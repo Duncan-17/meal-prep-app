@@ -69,30 +69,37 @@ Any email works — it's stamped on commits, nothing more.
 Local development works without these. They're only needed to put the app on a URL your phone
 can reach and install from.
 
-### 4. GitHub account + empty repo — now doubles as your backup
+### 4. GitHub repo — **one interactive step left, then I finish it**
 
-⚠️ Since the project left OneDrive, **nothing is backing up your source**. This moved up the
-priority list.
+⚠️ Since the project left OneDrive, **nothing is backing up your source**. This is the top item.
 
-Your git identity already points at GitHub user `Duncan-17`, so the account exists.
+Already done for you:
 
-**Fastest path — let me do it.** Install the GitHub CLI, then I can create the repo and push
-without you touching a browser:
+- GitHub CLI installed (`gh` 2.100.0).
+- Everything committed to `main`; working tree clean and ready to push.
+- Your git identity already points at GitHub user `Duncan-17`, so the account exists.
+
+**Your one step.** Run this in the VS Code terminal — it opens a browser to authorise, which I
+can't do for you from a non-interactive shell:
 
 ```powershell
-winget install GitHub.cli
-gh auth login          # interactive: run this yourself in a terminal, not through me
+gh auth login
 ```
 
-Then tell me and I'll handle `gh repo create` + the initial push.
+Answer: **GitHub.com** → **HTTPS** → **Yes** (authenticate Git with your GitHub credentials) →
+**Login with a web browser**. Copy the one-time code it shows, press Enter, paste it in the
+browser, approve.
 
-**Manual path.** Create an **empty private repo** named `meal-prep-app` at
-<https://github.com/new> — no README, no `.gitignore`, no license (this project has its own).
-Send me the URL and I'll wire up the remote and push.
+**Then tell me** and I'll run the rest — it creates the private repo, wires up `origin`, and
+pushes in a single command:
 
-> Alternative if you'd rather skip GitHub entirely: Cloudflare's `wrangler` CLI can push builds
-> straight from your machine. One less account, slightly more friction per deploy — but then you
-> still have no off-machine backup.
+```powershell
+gh repo create meal-prep-app --private --source=. --remote=origin --push
+```
+
+**Manual alternative** if you'd rather not use the CLI. Create an **empty private repo** named
+`meal-prep-app` at <https://github.com/new> — no README, no `.gitignore`, no license (this
+project has its own). Send me the URL and I'll wire up the remote and push.
 
 ### 5. Cloudflare account + Pages project
 
@@ -198,7 +205,7 @@ If you don't have one, I'll make a plain typographic placeholder.
 | 1b | Reopen VS Code on new path | Phase 0 | ✅ |
 | 2 | Node.js 24 LTS + deps installed | Phase 0 | ✅ |
 | 3 | Git identity | Phase 0 | ✅ (already set) |
-| 4 | GitHub repo | Deploy + **backup** | ⬜ ← **do this next** |
+| 4 | GitHub repo | Deploy + **backup** | 🟡 ← **run `gh auth login`, then tell me** |
 | 5 | Cloudflare Pages project | Deploy | ⬜ |
 | 6 | Phone install test | Deploy | ⬜ |
 | 7 | USDA API key | Phase 2 | ⬜ |

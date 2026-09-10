@@ -21,34 +21,56 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phase 0 (scaffold) — verified working as of 2026-09-10.**
+**Phase 0 (scaffold) — built and verified 2026-09-10. Phase 1 is next.**
 
-Node is installed and the scaffold has been built, linted and run for the first time. `tsc -b`
-passes clean under strict mode, `vite build` produces `dist/`, ESLint reports nothing, and the
-dev server serves the shell. The best-guess dependency versions in `package.json` all resolved
-without conflict — no version friction materialised.
+Node was installed and the scaffold ran for the first time. `tsc -b` passes clean under strict
+mode, `vite build` produces `dist/`, ESLint is clean, and the dev server serves the shell. The
+best-guess dependency versions in `package.json` all resolved without conflict — the anticipated
+version friction never materialised.
 
-`npm test` currently **fails by design**: there are no `src/**/*.test.ts` files yet, so Vitest
-exits 1 with "No test files found". Phase 1 fixes that by existing.
+`npm test` currently **fails by design**: no `src/**/*.test.ts` files exist yet, so Vitest exits 1
+with "No test files found". This is not a broken setup — Phase 1 fixes it by existing.
 
-Installed: **Node v24.19.0, npm 11.17.0**. Note this is Node **24**, not the 22 the earlier docs
-assumed — 24 is the current LTS line and 22 has moved to maintenance. Vite 7 needs ≥20.19, so
-this is fine.
+Installed: **Node v24.19.0, npm 11.17.0, gh 2.100.0**. Note Node **24**, not the 22 earlier docs
+assumed — 24 is the current LTS line, 22 has moved to maintenance, and Vite 7 only needs ≥20.19.
 
-### The immediate next step
+### ⚠️ Unfinished handoff — GitHub push
 
-**Phase 1 — nutrition foundation + Dexie schema.** Nutrient registry, unit conversion,
-`NutrientMap` / `Coverage` types, the pure aggregation functions with tests, complete Dexie
-schema, JSON export/import, dev seed. It needs none of the outstanding API keys — pure logic and
-tests, and the right place to spend real effort.
+**The source is still not backed up anywhere off this machine.** This was in progress when the
+session ended and is the highest-priority item.
 
-Worth doing alongside it: **push to GitHub**, which is still the only off-machine backup.
+Done already:
+- `gh` 2.100.0 installed via winget.
+- Everything committed to `main`, working tree clean. `package-lock.json` is tracked.
+
+Remaining — **`gh auth login` is interactive and cannot be run from a non-interactive terminal**,
+so the user must run it themselves:
+
+```powershell
+gh auth login     # user runs this: GitHub.com → HTTPS → login with a web browser
+```
+
+Then Claude can finish it in one step:
+
+```powershell
+gh repo create meal-prep-app --private --source=. --remote=origin --push
+```
+
+Check `gh auth status` first — if it reports a logged-in account, the login is done and only the
+`repo create` line is left. SETUP.md item 4 specifies a **private** repo.
+
+### After that — Phase 1
+
+**Nutrition foundation + Dexie schema.** Nutrient registry, unit conversion, `NutrientMap` /
+`Coverage` types, the pure aggregation functions with tests, complete Dexie schema, JSON
+export/import, dev seed. Needs none of the outstanding API keys — pure logic and tests, and the
+right place to spend real effort.
 
 ### Blocked on the user
 
 | Need | Blocks |
 |---|---|
-| GitHub repo + push | nothing technically, but it is now the **only** backup |
+| `gh auth login` (interactive) | GitHub push — the **only** off-machine backup |
 | Cloudflare Pages project | Phase 0 deploy |
 | USDA FDC API key | Phase 2 |
 | Open Food Facts contact string for `User-Agent` | Phase 2 |
@@ -61,10 +83,10 @@ string — they were asked to nominate an address and have not yet answered.
 
 - **Project root:** `C:\Users\dncan\Projects\meal-prep-app`
 - Windows 11, PowerShell 5.1. `&&`, `||`, and ternaries are **not** available — use `; if ($?) {}`.
-- **Installed:** `node` v24.19.0, `npm` 11.17.0 (via `winget install OpenJS.NodeJS.LTS`).
+- **Installed:** `node` v24.19.0, `npm` 11.17.0, `gh` 2.100.0 (all via `winget`).
   A terminal opened before that install will not see them on `PATH` until VS Code restarts.
-- **Not installed:** `gh`. Installing GitHub CLI would let Claude automate the repo creation and
-  push; without it that is a manual browser task for the user.
+- `gh` 2.100.0 is installed but **not yet authenticated**. `gh auth login` is interactive and
+  must be run by the user in a real terminal — it cannot be driven from a non-interactive shell.
 - **Do not move this project back under `C:\Users\dncan\OneDrive\`.** It was moved out
   deliberately: the user's Desktop is redirected into OneDrive, and syncing `node_modules`
   file-by-file caused the move. A Desktop shortcut points here.
