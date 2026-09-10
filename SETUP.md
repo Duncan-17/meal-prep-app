@@ -53,7 +53,7 @@ because no test files exist yet — Phase 1 adds them.
 ⚠️ If a terminal was already open before the install, it won't see `node` on its `PATH` until
 VS Code restarts.
 
-### 3. Set your git identity *(if you've never done this)*
+### 3. Set your git identity _(if you've never done this)_
 
 ```powershell
 git config --global user.name "Duncan"
@@ -172,7 +172,7 @@ Anything you don't specify falls back to standard adult RDA/DV values, clearly m
 as a default rather than your target. Everything stays editable in Settings later, so an
 approximate answer now costs nothing.
 
-### 10. Which nutrients to pin *(optional)*
+### 10. Which nutrients to pin _(optional)_
 
 Specific mode shows ~10 nutrients as bars; the rest live in Day Detail. Default pins:
 
@@ -199,18 +199,18 @@ If you don't have one, I'll make a plain typographic placeholder.
 
 ## Quick status
 
-| # | Item | Blocks | Status |
-|---|---|---|---|
-| 1 | Moved out of OneDrive | Phase 0 | ✅ |
-| 1b | Reopen VS Code on new path | Phase 0 | ✅ |
-| 2 | Node.js 24 LTS + deps installed | Phase 0 | ✅ |
-| 3 | Git identity | Phase 0 | ✅ (already set) |
-| 4 | GitHub repo | Deploy + **backup** | 🟡 ← **run `gh auth login`, then tell me** |
-| 5 | Cloudflare Pages project | Deploy | ⬜ |
-| 6 | Phone install test | Deploy | ⬜ |
-| 7 | USDA API key | Phase 2 | ⬜ |
-| 8 | OFF contact string | Phase 2 | ⬜ |
-| 9 | 2500-cal targets | Phase 7 | ⬜ |
-| 10 | Pinned nutrients | Phase 7 | ⬜ (defaults fine) |
-| 11 | Real recipes | — | ⬜ (optional) |
-| 12 | App icon | Phase 8 | ⬜ (optional) |
+| #   | Item                            | Blocks              | Status                                     |
+| --- | ------------------------------- | ------------------- | ------------------------------------------ |
+| 1   | Moved out of OneDrive           | Phase 0             | ✅                                         |
+| 1b  | Reopen VS Code on new path      | Phase 0             | ✅                                         |
+| 2   | Node.js 24 LTS + deps installed | Phase 0             | ✅                                         |
+| 3   | Git identity                    | Phase 0             | ✅ (already set)                           |
+| 4   | GitHub repo                     | Deploy + **backup** | 🟡 ← **run `gh auth login`, then tell me** |
+| 5   | Cloudflare Pages project        | Deploy              | ⬜                                         |
+| 6   | Phone install test              | Deploy              | ⬜                                         |
+| 7   | USDA API key                    | Phase 2             | ⬜                                         |
+| 8   | OFF contact string              | Phase 2             | ⬜                                         |
+| 9   | 2500-cal targets                | Phase 7             | ⬜                                         |
+| 10  | Pinned nutrients                | Phase 7             | ⬜ (defaults fine)                         |
+| 11  | Real recipes                    | —                   | ⬜ (optional)                              |
+| 12  | App icon                        | Phase 8             | ⬜ (optional)                              |

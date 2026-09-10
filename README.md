@@ -20,14 +20,14 @@ npm run dev
 
 Then open the printed `Network:` URL on your phone to test on a real device.
 
-| Script | Does |
-|---|---|
-| `npm run dev` | Dev server with hot reload |
-| `npm run build` | Typecheck + production build to `dist/` |
-| `npm run preview` | Serve the production build locally |
-| `npm test` | Run the domain-logic test suite |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier, write in place |
+| Script            | Does                                    |
+| ----------------- | --------------------------------------- |
+| `npm run dev`     | Dev server with hot reload              |
+| `npm run build`   | Typecheck + production build to `dist/` |
+| `npm run preview` | Serve the production build locally      |
+| `npm test`        | Run the domain-logic test suite         |
+| `npm run lint`    | ESLint                                  |
+| `npm run format`  | Prettier, write in place                |
 
 ## Stack
 

@@ -40,6 +40,7 @@ assumed — 24 is the current LTS line, 22 has moved to maintenance, and Vite 7 
 session ended and is the highest-priority item.
 
 Done already:
+
 - `gh` 2.100.0 installed via winget.
 - Everything committed to `main`, working tree clean. `package-lock.json` is tracked.
 
@@ -68,13 +69,13 @@ right place to spend real effort.
 
 ### Blocked on the user
 
-| Need | Blocks |
-|---|---|
-| `gh auth login` (interactive) | GitHub push — the **only** off-machine backup |
-| Cloudflare Pages project | Phase 0 deploy |
-| USDA FDC API key | Phase 2 |
-| Open Food Facts contact string for `User-Agent` | Phase 2 |
-| 2500-cal plan targets | Phase 7 |
+| Need                                            | Blocks                                        |
+| ----------------------------------------------- | --------------------------------------------- |
+| `gh auth login` (interactive)                   | GitHub push — the **only** off-machine backup |
+| Cloudflare Pages project                        | Phase 0 deploy                                |
+| USDA FDC API key                                | Phase 2                                       |
+| Open Food Facts contact string for `User-Agent` | Phase 2                                       |
+| 2500-cal plan targets                           | Phase 7                                       |
 
 Do not use the user's Apple ID email (`dncanzano@icloud.com`) as the Open Food Facts contact
 string — they were asked to nominate an address and have not yet answered.
@@ -136,14 +137,14 @@ picker) and the calendar mark.
 
 ## Commands
 
-| Script | Does |
-|---|---|
-| `npm run dev` | Dev server, host exposed for phone testing |
-| `npm run build` | Typecheck + production build to `dist/` |
-| `npm run preview` | Serve the production build |
-| `npm test` | Vitest, `src/**/*.test.ts` |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier, write in place |
+| Script            | Does                                       |
+| ----------------- | ------------------------------------------ |
+| `npm run dev`     | Dev server, host exposed for phone testing |
+| `npm run build`   | Typecheck + production build to `dist/`    |
+| `npm run preview` | Serve the production build                 |
+| `npm test`        | Vitest, `src/**/*.test.ts`                 |
+| `npm run lint`    | ESLint                                     |
+| `npm run format`  | Prettier, write in place                   |
 
 ---
 

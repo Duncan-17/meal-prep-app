@@ -11,18 +11,18 @@ Single user, no auth, local-first.
 
 ## 1. Locked decisions
 
-| # | Question | Decision |
-|---|---|---|
-| 1 | Color | Free hex picker, 12 suggested swatches, perceptual-distinctness warning on save |
-| 2 | Units | `portion_style` discrete/bulk — drives UI only, **one math path** (§3a) |
-| 2b | Bulk % basis | % of what is **currently left** in the fridge, not of the original batch |
-| 3 | Targets | Custom 2500-cal plan, user-editable; RDA/DV seeds until real numbers supplied |
-| 4 | Micros | **Full USDA panel** stored; curated pinned subset displayed by default (§4) |
-| 5 | Scheduling | Tap-to-schedule. `dnd-kit` used only for ingredient reordering in v1 |
-| 6 | Cook flow | Manual "Mark cooked" with actual-yield confirmation |
-| 7 | Discard | Yes — separate `stockAdjustments` audit trail, never counts as eaten |
-| 8 | Backup | Yes — full JSON export/import |
-| 9 | Quick Add | Yes — saveable favorites in a separate lightweight table |
+| #   | Question     | Decision                                                                        |
+| --- | ------------ | ------------------------------------------------------------------------------- |
+| 1   | Color        | Free hex picker, 12 suggested swatches, perceptual-distinctness warning on save |
+| 2   | Units        | `portion_style` discrete/bulk — drives UI only, **one math path** (§3a)         |
+| 2b  | Bulk % basis | % of what is **currently left** in the fridge, not of the original batch        |
+| 3   | Targets      | Custom 2500-cal plan, user-editable; RDA/DV seeds until real numbers supplied   |
+| 4   | Micros       | **Full USDA panel** stored; curated pinned subset displayed by default (§4)     |
+| 5   | Scheduling   | Tap-to-schedule. `dnd-kit` used only for ingredient reordering in v1            |
+| 6   | Cook flow    | Manual "Mark cooked" with actual-yield confirmation                             |
+| 7   | Discard      | Yes — separate `stockAdjustments` audit trail, never counts as eaten            |
+| 8   | Backup       | Yes — full JSON export/import                                                   |
+| 9   | Quick Add    | Yes — saveable favorites in a separate lightweight table                        |
 
 ### Out of scope for v1
 
@@ -94,13 +94,13 @@ Component {
 // per-unit nutrition = nutrition_per_base / base_quantity    ← always, both styles
 ```
 
-`portion_style` selects the *control* (stepper vs. percent picker) and the *calendar mark*
+`portion_style` selects the _control_ (stepper vs. percent picker) and the _calendar mark_
 (fixed square vs. size-scaled blob). It never branches the math.
 
 ### b. Nutrition is a sparse map, not columns
 
 ```ts
-type NutrientMap = Record<string, number>   // canonical key → amount in canonical unit
+type NutrientMap = Record<string, number>; // canonical key → amount in canonical unit
 // { energy_kcal: 210, protein_g: 28, vitamin_d_ug: 0.4, ... }
 ```
 
@@ -112,12 +112,12 @@ different units than FDC, and that conversion belongs in one place, not scattere
 
 ### c. Coverage tracking — the full-panel correctness fix
 
-Rice has no B12 *value*; it does not have zero B12. Summing sparse data as if missing means zero
+Rice has no B12 _value_; it does not have zero B12. Summing sparse data as if missing means zero
 silently under-reports every micronutrient. So every aggregate carries a companion map:
 
 ```ts
-type Coverage = Record<string, number>   // canonical key → 0..1 fraction of
-                                         // contributing grams that HAD data
+type Coverage = Record<string, number>; // canonical key → 0..1 fraction of
+// contributing grams that HAD data
 ```
 
 A day's B12 then reads `2.1 µg · 68% of intake had data` instead of a confident wrong number.
@@ -149,7 +149,7 @@ touches nutrition totals.
 
 **Full panel without a wall of numbers.** Storage is complete; display is layered.
 
-- **Specific mode** — your *pinned* nutrients as bars (default ~10, reorderable in Settings)
+- **Specific mode** — your _pinned_ nutrients as bars (default ~10, reorderable in Settings)
 - **Day Detail** — full panel, collapsed by nutrient group, with a "show nutrients with no data"
   toggle hiding the sparse tail
 - Nutrients with no target render as a bare value, never as 0% of nothing
@@ -175,15 +175,15 @@ Returns a confidence flag that feeds coverage.
 Bottom tab bar, four tabs — **Calendar · Components · Fridge · Log** — plus a floating "+" on
 Calendar and Fridge for quick logging.
 
-| Screen | Content |
-|---|---|
-| **Calendar** | Week strip with `‹ ›` nav. *Overview*: one mark per meal log, colored by Component — fixed squares for discrete, size-scaled blobs for bulk. *Specific*: mini bars for pinned micronutrients. Tap a day → Day Detail. |
-| **Day Detail** | Every MealLog that day, full grouped nutrient table vs. target, coverage indicators, edit/delete individual entries. |
-| **Component Library** | Card list with color dot, category, yield. Tap → detail (ingredients, per-unit nutrition, Edit / Schedule / Delete). |
-| **Component Builder** | Name, color, category, portion style, unit, base yield, ingredient list with search + reorder, live nutrition summary. |
-| **Fridge** | Discrete: `4 of 6 servings left`. Bulk: progress bar + `62% left · ≈1.9kg`. Actions: Log, Adjust, Discard remaining. |
-| **Log Meal** | *From Fridge* tab — steppers for discrete, percent picker (of remaining) for bulk with live gram/kcal preview. *Quick Add* tab — search, barcode scan, manual entry, favorites row. |
-| **Settings** | Nutrient targets editor, pinned-nutrient management, JSON export/import. |
+| Screen                | Content                                                                                                                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Calendar**          | Week strip with `‹ ›` nav. _Overview_: one mark per meal log, colored by Component — fixed squares for discrete, size-scaled blobs for bulk. _Specific_: mini bars for pinned micronutrients. Tap a day → Day Detail. |
+| **Day Detail**        | Every MealLog that day, full grouped nutrient table vs. target, coverage indicators, edit/delete individual entries.                                                                                                  |
+| **Component Library** | Card list with color dot, category, yield. Tap → detail (ingredients, per-unit nutrition, Edit / Schedule / Delete).                                                                                                  |
+| **Component Builder** | Name, color, category, portion style, unit, base yield, ingredient list with search + reorder, live nutrition summary.                                                                                                |
+| **Fridge**            | Discrete: `4 of 6 servings left`. Bulk: progress bar + `62% left · ≈1.9kg`. Actions: Log, Adjust, Discard remaining.                                                                                                  |
+| **Log Meal**          | _From Fridge_ tab — steppers for discrete, percent picker (of remaining) for bulk with live gram/kcal preview. _Quick Add_ tab — search, barcode scan, manual entry, favorites row.                                   |
+| **Settings**          | Nutrient targets editor, pinned-nutrient management, JSON export/import.                                                                                                                                              |
 
 ---
 
@@ -192,42 +192,56 @@ Calendar and Fridge for quick logging.
 Each phase ends in something openable and usable.
 
 ### Phase 0 — Environment & scaffold
+
 Node 22+ LTS (24 installed), `git init`, Vite + React + TS, ESLint/Prettier, Vitest, folder skeleton, app shell
 with tab bar and four routes, static web manifest, Cloudflare Pages connected.
+
 > **Done when:** the shell is live on a Pages URL and installs to your phone home screen.
 
 ### Phase 1 — Nutrition foundation & data layer
+
 Nutrient registry, unit conversion, `NutrientMap` / `Coverage` types, every pure aggregation
 function **with tests**, complete Dexie schema, JSON export/import, dev seed data.
+
 > **Done when:** `npm test` proves scaling, aggregation, coverage and percent-of-remaining are
 > correct. No UI — this is the layer everything else trusts.
 
 ### Phase 2 — Food lookup · needs USDA API key
+
 Pages Function proxy, USDA + OFF adapters, `foodCache` table, debounced search UI with source
 badges, manual-entry fallback for anything not found.
+
 > **Done when:** searching "chicken thigh" returns real nutrition and the second search is
 > instant from cache.
 
 ### Phase 3 — Component Builder & Library
+
 Library list, builder form, ingredient search + `dnd-kit` reorder, discrete/bulk toggle, color
 picker with distinctness check, live nutrition summary, detail view, delete guarded against
 Components that already have cook history.
+
 > **Done when:** Chicken Thighs, Rice and Guacamole exist with real numbers.
 
 ### Phase 4 — Calendar & scheduling
+
 Week view with `‹ ›` nav, Overview/Specific toggle (Overview only for now), tap-to-schedule flow,
 `Batch` creation with scale factor, planned-batch badges, past-due nudge.
+
 > **Done when:** a week of cooking is scheduled and visible.
 
 ### Phase 5 — Cook → Fridge
+
 "Mark cooked" sheet with actual-yield confirmation, `FridgeEntry` creation with nutrition
 snapshot, fridge list (discrete counts vs. bulk progress bar), Adjust, Discard remaining.
+
 > **Done when:** a cooked batch becomes fridge stock and can be corrected or discarded.
 
 ### Phase 6 — Logging
+
 From-Fridge tab with steppers and percent picker, Quick Add with search + manual entry +
 save-as-favorite, favorites row, barcode scan, transactional stock deduction, edit/delete a log
 restoring stock.
+
 > **Done when:** the loop closes — cook, eat, watch stock drop, correct a mistake.
 >
 > ⚠️ Barcode scanning is the one genuine unknown: the native `BarcodeDetector` API is absent on
@@ -235,29 +249,33 @@ restoring stock.
 > and scanning follows.
 
 ### Phase 7 — Insight · needs 2500-cal plan numbers
+
 Targets table + Settings editor, Specific mode bars, Day Detail full grouped panel with coverage
 indicators, Recharts weekly trends, pinned-nutrient management.
+
 > **Done when:** you can see how a real week measured up.
 
 ### Phase 8 — PWA polish
+
 Icon set, `vite-plugin-pwa` with Workbox precache + runtime caching for proxy routes, offline
 degradation to cached data, install prompt, iOS safe-area handling, backup reminder.
+
 > **Done when:** it works on the subway.
 
 ---
 
 ## 7. Risk register
 
-| Risk | Mitigation |
-|---|---|
-| Sparse micronutrient data misleads | Coverage tracking from Phase 1 |
-| IndexedDB wiped by browser cleanup | JSON export in Phase 1, backup reminder in Phase 8 |
-| iOS barcode scanning unsupported | ZXing fallback + manual barcode entry |
-| USDA rate limits / key exposure | Pages Function proxy + local `foodCache` |
-| Volume→gram guessing skews nutrition | Confidence flag surfaced in UI, one-time user override cached |
-| Recipe edits corrupting history | Snapshot-on-write at Batch / FridgeEntry / MealLog |
-| ~~OneDrive syncing `node_modules`~~ | Resolved — project moved to `C:\Users\dncan\Projects\meal-prep-app` |
-| Source no longer backed up by OneDrive | Push to GitHub early (SETUP.md item 4) |
+| Risk                                   | Mitigation                                                          |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| Sparse micronutrient data misleads     | Coverage tracking from Phase 1                                      |
+| IndexedDB wiped by browser cleanup     | JSON export in Phase 1, backup reminder in Phase 8                  |
+| iOS barcode scanning unsupported       | ZXing fallback + manual barcode entry                               |
+| USDA rate limits / key exposure        | Pages Function proxy + local `foodCache`                            |
+| Volume→gram guessing skews nutrition   | Confidence flag surfaced in UI, one-time user override cached       |
+| Recipe edits corrupting history        | Snapshot-on-write at Batch / FridgeEntry / MealLog                  |
+| ~~OneDrive syncing `node_modules`~~    | Resolved — project moved to `C:\Users\dncan\Projects\meal-prep-app` |
+| Source no longer backed up by OneDrive | Push to GitHub early (SETUP.md item 4)                              |
 
 ---
 
