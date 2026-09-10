@@ -69,37 +69,35 @@ Any email works — it's stamped on commits, nothing more.
 Local development works without these. They're only needed to put the app on a URL your phone
 can reach and install from.
 
-### 4. GitHub repo — **one interactive step left, then I finish it**
+### 4. GitHub repo — **publish it from GitHub Desktop**
 
 ⚠️ Since the project left OneDrive, **nothing is backing up your source**. This is the top item.
+There are 7 commits sitting only on this machine.
 
-Already done for you:
+Already done: everything is committed to `main`, working tree clean, `package-lock.json` tracked,
+and no secrets in the tree or history.
 
-- GitHub CLI installed (`gh` 2.100.0).
-- Everything committed to `main`; working tree clean and ready to push.
-- Your git identity already points at GitHub user `Duncan-17`, so the account exists.
+GitHub Desktop is installed and handles auth, repo creation and the first push in one step — no
+`gh auth login` needed.
 
-**Your one step.** Run this in the VS Code terminal — it opens a browser to authorise, which I
-can't do for you from a non-interactive shell:
+1. Open **GitHub Desktop**.
+2. **File → Add local repository…**
+3. Choose `C:\Users\dncan\Projects\meal-prep-app` → **Add repository**.
+   It will show the 7 existing commits and offer **Publish repository**.
+4. Click **Publish repository**. Name it `meal-prep-app`.
+   **Leave "Keep this code private" checked.**
+5. **Publish repository.**
 
-```powershell
-gh auth login
-```
+That creates the repo and pushes everything. Tell me when it is done and I will verify the remote
+and that all commits landed.
 
-Answer: **GitHub.com** → **HTTPS** → **Yes** (authenticate Git with your GitHub credentials) →
-**Login with a web browser**. Copy the one-time code it shows, press Enter, paste it in the
-browser, approve.
+> **Side benefit:** publishing this way stores your credentials in Git Credential Manager, so
+> after this I can push follow-up commits straight from the terminal without you leaving VS Code.
 
-**Then tell me** and I'll run the rest — it creates the private repo, wires up `origin`, and
-pushes in a single command:
-
-```powershell
-gh repo create meal-prep-app --private --source=. --remote=origin --push
-```
-
-**Manual alternative** if you'd rather not use the CLI. Create an **empty private repo** named
-`meal-prep-app` at <https://github.com/new> — no README, no `.gitignore`, no license (this
-project has its own). Send me the URL and I'll wire up the remote and push.
+**Alternative — GitHub CLI.** `gh` 2.100.0 is installed but not authenticated. `gh auth login` is
+interactive so it cannot be run from a non-interactive terminal; if you run it yourself, I can
+then finish with
+`gh repo create meal-prep-app --private --source=. --remote=origin --push`.
 
 ### 5. Cloudflare account + Pages project
 
@@ -220,18 +218,18 @@ If you don't have one, I'll make a plain typographic placeholder.
 
 ## Quick status
 
-| #   | Item                            | Blocks              | Status                                     |
-| --- | ------------------------------- | ------------------- | ------------------------------------------ |
-| 1   | Moved out of OneDrive           | Phase 0             | ✅                                         |
-| 1b  | Reopen VS Code on new path      | Phase 0             | ✅                                         |
-| 2   | Node.js 24 LTS + deps installed | Phase 0             | ✅                                         |
-| 3   | Git identity                    | Phase 0             | ✅ (already set)                           |
-| 4   | GitHub repo                     | Deploy + **backup** | 🟡 ← **run `gh auth login`, then tell me** |
-| 5   | Cloudflare Pages project        | Deploy              | ⬜                                         |
-| 6   | Phone install test              | Deploy              | ⬜                                         |
-| 7   | USDA API key                    | Phase 2             | ⬜ ← **next blocker**                      |
-| 8   | OFF contact string              | Phase 2             | ⬜                                         |
-| 9   | 2500-cal targets                | Phase 7             | ⬜ (FDA defaults seeded meanwhile)         |
-| 10  | Pinned nutrients                | Phase 7             | ⬜ (defaults fine)                         |
-| 11  | Real recipes                    | —                   | ⬜ (optional)                              |
-| 12  | App icon                        | Phase 8             | ⬜ (optional)                              |
+| #   | Item                            | Blocks              | Status                               |
+| --- | ------------------------------- | ------------------- | ------------------------------------ |
+| 1   | Moved out of OneDrive           | Phase 0             | ✅                                   |
+| 1b  | Reopen VS Code on new path      | Phase 0             | ✅                                   |
+| 2   | Node.js 24 LTS + deps installed | Phase 0             | ✅                                   |
+| 3   | Git identity                    | Phase 0             | ✅ (already set)                     |
+| 4   | GitHub repo                     | Deploy + **backup** | 🟡 ← **publish from GitHub Desktop** |
+| 5   | Cloudflare Pages project        | Deploy              | ⬜                                   |
+| 6   | Phone install test              | Deploy              | ⬜                                   |
+| 7   | USDA API key                    | Phase 2             | ⬜ ← **next blocker**                |
+| 8   | OFF contact string              | Phase 2             | ⬜                                   |
+| 9   | 2500-cal targets                | Phase 7             | ⬜ (FDA defaults seeded meanwhile)   |
+| 10  | Pinned nutrients                | Phase 7             | ⬜ (defaults fine)                   |
+| 11  | Real recipes                    | —                   | ⬜ (optional)                        |
+| 12  | App icon                        | Phase 8             | ⬜ (optional)                        |

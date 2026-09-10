@@ -36,21 +36,16 @@ assumed — 24 is the current LTS line and Vite 7 only needs ≥20.19.
 
 Done: `gh` installed, everything committed to `main`, working tree clean.
 
-Remaining — **`gh auth login` is interactive and cannot be driven from a non-interactive
-terminal**, so the user must run it:
+Remaining — the user publishes it from **GitHub Desktop** (installed; it is what they normally
+use). File → Add local repository → this folder → **Publish repository**, private. That does auth,
+creation and the first push in one step. See SETUP.md item 4.
 
-```powershell
-gh auth login     # GitHub.com → HTTPS → login with a web browser
-```
+**Check `git remote -v` first** — if `origin` exists, publishing is already done and the only
+thing left is verifying the commits landed. Publishing also populates Git Credential Manager, so
+later pushes can run straight from the terminal.
 
-Then Claude finishes it in one step:
-
-```powershell
-gh repo create meal-prep-app --private --source=. --remote=origin --push
-```
-
-**Run `gh auth status` first** — if it reports a logged-in account the login is already done and
-only the `repo create` line is left. SETUP.md item 4 specifies a **private** repo.
+`gh` 2.100.0 is installed but unauthenticated; `gh auth login` is interactive and cannot be driven
+from a non-interactive terminal, so it is the fallback path, not the primary one.
 
 ### What Phase 1 built
 
