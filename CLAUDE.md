@@ -94,15 +94,19 @@ seed instead, and only ingredient _search_ has to wait.
 
 ### Blocked on the user
 
-| Need                                            | Blocks                                    |
-| ----------------------------------------------- | ----------------------------------------- |
-| USDA FDC API key                                | Phase 2                                   |
-| Open Food Facts contact string for `User-Agent` | Phase 2                                   |
-| Cloudflare Pages project                        | Phase 0 deploy                            |
-| 2500-cal plan targets                           | Phase 7 (defaults are in place meanwhile) |
+| Need                               | Blocks                                                                                                          |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| ~~USDA FDC API key~~               | ✅ Supplied; lives in gitignored `.dev.vars`. **Never read that file.**                                         |
+| ~~Open Food Facts contact string~~ | ⏸️ Deferred by choice 2026-09-10 — Phase 2 ships USDA-only; blocks only Phase 6 barcode lookups. Do not re-ask. |
+| Cloudflare Pages project           | Phase 0 deploy                                                                                                  |
+| 2500-cal plan targets              | Phase 7 (defaults are in place meanwhile)                                                                       |
 
-Do not use the user's Apple ID email (`dncanzano@icloud.com`) as the Open Food Facts contact
-string — they were asked to nominate an address and have not yet answered.
+The USDA key is in `.dev.vars` (gitignored). **Never open that file** — nothing needs to; the
+Pages Function reads it at runtime. To confirm it is populated, test that the line is non-empty
+without printing the value, and say so.
+
+The Open Food Facts contact string was deliberately left blank on 2026-09-10 when the user was
+asked. Do not re-ask, and never substitute their Apple ID (`dncanzano@icloud.com`).
 
 ## Environment facts
 

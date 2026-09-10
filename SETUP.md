@@ -140,18 +140,28 @@ Deleting the commit is **not** enough — git history, any clone, fork or CI cac
 Generate a replacement at the signup page and update the Cloudflare secret. The old key is dead
 either way; USDA deactivates keys it finds published.
 
-### 8. Open Food Facts contact string
+### 8. Open Food Facts contact string — ⏸️ deferred by choice (2026-09-10)
 
-OFF has no API key and no signup, but it asks callers to identify themselves in the
-`User-Agent` header so they can contact you if a script misbehaves. The convention is:
+OFF has no API key and no signup, but asks callers to identify themselves in the `User-Agent`
+header so they can make contact if a script misbehaves. The convention is:
 
 ```
 MealPrepApp/0.1 (your-contact@example.com)
 ```
 
-**Decision needed:** which contact address do you want used? It gets sent to Open Food Facts on
-every lookup, so pick one you're comfortable exposing — a throwaway or alias is completely fine.
-I won't use your Apple ID address unless you tell me to.
+**You chose to leave this blank for now** — this is a deliberate deferral, not an oversight, so
+nobody needs to ask again unless you raise it.
+
+What that costs: Phase 2 ships **USDA-only**. Open Food Facts is the barcode/packaged-food
+source, so barcode lookups (Phase 6) wait until an address is nominated. USDA covers whole
+ingredients, which is what Components are built from, so nothing else is affected.
+
+When you want it, fill `OFF_USER_AGENT` in `.dev.vars` and tell me. Options worth knowing:
+
+- `76717242+Duncan-17@users.noreply.github.com` — already public on every commit you have pushed,
+  so it exposes nothing new, and GitHub forwards mail to you.
+- Any throwaway or alias.
+- Your Apple ID address — works, but it would be sent to OFF on every lookup.
 
 ---
 
@@ -199,18 +209,18 @@ If you don't have one, I'll make a plain typographic placeholder.
 
 ## Quick status
 
-| #   | Item                            | Blocks              | Status                             |
-| --- | ------------------------------- | ------------------- | ---------------------------------- |
-| 1   | Moved out of OneDrive           | Phase 0             | ✅                                 |
-| 1b  | Reopen VS Code on new path      | Phase 0             | ✅                                 |
-| 2   | Node.js 24 LTS + deps installed | Phase 0             | ✅                                 |
-| 3   | Git identity                    | Phase 0             | ✅ (already set)                   |
-| 4   | GitHub repo                     | Deploy + **backup** | ✅                                 |
-| 5   | Cloudflare Pages project        | Deploy              | ⬜                                 |
-| 6   | Phone install test              | Deploy              | ⬜                                 |
-| 7   | USDA API key                    | Phase 2             | ⬜ ← **next blocker**              |
-| 8   | OFF contact string              | Phase 2             | ⬜                                 |
-| 9   | 2500-cal targets                | Phase 7             | ⬜ (FDA defaults seeded meanwhile) |
-| 10  | Pinned nutrients                | Phase 7             | ⬜ (defaults fine)                 |
-| 11  | Real recipes                    | —                   | ⬜ (optional)                      |
-| 12  | App icon                        | Phase 8             | ⬜ (optional)                      |
+| #   | Item                            | Blocks               | Status                             |
+| --- | ------------------------------- | -------------------- | ---------------------------------- |
+| 1   | Moved out of OneDrive           | Phase 0              | ✅                                 |
+| 1b  | Reopen VS Code on new path      | Phase 0              | ✅                                 |
+| 2   | Node.js 24 LTS + deps installed | Phase 0              | ✅                                 |
+| 3   | Git identity                    | Phase 0              | ✅ (already set)                   |
+| 4   | GitHub repo                     | Deploy + **backup**  | ✅                                 |
+| 5   | Cloudflare Pages project        | Deploy               | ⬜                                 |
+| 6   | Phone install test              | Deploy               | ⬜                                 |
+| 7   | USDA API key                    | Phase 2              | ✅ (in `.dev.vars`)                |
+| 8   | OFF contact string              | Phase 6 barcode only | ⏸️ deferred by choice              |
+| 9   | 2500-cal targets                | Phase 7              | ⬜ (FDA defaults seeded meanwhile) |
+| 10  | Pinned nutrients                | Phase 7              | ⬜ (defaults fine)                 |
+| 11  | Real recipes                    | —                    | ⬜ (optional)                      |
+| 12  | App icon                        | Phase 8              | ⬜ (optional)                      |
