@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **Phase 0 complete and verified (2026-09-10). Phase 1 next.**
+> Status: **Phases 0 and 1 complete and verified (2026-09-10). Phase 2 next.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -205,6 +205,9 @@ function **with tests**, complete Dexie schema, JSON export/import, dev seed dat
 
 > **Done when:** `npm test` proves scaling, aggregation, coverage and percent-of-remaining are
 > correct. No UI — this is the layer everything else trusts.
+>
+> ✅ **Done 2026-09-10** — 125 tests across 7 files. Also added: `domain/components.ts` (rolling a
+> Component up from its ingredients) and `db/init.ts` (idempotent first-run defaults).
 
 ### Phase 2 — Food lookup · needs USDA API key
 

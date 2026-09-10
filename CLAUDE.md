@@ -21,61 +21,84 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phase 0 (scaffold) — built and verified 2026-09-10. Phase 1 is next.**
+**Phases 0 and 1 complete and verified (2026-09-10). Phase 2 is next, and needs the USDA key.**
 
-Node was installed and the scaffold ran for the first time. `tsc -b` passes clean under strict
-mode, `vite build` produces `dist/`, ESLint is clean, and the dev server serves the shell. The
-best-guess dependency versions in `package.json` all resolved without conflict — the anticipated
-version friction never materialised.
+Everything builds and passes: `tsc -b` clean under strict mode, `vite build` produces `dist/`,
+ESLint clean, **125 tests passing** across 7 files. There is still no UI beyond the Phase 0 shell
+— Phase 1 was deliberately the layer underneath it.
 
-`npm test` currently **fails by design**: no `src/**/*.test.ts` files exist yet, so Vitest exits 1
-with "No test files found". This is not a broken setup — Phase 1 fixes it by existing.
-
-Installed: **Node v24.19.0, npm 11.17.0, gh 2.100.0**. Note Node **24**, not the 22 earlier docs
-assumed — 24 is the current LTS line, 22 has moved to maintenance, and Vite 7 only needs ≥20.19.
+Installed: **Node v24.19.0, npm 11.17.0, gh 2.100.0**. Node **24**, not the 22 the original docs
+assumed — 24 is the current LTS line and Vite 7 only needs ≥20.19.
 
 ### ⚠️ Unfinished handoff — GitHub push
 
-**The source is still not backed up anywhere off this machine.** This was in progress when the
-session ended and is the highest-priority item.
+**The source is still not backed up anywhere off this machine.** Highest-priority item.
 
-Done already:
+Done: `gh` installed, everything committed to `main`, working tree clean.
 
-- `gh` 2.100.0 installed via winget.
-- Everything committed to `main`, working tree clean. `package-lock.json` is tracked.
-
-Remaining — **`gh auth login` is interactive and cannot be run from a non-interactive terminal**,
-so the user must run it themselves:
+Remaining — **`gh auth login` is interactive and cannot be driven from a non-interactive
+terminal**, so the user must run it:
 
 ```powershell
-gh auth login     # user runs this: GitHub.com → HTTPS → login with a web browser
+gh auth login     # GitHub.com → HTTPS → login with a web browser
 ```
 
-Then Claude can finish it in one step:
+Then Claude finishes it in one step:
 
 ```powershell
 gh repo create meal-prep-app --private --source=. --remote=origin --push
 ```
 
-Check `gh auth status` first — if it reports a logged-in account, the login is done and only the
-`repo create` line is left. SETUP.md item 4 specifies a **private** repo.
+**Run `gh auth status` first** — if it reports a logged-in account the login is already done and
+only the `repo create` line is left. SETUP.md item 4 specifies a **private** repo.
 
-### After that — Phase 1
+### What Phase 1 built
 
-**Nutrition foundation + Dexie schema.** Nutrient registry, unit conversion, `NutrientMap` /
-`Coverage` types, the pure aggregation functions with tests, complete Dexie schema, JSON
-export/import, dev seed. Needs none of the outstanding API keys — pure logic and tests, and the
-right place to spend real effort.
+`src/domain/` (pure — no Dexie, no React, fully tested):
+
+| File            | Holds                                                         |
+| --------------- | ------------------------------------------------------------- |
+| `types.ts`      | `NutrientMap`, `Coverage`, and every entity interface         |
+| `nutrients.ts`  | scaling, per-unit, weighted `aggregate` + `combineAggregates` |
+| `coverage.ts`   | reading coverage — thresholds, notes, missing keys            |
+| `portions.ts`   | percent-of-remaining, stock arithmetic, actual-yield          |
+| `components.ts` | rolling a Component up from its ingredients                   |
+| `backup.ts`     | backup format and strict validation (the pure half)           |
+
+`src/nutrition/`: `registry.ts` (75 canonical nutrients keyed to USDA numbers, with group, unit
+and precision), `units.ts` (the PLAN.md §4 grams ladder, returning a confidence), `targets.ts`
+(FDA Daily Values as `isDefault: true` placeholders).
+
+`src/db/`: `schema.ts` (all ten tables), `init.ts` (idempotent first-run defaults), `backup.ts`
+(Dexie export/import), `seed.dev.ts` (Chicken Thighs, Rice, Guacamole).
+
+Two invariants worth not breaking:
+
+- **Presence, not truthiness, decides whether data exists.** A measured `0` g trans fat is data;
+  an absent key is not. `aggregate` is grams-weighted and every aggregate carries `Coverage`.
+- **`combineAggregates` is defined via `aggregate`**, so totalling a week at once equals
+  totalling it day by day. Phase 7 does both; a test pins it.
+
+### Next — Phase 2 (blocked on the USDA key)
+
+Pages Function proxy at `functions/api/`, USDA + OFF adapters mapping into the registry keys with
+unit conversion applied **at the adapter**, `foodCache` table, debounced search UI.
+
+Phase 2 is also where the registry's USDA nutrient numbers get validated against live API
+responses — they were transcribed, not fetched, so expect to correct a few.
+
+If the key is still missing, Phase 3 (Component Builder & Library) can be built against the dev
+seed instead, and only ingredient _search_ has to wait.
 
 ### Blocked on the user
 
 | Need                                            | Blocks                                        |
 | ----------------------------------------------- | --------------------------------------------- |
 | `gh auth login` (interactive)                   | GitHub push — the **only** off-machine backup |
-| Cloudflare Pages project                        | Phase 0 deploy                                |
 | USDA FDC API key                                | Phase 2                                       |
 | Open Food Facts contact string for `User-Agent` | Phase 2                                       |
-| 2500-cal plan targets                           | Phase 7                                       |
+| Cloudflare Pages project                        | Phase 0 deploy                                |
+| 2500-cal plan targets                           | Phase 7 (defaults are in place meanwhile)     |
 
 Do not use the user's Apple ID email (`dncanzano@icloud.com`) as the Open Food Facts contact
 string — they were asked to nominate an address and have not yet answered.

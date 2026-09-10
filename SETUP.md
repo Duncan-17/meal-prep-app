@@ -168,9 +168,10 @@ numbers, anything:
 - **Fiber**
 - **Any micronutrients you're specifically targeting** and the numbers you're aiming for
 
-Anything you don't specify falls back to standard adult RDA/DV values, clearly marked in the UI
-as a default rather than your target. Everything stays editable in Settings later, so an
-approximate answer now costs nothing.
+Anything you do not specify falls back to standard adult RDA/DV values, clearly marked in the UI
+as a default rather than your target. **These are already seeded** (`src/nutrition/targets.ts`,
+every one flagged `isDefault: true`), so nothing is blocked — your real numbers just replace them.
+Everything stays editable in Settings later, so an approximate answer now costs nothing.
 
 ### 10. Which nutrients to pin _(optional)_
 
@@ -208,9 +209,9 @@ If you don't have one, I'll make a plain typographic placeholder.
 | 4   | GitHub repo                     | Deploy + **backup** | 🟡 ← **run `gh auth login`, then tell me** |
 | 5   | Cloudflare Pages project        | Deploy              | ⬜                                         |
 | 6   | Phone install test              | Deploy              | ⬜                                         |
-| 7   | USDA API key                    | Phase 2             | ⬜                                         |
+| 7   | USDA API key                    | Phase 2             | ⬜ ← **next blocker**                      |
 | 8   | OFF contact string              | Phase 2             | ⬜                                         |
-| 9   | 2500-cal targets                | Phase 7             | ⬜                                         |
+| 9   | 2500-cal targets                | Phase 7             | ⬜ (FDA defaults seeded meanwhile)         |
 | 10  | Pinned nutrients                | Phase 7             | ⬜ (defaults fine)                         |
 | 11  | Real recipes                    | —                   | ⬜ (optional)                              |
 | 12  | App icon                        | Phase 8             | ⬜ (optional)                              |
