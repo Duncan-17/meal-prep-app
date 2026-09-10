@@ -9,8 +9,8 @@ calendar, track servings as fridge stock, and log meals to see macro + micronutr
 
 > **Status:** Phases 0 and 1 are **complete and verified** — 125 tests passing, typecheck, lint and
 > production build all clean. The nutrition foundation and Dexie schema are in; there is no UI yet
-> beyond the app shell. Phase 2 (food lookup) needs the USDA API key — see SETUP.md. Pushing to
-> GitHub remains the priority, as it is still the only backup.
+> beyond the app shell. Phase 2 (food lookup) needs the USDA API key — see SETUP.md. The source
+> is backed up at <https://github.com/Duncan-17/meal-prep-app> (private).
 
 ## Running it
 

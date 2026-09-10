@@ -64,40 +64,21 @@ Any email works — it's stamped on commits, nothing more.
 
 ---
 
-## 🟠 Blocking the Phase 0 deploy
+## 🟠 Blocking the Phase 0 deploy — Cloudflare only
 
 Local development works without these. They're only needed to put the app on a URL your phone
 can reach and install from.
 
-### 4. GitHub repo — **publish it from GitHub Desktop**
+### 4. ~~GitHub repo~~ ✅ Done — published 2026-09-10
 
-⚠️ Since the project left OneDrive, **nothing is backing up your source**. This is the top item.
-There are 7 commits sitting only on this machine.
+Live at <https://github.com/Duncan-17/meal-prep-app> (private). All 11 commits pushed via GitHub
+Desktop; `origin/main` matches local. **Your source is backed up off this machine again.**
 
-Already done: everything is committed to `main`, working tree clean, `package-lock.json` tracked,
-and no secrets in the tree or history.
-
-GitHub Desktop is installed and handles auth, repo creation and the first push in one step — no
-`gh auth login` needed.
-
-1. Open **GitHub Desktop**.
-2. **File → Add local repository…**
-3. Choose `C:\Users\dncan\Projects\meal-prep-app` → **Add repository**.
-   It will show the 7 existing commits and offer **Publish repository**.
-4. Click **Publish repository**. Name it `meal-prep-app`.
-   **Leave "Keep this code private" checked.**
-5. **Publish repository.**
-
-That creates the repo and pushes everything. Tell me when it is done and I will verify the remote
-and that all commits landed.
-
-> **Side benefit:** publishing this way stores your credentials in Git Credential Manager, so
-> after this I can push follow-up commits straight from the terminal without you leaving VS Code.
-
-**Alternative — GitHub CLI.** `gh` 2.100.0 is installed but not authenticated. `gh auth login` is
-interactive so it cannot be run from a non-interactive terminal; if you run it yourself, I can
-then finish with
-`gh repo create meal-prep-app --private --source=. --remote=origin --push`.
+> **How pushing works from here.** I can commit, but I **cannot push** — GitHub Desktop keeps its
+> credentials in its own store, so git in my terminal has none and any network git command hangs
+> on a prompt it can never answer. When I say something is committed, hit **Push origin** in
+> GitHub Desktop to send it up. Small, but worth the habit: uncommitted-and-unpushed work is the
+> only work at risk.
 
 ### 5. Cloudflare account + Pages project
 
@@ -218,18 +199,18 @@ If you don't have one, I'll make a plain typographic placeholder.
 
 ## Quick status
 
-| #   | Item                            | Blocks              | Status                               |
-| --- | ------------------------------- | ------------------- | ------------------------------------ |
-| 1   | Moved out of OneDrive           | Phase 0             | ✅                                   |
-| 1b  | Reopen VS Code on new path      | Phase 0             | ✅                                   |
-| 2   | Node.js 24 LTS + deps installed | Phase 0             | ✅                                   |
-| 3   | Git identity                    | Phase 0             | ✅ (already set)                     |
-| 4   | GitHub repo                     | Deploy + **backup** | 🟡 ← **publish from GitHub Desktop** |
-| 5   | Cloudflare Pages project        | Deploy              | ⬜                                   |
-| 6   | Phone install test              | Deploy              | ⬜                                   |
-| 7   | USDA API key                    | Phase 2             | ⬜ ← **next blocker**                |
-| 8   | OFF contact string              | Phase 2             | ⬜                                   |
-| 9   | 2500-cal targets                | Phase 7             | ⬜ (FDA defaults seeded meanwhile)   |
-| 10  | Pinned nutrients                | Phase 7             | ⬜ (defaults fine)                   |
-| 11  | Real recipes                    | —                   | ⬜ (optional)                        |
-| 12  | App icon                        | Phase 8             | ⬜ (optional)                        |
+| #   | Item                            | Blocks              | Status                             |
+| --- | ------------------------------- | ------------------- | ---------------------------------- |
+| 1   | Moved out of OneDrive           | Phase 0             | ✅                                 |
+| 1b  | Reopen VS Code on new path      | Phase 0             | ✅                                 |
+| 2   | Node.js 24 LTS + deps installed | Phase 0             | ✅                                 |
+| 3   | Git identity                    | Phase 0             | ✅ (already set)                   |
+| 4   | GitHub repo                     | Deploy + **backup** | ✅                                 |
+| 5   | Cloudflare Pages project        | Deploy              | ⬜                                 |
+| 6   | Phone install test              | Deploy              | ⬜                                 |
+| 7   | USDA API key                    | Phase 2             | ⬜ ← **next blocker**              |
+| 8   | OFF contact string              | Phase 2             | ⬜                                 |
+| 9   | 2500-cal targets                | Phase 7             | ⬜ (FDA defaults seeded meanwhile) |
+| 10  | Pinned nutrients                | Phase 7             | ⬜ (defaults fine)                 |
+| 11  | Real recipes                    | —                   | ⬜ (optional)                      |
+| 12  | App icon                        | Phase 8             | ⬜ (optional)                      |

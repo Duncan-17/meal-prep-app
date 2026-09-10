@@ -269,16 +269,16 @@ degradation to cached data, install prompt, iOS safe-area handling, backup remin
 
 ## 7. Risk register
 
-| Risk                                   | Mitigation                                                          |
-| -------------------------------------- | ------------------------------------------------------------------- |
-| Sparse micronutrient data misleads     | Coverage tracking from Phase 1                                      |
-| IndexedDB wiped by browser cleanup     | JSON export in Phase 1, backup reminder in Phase 8                  |
-| iOS barcode scanning unsupported       | ZXing fallback + manual barcode entry                               |
-| USDA rate limits / key exposure        | Pages Function proxy + local `foodCache`                            |
-| Volume→gram guessing skews nutrition   | Confidence flag surfaced in UI, one-time user override cached       |
-| Recipe edits corrupting history        | Snapshot-on-write at Batch / FridgeEntry / MealLog                  |
-| ~~OneDrive syncing `node_modules`~~    | Resolved — project moved to `C:\Users\dncan\Projects\meal-prep-app` |
-| Source no longer backed up by OneDrive | Push to GitHub early (SETUP.md item 4)                              |
+| Risk                                       | Mitigation                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------- |
+| Sparse micronutrient data misleads         | Coverage tracking from Phase 1                                      |
+| IndexedDB wiped by browser cleanup         | JSON export in Phase 1, backup reminder in Phase 8                  |
+| iOS barcode scanning unsupported           | ZXing fallback + manual barcode entry                               |
+| USDA rate limits / key exposure            | Pages Function proxy + local `foodCache`                            |
+| Volume→gram guessing skews nutrition       | Confidence flag surfaced in UI, one-time user override cached       |
+| Recipe edits corrupting history            | Snapshot-on-write at Batch / FridgeEntry / MealLog                  |
+| ~~OneDrive syncing `node_modules`~~        | Resolved — project moved to `C:\Users\dncan\Projects\meal-prep-app` |
+| ~~Source no longer backed up by OneDrive~~ | Resolved — pushed to GitHub 2026-09-10                              |
 
 ---
 

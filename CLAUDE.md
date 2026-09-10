@@ -21,7 +21,8 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phases 0 and 1 complete and verified (2026-09-10). Phase 2 is next, and needs the USDA key.**
+**Phases 0 and 1 complete and verified (2026-09-10). Pushed to GitHub. Phase 2 is next, and
+needs the USDA key.**
 
 Everything builds and passes: `tsc -b` clean under strict mode, `vite build` produces `dist/`,
 ESLint clean, **125 tests passing** across 7 files. There is still no UI beyond the Phase 0 shell
@@ -30,22 +31,28 @@ ESLint clean, **125 tests passing** across 7 files. There is still no UI beyond 
 Installed: **Node v24.19.0, npm 11.17.0, gh 2.100.0**. Node **24**, not the 22 the original docs
 assumed — 24 is the current LTS line and Vite 7 only needs ≥20.19.
 
-### ⚠️ Unfinished handoff — GitHub push
+### Pushing — the user does it from GitHub Desktop
 
-**The source is still not backed up anywhere off this machine.** Highest-priority item.
+The repo is live at <https://github.com/Duncan-17/meal-prep-app> (private) and `origin/main` is
+in sync as of 2026-09-10.
 
-Done: `gh` installed, everything committed to `main`, working tree clean.
+**Claude cannot push from this terminal.** GitHub Desktop holds its credentials in its own store,
+so git here has none — any network git command (`fetch`, `push`, `ls-remote`) either fails with
+`could not read Username for 'https://github.com'` or **hangs on a credential prompt** that a
+non-interactive shell can never answer.
 
-Remaining — the user publishes it from **GitHub Desktop** (installed; it is what they normally
-use). File → Add local repository → this folder → **Publish repository**, private. That does auth,
-creation and the first push in one step. See SETUP.md item 4.
+So: **commit freely, never run a network git command.** Tell the user what is ready and they hit
+**Push origin** in GitHub Desktop. To check sync state without the network, use the local
+remote-tracking ref:
 
-**Check `git remote -v` first** — if `origin` exists, publishing is already done and the only
-thing left is verifying the commits landed. Publishing also populates Git Credential Manager, so
-later pushes can run straight from the terminal.
+```powershell
+git rev-list --left-right --count main...origin/main   # left = unpushed commits
+```
 
-`gh` 2.100.0 is installed but unauthenticated; `gh auth login` is interactive and cannot be driven
-from a non-interactive terminal, so it is the fallback path, not the primary one.
+That ref only updates when the user fetches or pushes, so treat it as "as of their last sync".
+
+If terminal pushes ever become worth it, `gh auth login` (interactive, user-run) would configure
+git's credential helper as a side effect.
 
 ### What Phase 1 built
 
@@ -87,13 +94,12 @@ seed instead, and only ingredient _search_ has to wait.
 
 ### Blocked on the user
 
-| Need                                            | Blocks                                        |
-| ----------------------------------------------- | --------------------------------------------- |
-| `gh auth login` (interactive)                   | GitHub push — the **only** off-machine backup |
-| USDA FDC API key                                | Phase 2                                       |
-| Open Food Facts contact string for `User-Agent` | Phase 2                                       |
-| Cloudflare Pages project                        | Phase 0 deploy                                |
-| 2500-cal plan targets                           | Phase 7 (defaults are in place meanwhile)     |
+| Need                                            | Blocks                                    |
+| ----------------------------------------------- | ----------------------------------------- |
+| USDA FDC API key                                | Phase 2                                   |
+| Open Food Facts contact string for `User-Agent` | Phase 2                                   |
+| Cloudflare Pages project                        | Phase 0 deploy                            |
+| 2500-cal plan targets                           | Phase 7 (defaults are in place meanwhile) |
 
 Do not use the user's Apple ID email (`dncanzano@icloud.com`) as the Open Food Facts contact
 string — they were asked to nominate an address and have not yet answered.
