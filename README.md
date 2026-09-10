@@ -5,6 +5,10 @@ calendar, track servings as fridge stock, and log meals to see macro + micronutr
 
 - **[PLAN.md](PLAN.md)** — architecture, data model, phased build plan
 - **[SETUP.md](SETUP.md)** — accounts, keys and decisions needed from you
+- **[CLAUDE.md](CLAUDE.md)** — build status + conventions, auto-loaded by Claude Code
+
+> **Status:** Phase 0 scaffold is written but **unverified** — Node.js isn't installed yet, so
+> nothing here has been built or run. Start with SETUP.md items 1b and 2.
 
 ## Running it
 
