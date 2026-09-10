@@ -7,22 +7,29 @@ work. Nothing in "Later" needs attention yet.
 
 ## 🔴 Blocking now — Phase 0
 
-### 1. Decide where this project lives
+### 1. ~~Decide where this project lives~~ ✅ Done
 
-The project is currently at `C:\Users\dncan\OneDrive\Desktop\Meal Prep App`, inside OneDrive.
-Once dependencies are installed, `node_modules` will hold **tens of thousands of small files**.
-OneDrive will try to sync every one of them, which causes constant background churn, slow
-builds, and occasional `EPERM` errors when the sync client locks a file mid-build.
+The project now lives at **`C:\Users\dncan\Projects\meal-prep-app`**, outside OneDrive, with a
+`meal-prep-app` shortcut on the Desktop pointing at it.
 
-Three options, best first:
+Why it moved: once dependencies are installed, `node_modules` holds **tens of thousands of small
+files**. OneDrive would try to sync every one, causing background churn, slow builds, and
+`EPERM` errors when the sync client locks a file mid-build. Your Desktop is itself redirected
+into OneDrive (`C:\Users\dncan\OneDrive\Desktop`), so there was no unsynced desktop to use — the
+shortcut gives you the same one-click access without the sync cost.
 
-| Option | How |
-|---|---|
-| **Move the project out of OneDrive** *(recommended)* | Relocate to `C:\Users\dncan\Projects\meal-prep-app`. I can do this for you — just say so. Git history and files come along intact. |
-| Exclude the folder from sync | OneDrive → Settings → Account → Choose folders → untick this folder. Blunt: you lose backup of your source too. |
-| Leave it | Works, but expect slow installs and the occasional flaky build. Your source is backed up by OneDrive, which is a genuine upside. |
+**Your source is no longer backed up by OneDrive.** Pushing to GitHub (item 4) is now the backup,
+so don't leave that too long.
 
-**Decision needed:** which one?
+> **One bit of cleanup left:** the old empty folder
+> `C:\Users\dncan\OneDrive\Desktop\Meal Prep App` couldn't be deleted because VS Code still has
+> it open. It's empty — all 98 files moved. Once you reopen VS Code on the new path (below), it
+> can be deleted; drag it to the Recycle Bin or ask me and I'll remove it.
+
+### 1b. Reopen VS Code on the new folder
+
+VS Code is still pointed at the old, now-empty location. **File → Open Folder →**
+`C:\Users\dncan\Projects\meal-prep-app`, or just double-click the new Desktop shortcut.
 
 ### 2. Install Node.js 22 LTS
 
@@ -167,9 +174,10 @@ If you don't have one, I'll make a plain typographic placeholder.
 
 | # | Item | Blocks | Status |
 |---|---|---|---|
-| 1 | OneDrive decision | Phase 0 | ⬜ |
+| 1 | Moved out of OneDrive | Phase 0 | ✅ |
+| 1b | Reopen VS Code on new path | Phase 0 | ⬜ |
 | 2 | Node.js 22 LTS | Phase 0 | ⬜ |
-| 3 | Git identity | Phase 0 | ⬜ |
+| 3 | Git identity | Phase 0 | ✅ (already set) |
 | 4 | GitHub repo | Deploy | ⬜ |
 | 5 | Cloudflare Pages project | Deploy | ⬜ |
 | 6 | Phone install test | Deploy | ⬜ |

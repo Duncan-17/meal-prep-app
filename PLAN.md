@@ -256,7 +256,8 @@ degradation to cached data, install prompt, iOS safe-area handling, backup remin
 | USDA rate limits / key exposure | Pages Function proxy + local `foodCache` |
 | Volume→gram guessing skews nutrition | Confidence flag surfaced in UI, one-time user override cached |
 | Recipe edits corrupting history | Snapshot-on-write at Batch / FridgeEntry / MealLog |
-| OneDrive syncing `node_modules` | Move project out of OneDrive, or exclude the folder (see SETUP.md) |
+| ~~OneDrive syncing `node_modules`~~ | Resolved — project moved to `C:\Users\dncan\Projects\meal-prep-app` |
+| Source no longer backed up by OneDrive | Push to GitHub early (SETUP.md item 4) |
 
 ---
 
