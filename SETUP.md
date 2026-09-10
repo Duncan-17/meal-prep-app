@@ -5,7 +5,7 @@ work. Nothing in "Later" needs attention yet.
 
 ---
 
-## 🔴 Blocking now — Phase 0
+## ✅ Done — Phase 0 environment
 
 ### 1. ~~Decide where this project lives~~ ✅ Done
 
@@ -26,28 +26,32 @@ so don't leave that too long.
 > it open. It's empty — all 98 files moved. Once you reopen VS Code on the new path (below), it
 > can be deleted; drag it to the Recycle Bin or ask me and I'll remove it.
 
-### 1b. Reopen VS Code on the new folder
+### 1b. ~~Reopen VS Code on the new folder~~ ✅ Done
 
-VS Code is still pointed at the old, now-empty location. **File → Open Folder →**
-`C:\Users\dncan\Projects\meal-prep-app`, or just double-click the new Desktop shortcut.
+VS Code is now open on `C:\Users\dncan\Projects\meal-prep-app`.
 
-### 2. Install Node.js 22 LTS
+> **One bit of cleanup still available:** the old empty folder
+> `C:\Users\dncan\OneDrive\Desktop\Meal Prep App` is confirmed empty but still present. Drag it
+> to the Recycle Bin, or ask me and I'll remove it.
 
-Not currently installed on this machine — nothing can be built or run until it is.
+### 2. ~~Install Node.js 22 LTS~~ ✅ Done — Node 24 installed
 
-```powershell
-winget install OpenJS.NodeJS.LTS
+Installed 2026-09-10 via `winget install OpenJS.NodeJS.LTS`:
+
+```
+node v24.19.0
+npm  11.17.0
 ```
 
-Or download the Windows installer from <https://nodejs.org> (pick **LTS**).
+winget's LTS package now serves **Node 24**, not 22 — 24 is the current LTS line and 22 has
+moved to maintenance. Vite 7 requires Node ≥20.19, so this is the better version anyway.
 
-⚠️ **Close and reopen VS Code afterwards.** The installer edits your `PATH`, and already-running
-terminals won't see it. Verify with:
+Verified working: `npm install` (216 packages, no conflicts), `npm run build` (typecheck + build
+both clean), `npm run lint` (clean), `npm run dev` (serves on :5173). `npm test` exits 1 only
+because no test files exist yet — Phase 1 adds them.
 
-```powershell
-node --version   # expect v22.x
-npm --version    # expect 10.x or 11.x
-```
+⚠️ If a terminal was already open before the install, it won't see `node` on its `PATH` until
+VS Code restarts.
 
 ### 3. Set your git identity *(if you've never done this)*
 
@@ -191,10 +195,10 @@ If you don't have one, I'll make a plain typographic placeholder.
 | # | Item | Blocks | Status |
 |---|---|---|---|
 | 1 | Moved out of OneDrive | Phase 0 | ✅ |
-| 1b | Reopen VS Code on new path | Phase 0 | ⬜ ← **do this first** |
-| 2 | Node.js 22 LTS | Phase 0 | ⬜ ← **blocks everything** |
+| 1b | Reopen VS Code on new path | Phase 0 | ✅ |
+| 2 | Node.js 24 LTS + deps installed | Phase 0 | ✅ |
 | 3 | Git identity | Phase 0 | ✅ (already set) |
-| 4 | GitHub repo | Deploy + **backup** | ⬜ |
+| 4 | GitHub repo | Deploy + **backup** | ⬜ ← **do this next** |
 | 5 | Cloudflare Pages project | Deploy | ⬜ |
 | 6 | Phone install test | Deploy | ⬜ |
 | 7 | USDA API key | Phase 2 | ⬜ |

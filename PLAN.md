@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **Phase 0 in progress.**
+> Status: **Phase 0 complete and verified (2026-09-10). Phase 1 next.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -192,7 +192,7 @@ Calendar and Fridge for quick logging.
 Each phase ends in something openable and usable.
 
 ### Phase 0 — Environment & scaffold
-Node 22 LTS, `git init`, Vite + React + TS, ESLint/Prettier, Vitest, folder skeleton, app shell
+Node 22+ LTS (24 installed), `git init`, Vite + React + TS, ESLint/Prettier, Vitest, folder skeleton, app shell
 with tab bar and four routes, static web manifest, Cloudflare Pages connected.
 > **Done when:** the shell is live on a Pages URL and installs to your phone home screen.
 

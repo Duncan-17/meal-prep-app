@@ -21,30 +21,33 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phase 0 (scaffold) — code written, NOT yet verified.**
+**Phase 0 (scaffold) — verified working as of 2026-09-10.**
 
-`npm install` has never run, because **Node.js is not installed on this machine**. Nothing has
-been built, typechecked, or executed. Dependency versions in `package.json` are best-guess picks
-(Vite 7 / `@vitejs/plugin-react` 5 / Vitest 3) and may need adjusting on first install.
+Node is installed and the scaffold has been built, linted and run for the first time. `tsc -b`
+passes clean under strict mode, `vite build` produces `dist/`, ESLint reports nothing, and the
+dev server serves the shell. The best-guess dependency versions in `package.json` all resolved
+without conflict — no version friction materialised.
+
+`npm test` currently **fails by design**: there are no `src/**/*.test.ts` files yet, so Vitest
+exits 1 with "No test files found". Phase 1 fixes that by existing.
+
+Installed: **Node v24.19.0, npm 11.17.0**. Note this is Node **24**, not the 22 the earlier docs
+assumed — 24 is the current LTS line and 22 has moved to maintenance. Vite 7 needs ≥20.19, so
+this is fine.
 
 ### The immediate next step
 
-Once the user installs Node 22 LTS and restarts VS Code:
+**Phase 1 — nutrition foundation + Dexie schema.** Nutrient registry, unit conversion,
+`NutrientMap` / `Coverage` types, the pure aggregation functions with tests, complete Dexie
+schema, JSON export/import, dev seed. It needs none of the outstanding API keys — pure logic and
+tests, and the right place to spend real effort.
 
-```powershell
-npm install      # expect to fix version friction here
-npm run build    # first real typecheck
-npm run dev
-```
-
-Then Phase 1 (nutrition foundation + Dexie schema). Phase 1 needs none of the outstanding API
-keys — it is pure logic and tests, and is the right place to spend real effort.
+Worth doing alongside it: **push to GitHub**, which is still the only off-machine backup.
 
 ### Blocked on the user
 
 | Need | Blocks |
 |---|---|
-| Install Node 22 LTS | everything |
 | GitHub repo + push | nothing technically, but it is now the **only** backup |
 | Cloudflare Pages project | Phase 0 deploy |
 | USDA FDC API key | Phase 2 |
@@ -54,14 +57,14 @@ keys — it is pure logic and tests, and is the right place to spend real effort
 Do not use the user's Apple ID email (`dncanzano@icloud.com`) as the Open Food Facts contact
 string — they were asked to nominate an address and have not yet answered.
 
----
-
 ## Environment facts
 
 - **Project root:** `C:\Users\dncan\Projects\meal-prep-app`
 - Windows 11, PowerShell 5.1. `&&`, `||`, and ternaries are **not** available — use `; if ($?) {}`.
-- **Not installed:** `node`, `npm`, `gh`. Installing GitHub CLI would let Claude automate the
-  repo creation and push; without it that is a manual browser task for the user.
+- **Installed:** `node` v24.19.0, `npm` 11.17.0 (via `winget install OpenJS.NodeJS.LTS`).
+  A terminal opened before that install will not see them on `PATH` until VS Code restarts.
+- **Not installed:** `gh`. Installing GitHub CLI would let Claude automate the repo creation and
+  push; without it that is a manual browser task for the user.
 - **Do not move this project back under `C:\Users\dncan\OneDrive\`.** It was moved out
   deliberately: the user's Desktop is redirected into OneDrive, and syncing `node_modules`
   file-by-file caused the move. A Desktop shortcut points here.

@@ -7,8 +7,9 @@ calendar, track servings as fridge stock, and log meals to see macro + micronutr
 - **[SETUP.md](SETUP.md)** — accounts, keys and decisions needed from you
 - **[CLAUDE.md](CLAUDE.md)** — build status + conventions, auto-loaded by Claude Code
 
-> **Status:** Phase 0 scaffold is written but **unverified** — Node.js isn't installed yet, so
-> nothing here has been built or run. Start with SETUP.md items 1b and 2.
+> **Status:** Phase 0 scaffold is **built and verified** — typecheck, lint, production build and
+> dev server all pass on Node 24. Phase 1 (nutrition foundation) is next. See SETUP.md for the
+> accounts and keys still outstanding — pushing to GitHub is the priority, as it is the only backup.
 
 ## Running it
 
