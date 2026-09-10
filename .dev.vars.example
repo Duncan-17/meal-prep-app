@@ -1,0 +1,10 @@
+# Copy this file to `.dev.vars` and fill in the values.
+# `.dev.vars` is gitignored and is read by `wrangler pages dev` for local API calls.
+# In production these live as encrypted secrets in the Cloudflare Pages dashboard.
+
+# https://fdc.nal.usda.gov/api-key-signup.html
+USDA_API_KEY=
+
+# Open Food Facts needs no key, just an identifying contact string.
+# Format: MealPrepApp/0.1 (your-contact@example.com)
+OFF_USER_AGENT=

@@ -1,0 +1,162 @@
+/* Design tokens. Light is the base; dark overrides only the values. */
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --surface-sunken: #efede8;
+  --border: #e0ddd6;
+  --text: #1b1c1f;
+  --text-dim: #6b6f76;
+  --accent: #3d7a5a;
+  --accent-contrast: #ffffff;
+  --danger: #b3402f;
+
+  --radius: 12px;
+  --tabbar-h: 56px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --surface: #1e2024;
+    --surface-sunken: #121316;
+    --border: #2e3137;
+    --text: #eceef1;
+    --text-dim: #9aa0a8;
+    --accent: #6bbf90;
+    --accent-contrast: #10231a;
+    --danger: #e0705c;
+
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font:
+    15px/1.5 -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Stop iOS rubber-band scroll from revealing the page behind the app. */
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100%;
+}
+
+/* ── App shell ─────────────────────────────────────────────────────── */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.shell__main {
+  flex: 1;
+  /* Clear the fixed tab bar, plus the iPhone home indicator. */
+  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+}
+
+/* ── Tab bar ───────────────────────────────────────────────────────── */
+
+.tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.tabbar__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabbar__link[aria-current='page'] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tabbar__icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* ── Screens ───────────────────────────────────────────────────────── */
+
+.screen {
+  padding: 16px;
+  padding-block-start: calc(16px + env(safe-area-inset-top));
+}
+
+.screen__title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.screen__sub {
+  margin: 0 0 20px;
+  color: var(--text-dim);
+}
+
+/* ── Phase placeholder (scaffolding only — deleted as phases land) ──── */
+
+.placeholder {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  background: var(--surface);
+}
+
+.placeholder__badge {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.placeholder__list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-dim);
+}
+
+.placeholder__list li + li {
+  margin-top: 4px;
+}
