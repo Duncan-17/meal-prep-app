@@ -141,6 +141,13 @@ creation. Editing a Component must never retroactively change what was already l
 transaction spanning `fridgeEntries` and whatever else changed. Deleting a meal log restores the
 stock it consumed. Discards write a `stockAdjustments` row and never count as eaten.
 
+**Secrets never reach the client.** The USDA key lives only as a Cloudflare secret
+(`USDA_API_KEY`) and in the gitignored `.dev.vars`; the browser calls the Pages Function at
+`/api/...` and never sees it. **Never prefix a secret with `VITE_`** — Vite inlines every
+`VITE_`-prefixed variable into the bundle as plain text, which would publish the key to every
+visitor and get it deactivated (USDA deactivates keys found in public repos). Secrets are read
+server-side in `functions/api/`, never through `import.meta.env`.
+
 **`portion_style` is a UI flag, not a math branch.** Discrete and bulk share one arithmetic path:
 `per-unit = nutrition_per_base / base_quantity`. It only selects the control (stepper vs. percent
 picker) and the calendar mark.

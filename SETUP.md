@@ -129,17 +129,37 @@ Once deployed, open the URL on your phone and install it:
 
 ### 7. USDA FoodData Central API key
 
-Free, instant, no payment details. Sign up at
-<https://fdc.nal.usda.gov/api-key-signup.html> — the key arrives by email in seconds.
+Free, instant, no payment details. Sign up at <https://fdc.nal.usda.gov/api-key-signup.html> —
+the key arrives by email in seconds.
 
-**Do not paste the key into chat or into a file in this repo.** It goes into Cloudflare as an
-encrypted secret so it never touches the client bundle or git:
+> **USDA's own warning:** _"It is the API Key holder's responsibility to ensure that their key is
+> not made publicly available. Any API keys discovered online, such as those in a code
+> repository, will be deactivated to prevent malicious use."_
 
-> Cloudflare dashboard → your Pages project → **Settings** → **Variables and Secrets** →
-> add `USDA_API_KEY`, type **Secret**, then redeploy.
+That is precisely why this project has a Pages Function proxy (PLAN.md §2). The key lives on
+Cloudflare's servers; the browser calls `/api/...` on your own domain and never sees the key.
 
-For local development it goes in `.dev.vars` in the project root, which is already gitignored.
-I'll create that file with a placeholder — you just fill in the value.
+**Do not paste the key into chat, or into any file in this repo.**
+
+- **Production** — Cloudflare dashboard → your Pages project → **Settings** →
+  **Variables and Secrets** → add `USDA_API_KEY`, type **Secret**, then redeploy.
+- **Local dev** — put it in `.dev.vars` in the project root. Already gitignored, and
+  `.dev.vars.example` is committed as the template with an empty value.
+
+#### ⛔ The one mistake that would leak it
+
+**Never name the variable `VITE_USDA_API_KEY`, or prefix any secret with `VITE_`.**
+
+Vite inlines every `VITE_`-prefixed variable into the client bundle **as plain text** at build
+time. It would be published to every visitor and scraped within days — the proxy would be
+pointless. The name stays `USDA_API_KEY`, read server-side by the Pages Function only, never via
+`import.meta.env`.
+
+#### If it does leak
+
+Deleting the commit is **not** enough — git history, any clone, fork or CI cache still has it.
+Generate a replacement at the signup page and update the Cloudflare secret. The old key is dead
+either way; USDA deactivates keys it finds published.
 
 ### 8. Open Food Facts contact string
 
