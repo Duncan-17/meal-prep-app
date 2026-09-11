@@ -160,3 +160,301 @@ body {
 .placeholder__list li + li {
   margin-top: 4px;
 }
+
+/* ── Sections ──────────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: 24px;
+}
+
+.section__title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── Notices ───────────────────────────────────────────────────────── */
+
+.notice {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.notice--warn {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+
+.notice--error {
+  border-color: var(--danger);
+}
+
+.notice__title {
+  margin: 0 0 4px;
+  font-weight: 650;
+}
+
+.notice__body {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.notice__body + .notice__body {
+  margin-top: 6px;
+}
+
+.notice code,
+.proxystatus code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-sunken);
+  font-size: 12.5px;
+}
+
+.proxystatus {
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.proxystatus--muted {
+  color: var(--text-dim);
+}
+
+.proxystatus--ok {
+  color: var(--accent);
+}
+
+/* ── Food search ───────────────────────────────────────────────────── */
+
+.foodsearch__input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.foodsearch__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.foodsearch__status {
+  margin: 8px 2px 10px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.foodsearch__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.foodcard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.foodcard:hover {
+  border-color: var(--accent);
+}
+
+.foodcard__name {
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.foodcard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.foodcard__nums {
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.badge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.linkbtn {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Selected food readout (Phase 2 proof; Phase 3 replaces it) ─────── */
+
+.selected {
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.selected__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selected__name {
+  margin: 0;
+  font-weight: 650;
+}
+
+.selected__meta {
+  margin: 6px 0 0;
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.selected .linkbtn {
+  margin-top: 0;
+  flex: none;
+}
+
+.nutrients {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  font-size: 13.5px;
+}
+
+.nutrients__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border-top: 1px solid var(--border);
+}
+
+.nutrients__value {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Manual entry ──────────────────────────────────────────────────── */
+
+.manualentry {
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.manualentry__title {
+  margin: 0 0 10px;
+  font-weight: 650;
+}
+
+.manualentry__hint {
+  margin: 10px 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.manualentry__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.manualentry__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field__label {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.field__unit {
+  font-weight: 400;
+}
+
+.field__input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.field__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.btn {
+  padding: 9px 15px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

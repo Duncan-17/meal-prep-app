@@ -6,14 +6,14 @@
  */
 
 import { backupFilename, buildBackup, parseBackup, type BackupFile } from '@/domain/backup';
-import { db, TABLE_NAMES } from '@/db/schema';
+import { db, BACKUP_TABLE_NAMES, TABLE_NAMES } from '@/db/schema';
 
 /** Read every table into a backup object. */
 export async function exportBackup(): Promise<BackupFile> {
   const data: Record<string, unknown[]> = {};
 
   await db.transaction('r', db.tables, async () => {
-    for (const name of TABLE_NAMES) {
+    for (const name of BACKUP_TABLE_NAMES) {
       data[name] = await db.table(name).toArray();
     }
   });

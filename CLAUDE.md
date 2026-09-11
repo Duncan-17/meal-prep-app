@@ -21,15 +21,43 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phases 0 and 1 complete and verified (2026-09-10). Pushed to GitHub. Phase 2 is next, and
-needs the USDA key.**
+**Phases 0 and 1 complete. Phase 2 built and awaiting live verification.**
 
-Everything builds and passes: `tsc -b` clean under strict mode, `vite build` produces `dist/`,
-ESLint clean, **125 tests passing** across 7 files. There is still no UI beyond the Phase 0 shell
-— Phase 1 was deliberately the layer underneath it.
+Everything builds and passes: `tsc -b` clean under strict mode (three projects — app, node,
+functions), ESLint clean, **154 tests passing** across 8 files.
 
-Installed: **Node v24.19.0, npm 11.17.0, gh 2.100.0**. Node **24**, not the 22 the original docs
-assumed — 24 is the current LTS line and Vite 7 only needs ≥20.19.
+### ⏳ Phase 2 — built, not yet proven against the live API
+
+The proxy, adapter, cache and search UI are written and unit-tested. What has **not** happened is
+a real FoodData Central request, because `USDA_API_KEY` in `.dev.vars` was still empty when the
+work was done (`/api/health` reported `usdaKeyConfigured: false`).
+
+Verified locally with no key:
+
+| Check                     | Result                                           |
+| ------------------------- | ------------------------------------------------ |
+| `/api/health`             | 200, reports config state without leaking values |
+| `/api/usda/search` no key | 503 with an actionable message                   |
+| empty / overlong query    | 400                                              |
+| `/api/off/*`              | 501, explains OFF is deliberately disabled       |
+| unknown `/api/*` route    | 404                                              |
+| `/calendar` SPA fallback  | 200 text/html — Functions do **not** swallow it  |
+
+**To finish Phase 2**, once the key is in `.dev.vars`:
+
+1. `npm run dev:api` (terminal 1), `npm run dev` (terminal 2), open :5173 → Components tab.
+2. The status line should read "API proxy up · USDA key loaded".
+3. Search "chicken thigh" → results. Search it again → "from cache".
+4. **Validate the registry's USDA numbers against what comes back.** They were transcribed, not
+   fetched. Click a result and check the mapped nutrient list looks sane — wrong numbers show up
+   as missing or absurd values.
+
+### Known unknown — `_redirects` in production
+
+Wrangler warns the `/*  /index.html  200` rule is an infinite loop and **ignores it** ("Parsed 0
+valid redirect rules"). SPA fallback still worked locally, so something else served `index.html`.
+Whether deployed Pages behaves the same is **unverified** — check that a hard refresh on
+`/calendar` works on the first deploy before assuming it does.
 
 ### Pushing — the user does it from GitHub Desktop
 
@@ -116,6 +144,9 @@ asked. Do not re-ask, and never substitute their Apple ID (`dncanzano@icloud.com
   A terminal opened before that install will not see them on `PATH` until VS Code restarts.
 - `gh` 2.100.0 is installed but **not yet authenticated**. `gh auth login` is interactive and
   must be run by the user in a real terminal — it cannot be driven from a non-interactive shell.
+- **Do not run `npm run build` while `npm run dev:api` is running.** Wrangler watches
+  `dist/` and Windows file locks deadlock `vite build` — it hangs rather than failing. Stop
+  wrangler first. (Hit during Phase 2; cost ten minutes of confusion.)
 - **Do not move this project back under `C:\Users\dncan\OneDrive\`.** It was moved out
   deliberately: the user's Desktop is redirected into OneDrive, and syncing `node_modules`
   file-by-file caused the move. A Desktop shortcut points here.
@@ -172,14 +203,16 @@ picker) and the calendar mark.
 
 ## Commands
 
-| Script            | Does                                       |
-| ----------------- | ------------------------------------------ |
-| `npm run dev`     | Dev server, host exposed for phone testing |
-| `npm run build`   | Typecheck + production build to `dist/`    |
-| `npm run preview` | Serve the production build                 |
-| `npm test`        | Vitest, `src/**/*.test.ts`                 |
-| `npm run lint`    | ESLint                                     |
-| `npm run format`  | Prettier, write in place                   |
+| Script               | Does                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| `npm run dev`        | Vite dev server, host exposed for phone testing                                            |
+| `npm run dev:api`    | Wrangler on :8788 serving `functions/`. Vite proxies `/api` to it. Needed for food search. |
+| `npm run serve:full` | Build, then serve app + functions together on :8788 (no hot reload)                        |
+| `npm run build`      | Typecheck + production build to `dist/`                                                    |
+| `npm run preview`    | Serve the production build                                                                 |
+| `npm test`           | Vitest, `src/**/*.test.ts`                                                                 |
+| `npm run lint`       | ESLint                                                                                     |
+| `npm run format`     | Prettier, write in place                                                                   |
 
 ---
 

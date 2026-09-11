@@ -21,6 +21,7 @@ import type {
   MealLog,
   NutrientTarget,
   QuickAddFavorite,
+  SearchCacheEntry,
   StockAdjustment,
 } from '@/domain/types';
 
@@ -33,6 +34,7 @@ export class MealPrepDatabase extends Dexie {
   mealLogs!: Table<MealLog, number>;
   quickAddFavorites!: Table<QuickAddFavorite, number>;
   foodCache!: Table<FoodCacheEntry, string>;
+  searchCache!: Table<SearchCacheEntry, string>;
   targets!: Table<NutrientTarget, string>;
   settings!: Table<AppSettings, string>;
 
@@ -66,12 +68,19 @@ export class MealPrepDatabase extends Dexie {
       // Single row, id 'settings'.
       settings: 'id',
     });
+
+    // v2 (Phase 2): remembers which foods a search returned, so repeating a
+    // search is instant and works offline. The edge cache only helps requests
+    // that actually leave the device.
+    this.version(2).stores({
+      searchCache: 'query, fetchedAt',
+    });
   }
 }
 
 export const db = new MealPrepDatabase();
 
-/** Every table name, in a stable order. Backup relies on this list. */
+/** Every table name, in a stable order. Import validates against this list. */
 export const TABLE_NAMES = [
   'ingredients',
   'components',
@@ -81,8 +90,21 @@ export const TABLE_NAMES = [
   'mealLogs',
   'quickAddFavorites',
   'foodCache',
+  'searchCache',
   'targets',
   'settings',
 ] as const;
+
+/**
+ * What a backup actually writes.
+ *
+ * The caches are excluded deliberately: they are re-fetchable, `foodCache.raw`
+ * holds whole API payloads, and a backup should be the user's data — not a
+ * copy of USDA's. Import still ACCEPTS them, so an older backup that included
+ * them restores cleanly.
+ */
+export const BACKUP_TABLE_NAMES = TABLE_NAMES.filter(
+  (name) => name !== 'foodCache' && name !== 'searchCache',
+);
 
 export type TableName = (typeof TABLE_NAMES)[number];

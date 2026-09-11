@@ -216,18 +216,49 @@ export interface QuickAddFavorite {
   createdAt: number;
 }
 
-/** Cached lookup result, so a repeat search costs nothing. */
-export interface FoodCacheEntry {
-  /** `${source}:${sourceId}` */
-  key: string;
+/**
+ * A food from any source, already mapped into canonical nutrient keys.
+ *
+ * The common shape every adapter produces, so search results, the cache and the
+ * ingredient editor all speak one language regardless of where a food came
+ * from.
+ */
+export interface AdaptedFood {
   source: FoodSource;
+  /** FDC id, or OFF barcode. */
   sourceId: string;
   name: string;
+  /** FDC dataset ('Foundation', 'Branded'…) — shown as a provenance badge. */
+  dataType?: string;
+  brand?: string;
+  /** Canonical basis for every source, whatever units it reported. */
   nutritionPer100g: NutrientMap;
+  /** Portion label → grams for ONE of it, feeding `resolveToGrams`. */
   portionGrams?: Record<string, number>;
+}
+
+/** Cached lookup result, so a repeat search costs nothing. */
+export interface FoodCacheEntry extends AdaptedFood {
+  /** `${source}:${sourceId}` */
+  key: string;
   fetchedAt: number;
   /** Raw payload, kept so a registry fix can re-map without a refetch. */
   raw?: unknown;
+}
+
+/**
+ * A search query → the food keys it returned.
+ *
+ * Separate from `foodCache` because that is keyed per food. This is what makes
+ * repeating a search instant offline; the edge cache only helps a request that
+ * actually leaves the device.
+ */
+export interface SearchCacheEntry {
+  /** Lowercased, trimmed query text. */
+  query: string;
+  /** `${source}:${sourceId}` keys into `foodCache`, in result order. */
+  keys: string[];
+  fetchedAt: number;
 }
 
 export interface NutrientTarget {

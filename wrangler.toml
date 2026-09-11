@@ -1,0 +1,9 @@
+# Cloudflare Pages configuration.
+#
+# Secrets are NOT here. `USDA_API_KEY` lives in `.dev.vars` locally (gitignored)
+# and as an encrypted secret in the Pages dashboard in production. Anything in
+# this file is committed and therefore public.
+
+name = "meal-prep-app"
+compatibility_date = "2026-09-10"
+pages_build_output_dir = "dist"
