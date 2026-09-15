@@ -21,19 +21,21 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phases 0–5 complete. Phase 6 (Logging) is next and is unblocked — it closes the loop.**
+**Phases 0–6 complete. The core loop works end to end. Phase 7 (Insight) needs the 2500-cal targets.**
 
-`tsc -b` clean across three projects, ESLint clean, **313 tests** across 14 files.
+`tsc -b` clean across three projects, ESLint clean, **340 tests** across 15 files.
 
-| Phase               | State                                                |
-| ------------------- | ---------------------------------------------------- |
-| 0 scaffold          | ✅ verified                                          |
-| 1 nutrition + Dexie | ✅ 125 tests                                         |
-| 2 food lookup       | ✅ verified against the live USDA API 2026-09-15     |
-| 3 Component Builder | ✅ built; DB write path covered by integration tests |
-| 4 Calendar          | ✅ week view, tap-to-schedule, scale, past-due nudge |
-| 5 Cook → Fridge     | ✅ mark cooked, fridge list, adjust, discard         |
-| 6 Logging           | ⬜ next — closes the cook→eat→restock loop           |
+| Phase               | State                                                           |
+| ------------------- | --------------------------------------------------------------- |
+| 0 scaffold          | ✅ verified                                                     |
+| 1 nutrition + Dexie | ✅ 125 tests                                                    |
+| 2 food lookup       | ✅ verified against the live USDA API 2026-09-15                |
+| 3 Component Builder | ✅ built; DB write path covered by integration tests            |
+| 4 Calendar          | ✅ week view, tap-to-schedule, scale, past-due nudge            |
+| 5 Cook → Fridge     | ✅ mark cooked, fridge list, adjust, discard                    |
+| 6 Logging           | ✅ from-fridge + Quick Add, favourites, stock restore on delete |
+| 7 Insight           | ⬜ next — **blocked** on SETUP.md item 9 (2500-cal targets)     |
+| 8 PWA polish        | ⬜ — also where the 538 kB bundle gets code-split               |
 
 ### Not yet confirmed by the user
 

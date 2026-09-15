@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **Phases 0–5 complete (2026-09-15). Phase 6 (Logging) next — it closes the loop.**
+> Status: **Phases 0–6 complete (2026-09-15). The core loop works. Phase 7 (Insight) next.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -262,6 +262,10 @@ save-as-favorite, favorites row, barcode scan, transactional stock deduction, ed
 restoring stock.
 
 > **Done when:** the loop closes — cook, eat, watch stock drop, correct a mistake.
+>
+> ✅ **Built 2026-09-15** — from-fridge stepper/percent picker, Quick Add with favourites, and
+> transactional stock that returns when a log is deleted. 27 tests on those invariants.
+> Barcode scanning deferred: it needs Open Food Facts, which is off until item 8 is answered.
 >
 > ⚠️ Barcode scanning is the one genuine unknown: the native `BarcodeDetector` API is absent on
 > Safari, so iOS needs a `@zxing/browser` fallback. If it fights back, manual barcode entry ships
