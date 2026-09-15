@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **Phases 0–4 complete (2026-09-15). Phase 5 (Cook → Fridge) next.**
+> Status: **Phases 0–5 complete (2026-09-15). Phase 6 (Logging) next — it closes the loop.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -250,6 +250,10 @@ Week view with `‹ ›` nav, Overview/Specific toggle (Overview only for now), 
 snapshot, fridge list (discrete counts vs. bulk progress bar), Adjust, Discard remaining.
 
 > **Done when:** a cooked batch becomes fridge stock and can be corrected or discarded.
+>
+> ✅ **Built 2026-09-15** — actual-yield confirmation divides by what really came out of the pan,
+> not the plan. Corrections, discards and spoilage each write their own `stockAdjustments` reason
+> and never count as eaten. 23 tests against a real in-memory IndexedDB.
 
 ### Phase 6 — Logging
 
