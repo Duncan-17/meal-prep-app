@@ -21,14 +21,54 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phases 0, 1 and 2 complete and verified. Phase 3 is next and is unblocked.**
+**Phases 0–4 complete. Phase 5 (Cook → Fridge) is next and is unblocked.**
 
-`tsc -b` clean across three projects (app, node, functions), ESLint clean, **183 tests passing**
-across 9 files.
+`tsc -b` clean across three projects, ESLint clean, **290 tests** across 13 files.
 
-Phase 2 was verified against the **live** FoodData Central API on 2026-09-15, not just unit
-tests: search returned 19,967 hits for "chicken thigh", the edge cache reported `x-proxy-cache:
-HIT` on the repeat, and the detail endpoint round-tripped correctly.
+| Phase               | State                                                |
+| ------------------- | ---------------------------------------------------- |
+| 0 scaffold          | ✅ verified                                          |
+| 1 nutrition + Dexie | ✅ 125 tests                                         |
+| 2 food lookup       | ✅ verified against the live USDA API 2026-09-15     |
+| 3 Component Builder | ✅ built; DB write path covered by integration tests |
+| 4 Calendar          | ✅ week view, tap-to-schedule, scale, past-due nudge |
+| 5 Cook → Fridge     | ⬜ next                                              |
+
+### Not yet confirmed by the user
+
+Phases 3 and 4 are verified by tests and by the screens rendering, but the user
+has **not** yet built the three worked-example Components (Chicken Thighs, Rice,
+Guacamole), which is PLAN.md's stated done-when for Phase 3. The write path is
+covered by `db.test.ts` and `batches.test.ts` against a real in-memory
+IndexedDB, so the risk is UI ergonomics rather than correctness.
+
+### Testing locally
+
+Two servers, two terminals — Vite cannot run Pages Functions:
+
+```powershell
+npm run dev:api   # wrangler on :8788, serves functions/
+npm run dev       # vite on :5173, proxies /api to it — open THIS one
+```
+
+⚠️ Stop `dev:api` before `npm run build`. Wrangler watches `dist/` and Windows
+file locks hang the build silently.
+
+### Things a future session should not re-derive
+
+- **`domain/dates.ts` exists for one reason.** `new Date('2026-09-15')` is UTC
+  midnight = the 14th in New York. Days are local, stored `'YYYY-MM-DD'`, and
+  every conversion goes through local components. 31 tests pin it.
+- **Batch `scale` is separate from the snapshot.** The snapshot is one base
+  batch; scale says how many. Do not multiply at schedule time.
+- **FDC search rounds, detail does not.** The builder re-fetches
+  `/api/usda/food/{id}` on selection. Do not "simplify" that away — a test pins
+  both values.
+- **Colour distinctness is OKLab, not RGB.** The suggested palette's closest
+  pair is 0.122 against a 0.12 threshold; `color.test.ts` fails if a swatch
+  moves.
+- **The JS bundle is 517 kB** (166 kB gzipped) and Vite warns about it.
+  Code-splitting belongs in Phase 8.
 
 ### Registry validated against real data
 

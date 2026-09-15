@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **Phases 0 and 1 complete and verified (2026-09-10). Phase 2 next.**
+> Status: **Phases 0–4 complete (2026-09-15). Phase 5 (Cook → Fridge) next.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -228,6 +228,10 @@ picker with distinctness check, live nutrition summary, detail view, delete guar
 Components that already have cook history.
 
 > **Done when:** Chicken Thighs, Rice and Guacamole exist with real numbers.
+>
+> ✅ **Built 2026-09-15** — library, builder, detail, OKLab colour distinctness, dnd-kit reorder,
+> delete guarded against cook history. Write path covered by `db.test.ts` against a real
+> in-memory IndexedDB. The three worked examples are still for the user to enter.
 
 ### Phase 4 — Calendar & scheduling
 
@@ -235,6 +239,10 @@ Week view with `‹ ›` nav, Overview/Specific toggle (Overview only for now), 
 `Batch` creation with scale factor, planned-batch badges, past-due nudge.
 
 > **Done when:** a week of cooking is scheduled and visible.
+>
+> ✅ **Built 2026-09-15** — week strip with `‹ ›`, tap-to-schedule, scale picker, past-due nudge
+> offering "didn't cook it". Overview mode only, as planned. Days are local `YYYY-MM-DD` via
+> `domain/dates.ts` (31 tests) — `new Date('2026-09-15')` is UTC midnight and would shift the day.
 
 ### Phase 5 — Cook → Fridge
 

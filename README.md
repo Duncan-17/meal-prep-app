@@ -7,10 +7,10 @@ calendar, track servings as fridge stock, and log meals to see macro + micronutr
 - **[SETUP.md](SETUP.md)** — accounts, keys and decisions needed from you
 - **[CLAUDE.md](CLAUDE.md)** — build status + conventions, auto-loaded by Claude Code
 
-> **Status:** Phases 0, 1 and 2 are **complete and verified** — 183 tests passing, with typecheck,
-> lint and production build all clean. Nutrition foundation, Dexie schema and live USDA food
-> lookup are in; Phase 3 (Component Builder) is next. Source is backed up at
-> <https://github.com/Duncan-17/meal-prep-app> (private).
+> **Status:** Phases 0–4 are complete — **290 tests** passing, with typecheck, lint and production
+> build all clean. Nutrition foundation, Dexie schema, live USDA food lookup, the Component
+> Builder and the scheduling Calendar are all in. Phase 5 (Cook → Fridge) is next. Source is
+> backed up at <https://github.com/Duncan-17/meal-prep-app> (private).
 
 ## Running it
 
