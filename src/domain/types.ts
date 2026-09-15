@@ -235,6 +235,12 @@ export interface AdaptedFood {
   nutritionPer100g: NutrientMap;
   /** Portion label → grams for ONE of it, feeding `resolveToGrams`. */
   portionGrams?: Record<string, number>;
+  /**
+   * True when this came from FDC's detail endpoint, which reports full
+   * precision. Search results round to ~3 significant figures, so a food
+   * without this flag is slightly approximate — see `usda.live.test.ts`.
+   */
+  precise?: boolean;
 }
 
 /** Cached lookup result, so a repeat search costs nothing. */

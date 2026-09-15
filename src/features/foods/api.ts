@@ -5,8 +5,8 @@
  * exists, which is the whole point of the proxy (PLAN.md §2).
  */
 
-import { adaptUsdaSearchResponse } from '@/nutrition/usda.adapter';
-import { cacheFoods, cacheSearch, foodKey, getCachedSearch } from '@/db/foods';
+import { adaptUsdaFood, adaptUsdaSearchResponse } from '@/nutrition/usda.adapter';
+import { cacheFoods, cacheSearch, foodKey, getCachedFood, getCachedSearch } from '@/db/foods';
 import type { AdaptedFood } from '@/domain/types';
 
 export interface SearchOutcome {
@@ -102,6 +102,48 @@ export async function searchFoods(
   await cacheSearch(trimmed, foods);
 
   return { foods, from: 'network' };
+}
+
+/**
+ * Fetch the full-precision record for one food.
+ *
+ * Worth a round trip because FDC's search endpoint ROUNDS to about three
+ * significant figures while `/food/{id}` does not — 15 of 126 values differed
+ * on the payload in `usda.live.test.ts`. Search results are fine for choosing;
+ * this is what should be stored once a choice is made.
+ *
+ * Falls back to the search-grade food on failure: slightly rounded nutrition
+ * beats blocking the user over a network hiccup.
+ */
+export async function fetchFoodDetail(
+  food: AdaptedFood,
+  signal?: AbortSignal,
+): Promise<{ food: AdaptedFood; precise: boolean }> {
+  if (food.source !== 'usda') return { food, precise: true };
+
+  const cached = await getCachedFood('usda', food.sourceId);
+  if (cached?.raw !== undefined && cached.precise === true) {
+    return { food: cached, precise: true };
+  }
+
+  try {
+    const response = await fetch(
+      `/api/usda/food/${encodeURIComponent(food.sourceId)}`,
+      signal === undefined ? {} : { signal },
+    );
+    if (!response.ok) return { food, precise: false };
+
+    const body: unknown = await response.json();
+    const adapted = adaptUsdaFood(body);
+    if (adapted === null) return { food, precise: false };
+
+    const raw = new Map<string, unknown>([[foodKey('usda', adapted.sourceId), body]]);
+    await cacheFoods([{ ...adapted, precise: true }], raw);
+    return { food: adapted, precise: true };
+  } catch {
+    // Aborted or offline — the caller still gets something usable.
+    return { food, precise: false };
+  }
 }
 
 function toApiError(body: unknown, status: number): FoodApiError {

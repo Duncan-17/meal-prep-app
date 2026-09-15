@@ -458,3 +458,419 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── Screen head with action ───────────────────────────────────────── */
+
+.screen__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.screen__head .btn {
+  flex: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ── Component cards ───────────────────────────────────────────────── */
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.card:hover {
+  border-color: var(--accent);
+}
+
+.card__dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.card__dot--lg {
+  width: 22px;
+  height: 22px;
+  margin-top: 6px;
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.card__name {
+  font-weight: 600;
+}
+
+.card__meta {
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.detail__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* ── Colour picker ─────────────────────────────────────────────────── */
+
+.colorpicker {
+  margin-bottom: 16px;
+}
+
+.colorpicker__swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+
+.swatch {
+  aspect-ratio: 1;
+  border: 2px solid transparent;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.swatch--on {
+  border-color: var(--text);
+}
+
+.colorpicker__custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colorpicker__native {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.colorpicker__native input {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+
+.colorpicker__hex {
+  max-width: 130px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.colorpicker__note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.colorpicker__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* ── Segmented control ─────────────────────────────────────────────── */
+
+.segmented {
+  display: inline-flex;
+  margin: 6px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.segmented__option {
+  padding: 8px 18px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  cursor: pointer;
+}
+
+.segmented__option--on {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+
+.yield {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.yield__qty {
+  max-width: 84px;
+}
+
+.yield__unit {
+  max-width: 130px;
+}
+
+.yield__hint {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  margin: 0;
+}
+
+/* ── Ingredient rows ───────────────────────────────────────────────── */
+
+.ingredients {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ingredients__empty {
+  margin: 0 0 12px;
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+
+.ingredient {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.ingredient--dragging {
+  opacity: 0.85;
+  border-color: var(--accent);
+  z-index: 1;
+}
+
+.ingredient__handle {
+  flex: none;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font-size: 17px;
+  line-height: 1.2;
+  cursor: grab;
+  touch-action: none;
+}
+
+.ingredient__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ingredient__name {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 550;
+  line-height: 1.35;
+  margin-bottom: 7px;
+}
+
+.ingredient__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.ingredient__qty {
+  max-width: 82px;
+}
+
+.ingredient__unit {
+  max-width: 108px;
+}
+
+.ingredient__remove {
+  margin-left: auto;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ingredient__note {
+  margin: 7px 0 0;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.ingredient__note--warn {
+  color: var(--danger);
+}
+
+.grams {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grams--assumed,
+.grams--density {
+  font-style: italic;
+}
+
+.grams--unknown {
+  color: var(--danger);
+}
+
+.builder__search {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+
+.builder__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 12px;
+}
+
+.builder__actions .btn {
+  text-decoration: none;
+}
+
+.btn--danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+
+.problems {
+  margin: 12px 0;
+  padding-left: 18px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.problems li + li {
+  margin-top: 3px;
+}
+
+/* ── Nutrition summary ─────────────────────────────────────────────── */
+
+.summary {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.summary th,
+.summary td {
+  padding: 6px 0;
+  text-align: right;
+  border-top: 1px solid var(--border);
+  font-weight: 400;
+}
+
+.summary thead th {
+  border-top: 0;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.summary th:first-child,
+.summary thead th:first-child {
+  text-align: left;
+}
+
+.summary td {
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__coverage {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-dim);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.summary__foot,
+.summary__empty {
+  margin: 10px 0 0;
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+/* ── Recipe list ───────────────────────────────────────────────────── */
+
+.recipe {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13.5px;
+}
+
+.recipe__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+}
+
+.recipe__amount {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
