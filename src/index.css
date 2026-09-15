@@ -1100,3 +1100,64 @@ body {
   margin: 0 0 0 auto;
   white-space: nowrap;
 }
+
+/* ── Fridge stock ──────────────────────────────────────────────────── */
+
+.stock {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.stock__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stock__title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.stock__adjust {
+  flex: none;
+  padding: 5px 11px;
+  font-size: 13px;
+}
+
+.stock__amount {
+  margin: 9px 0 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+.stock__amount strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.bar {
+  height: 9px;
+  margin-top: 11px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 140ms ease-out;
+}
+
+.rule {
+  margin: 18px 0 14px;
+  border: 0;
+  border-top: 1px solid var(--border);
+}

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { ScheduleSheet } from '@/features/calendar/ScheduleSheet';
+import { MarkCookedSheet } from '@/features/calendar/MarkCookedSheet';
 import { PhasePlaceholder } from '@/ui/PhasePlaceholder';
 import {
   batchYield,
@@ -38,6 +39,7 @@ export function CalendarScreen() {
   const [weekStart, setWeekStart] = useState<DayKey>(() => startOfWeek(todayKey()));
   const [scheduling, setScheduling] = useState<DayKey | null>(null);
   const [openDay, setOpenDay] = useState<DayKey | null>(null);
+  const [cooking, setCooking] = useState<Batch | null>(null);
 
   const days = weekDays(weekStart);
   const lastDay = days[6] ?? weekStart;
@@ -145,14 +147,23 @@ export function CalendarScreen() {
                       <span className="card__meta">{describeBatch(batch)}</span>
                     </span>
                     {batch.status === 'planned' && batch.id !== undefined && (
-                      <button
-                        type="button"
-                        className="ingredient__remove"
-                        onClick={() => void deleteBatch(batch.id!)}
-                        aria-label={`Remove ${batch.componentName}`}
-                      >
-                        ✕
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          className="btn stock__adjust"
+                          onClick={() => setCooking(batch)}
+                        >
+                          Cooked
+                        </button>
+                        <button
+                          type="button"
+                          className="ingredient__remove"
+                          onClick={() => void deleteBatch(batch.id!)}
+                          aria-label={`Remove ${batch.componentName}`}
+                        >
+                          ✕
+                        </button>
+                      </>
                     )}
                   </div>
                 </li>
@@ -167,16 +178,17 @@ export function CalendarScreen() {
       )}
 
       <PhasePlaceholder
-        phase={5}
-        title="Cooking and Day Detail"
+        phase={7}
+        title="Insight"
         items={[
-          'Mark cooked, with actual-yield confirmation → Fridge',
-          'Specific mode — pinned micronutrient bars (Phase 7)',
-          'Day Detail — full nutrient panel vs target (Phase 7)',
+          'Specific mode — pinned micronutrient bars',
+          'Day Detail — full nutrient panel vs target, with coverage',
+          'Needs your 2500-cal targets (SETUP.md item 9)',
         ]}
       />
 
       <ScheduleSheet day={scheduling} onClose={() => setScheduling(null)} />
+      <MarkCookedSheet batch={cooking} onClose={() => setCooking(null)} />
     </div>
   );
 }
@@ -223,7 +235,6 @@ function PastDueNudge({ batches, onSkip }: { batches: Batch[]; onSkip: (id: numb
           </li>
         ))}
       </ul>
-      <p className="notice__body">Marking cooked arrives in Phase 5.</p>
     </div>
   );
 }
