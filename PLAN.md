@@ -216,6 +216,10 @@ badges, manual-entry fallback for anything not found.
 
 > **Done when:** searching "chicken thigh" returns real nutrition and the second search is
 > instant from cache.
+>
+> ✅ **Done 2026-09-15** — verified against the live API: 19,967 hits, `x-proxy-cache: HIT` on
+> repeat, registry validated (74 keys, 0 unit mismatches). OFF deferred by choice, so USDA-only.
+> Found that FDC search rounds and detail does not — Phase 3 must fetch detail on selection.
 
 ### Phase 3 — Component Builder & Library
 

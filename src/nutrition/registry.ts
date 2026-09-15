@@ -6,10 +6,18 @@
  * WITH UNIT CONVERSION APPLIED AT THE ADAPTER. Call sites downstream can then
  * assume a value is already in `unit`. See PLAN.md §3b.
  *
- * `usdaNumber` is FoodData Central's nutrient number. These are stable and
- * well documented, but they are transcribed here rather than fetched — Phase 2
- * validates the whole table against live API responses, and any that turn out
- * wrong get corrected there rather than guessed at now.
+ * `usdaNumber` is FoodData Central's nutrient number.
+ *
+ * **Validated against live FDC data on 2026-09-15.** A real SR Legacy payload
+ * carrying 126 nutrient entries mapped 74 of these keys with zero unit
+ * mismatches — see `usda.live.test.ts`, which pins that against captured
+ * fixtures so a future FDC renumbering fails loudly instead of silently
+ * dropping a nutrient.
+ *
+ * Three entries remain UNCONFIRMED because no sampled food reported them:
+ * `starch_g` (209), `fluoride_ug` (313) and `iodine_ug` (314). They are
+ * plausible but unproven; if one is wrong, that nutrient silently never
+ * appears. Confirm them opportunistically if a food ever reports them.
  */
 
 export type NutrientGroup = 'macro' | 'vitamin' | 'mineral' | 'lipid' | 'amino_acid' | 'other';

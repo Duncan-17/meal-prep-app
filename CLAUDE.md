@@ -21,36 +21,42 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phases 0 and 1 complete. Phase 2 built and awaiting live verification.**
+**Phases 0, 1 and 2 complete and verified. Phase 3 is next and is unblocked.**
 
-Everything builds and passes: `tsc -b` clean under strict mode (three projects — app, node,
-functions), ESLint clean, **154 tests passing** across 8 files.
+`tsc -b` clean across three projects (app, node, functions), ESLint clean, **183 tests passing**
+across 9 files.
 
-### ⏳ Phase 2 — built, not yet proven against the live API
+Phase 2 was verified against the **live** FoodData Central API on 2026-09-15, not just unit
+tests: search returned 19,967 hits for "chicken thigh", the edge cache reported `x-proxy-cache:
+HIT` on the repeat, and the detail endpoint round-tripped correctly.
 
-The proxy, adapter, cache and search UI are written and unit-tested. What has **not** happened is
-a real FoodData Central request, because `USDA_API_KEY` in `.dev.vars` was still empty when the
-work was done (`/api/health` reported `usdaKeyConfigured: false`).
+### Registry validated against real data
 
-Verified locally with no key:
+A real SR Legacy payload with 126 nutrient entries mapped **74 registry keys with zero unit
+mismatches**. `usda.live.test.ts` pins this against captured fixtures in
+`src/nutrition/__fixtures__/`, so an FDC renumbering fails loudly instead of silently dropping a
+nutrient.
 
-| Check                     | Result                                           |
-| ------------------------- | ------------------------------------------------ |
-| `/api/health`             | 200, reports config state without leaking values |
-| `/api/usda/search` no key | 503 with an actionable message                   |
-| empty / overlong query    | 400                                              |
-| `/api/off/*`              | 501, explains OFF is deliberately disabled       |
-| unknown `/api/*` route    | 404                                              |
-| `/calendar` SPA fallback  | 200 text/html — Functions do **not** swallow it  |
+Three entries stay UNCONFIRMED — no sampled food reported them: `starch_g` (209),
+`fluoride_ug` (313), `iodine_ug` (314). Plausible but unproven.
 
-**To finish Phase 2**, once the key is in `.dev.vars`:
+### ⚠️ FDC search rounds; detail does not
 
-1. `npm run dev:api` (terminal 1), `npm run dev` (terminal 2), open :5173 → Components tab.
-2. The status line should read "API proxy up · USDA key loaded".
-3. Search "chicken thigh" → results. Search it again → "from cache".
-4. **Validate the registry's USDA numbers against what comes back.** They were transcribed, not
-   fetched. Click a result and check the mapped nutrient list looks sane — wrong numbers show up
-   as missing or absurd values.
+Found while validating: `/foods/search` returns ~3 significant figures while `/food/{id}` returns
+full precision. 15 of 126 values differed — fat 44.2 vs 44.23, monounsaturated 19 vs 18.975.
+
+**Consequence for Phase 3:** a Component built straight from search results carries search-grade
+precision. When the user actually picks a food, fetch `/api/usda/food/{fdcId}` and store that.
+The proxy route already exists. A test pins both values so this cannot be "simplified" away.
+
+### Next — Phase 3, Component Builder & Library
+
+Nothing blocks it. Food lookup works, the dev seed exists, and `domain/components.ts` already
+rolls a Component up from its ingredients with coverage.
+
+Also still open, and now the only real gap before a deploy: **Cloudflare Pages project**
+(SETUP.md item 5) — needed to reach the app from a phone, and where `USDA_API_KEY` must be added
+as an encrypted secret.
 
 ### Known unknown — `_redirects` in production
 
