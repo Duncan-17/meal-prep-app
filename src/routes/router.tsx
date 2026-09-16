@@ -6,6 +6,7 @@ import { ComponentBuilder } from '@/features/components/ComponentBuilder';
 import { ComponentDetail } from '@/features/components/ComponentDetail';
 import { FridgeScreen } from '@/features/fridge/FridgeScreen';
 import { LogScreen } from '@/features/log/LogScreen';
+import { PlanScreen } from '@/features/settings/PlanScreen';
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: 'components/:id/edit', element: <ComponentBuilder /> },
       { path: 'fridge', element: <FridgeScreen /> },
       { path: 'log', element: <LogScreen /> },
+      { path: 'plan', element: <PlanScreen /> },
     ],
   },
 ]);

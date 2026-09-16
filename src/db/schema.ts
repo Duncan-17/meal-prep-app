@@ -11,6 +11,8 @@
 
 import Dexie, { type Table } from 'dexie';
 
+import { defaultTargetFor } from '@/nutrition/targets';
+
 import type {
   AppSettings,
   Batch,
@@ -20,9 +22,11 @@ import type {
   Ingredient,
   MealLog,
   NutrientTarget,
+  Plan,
   QuickAddFavorite,
   SearchCacheEntry,
   StockAdjustment,
+  WeightEntry,
 } from '@/domain/types';
 
 export class MealPrepDatabase extends Dexie {
@@ -36,6 +40,8 @@ export class MealPrepDatabase extends Dexie {
   foodCache!: Table<FoodCacheEntry, string>;
   searchCache!: Table<SearchCacheEntry, string>;
   targets!: Table<NutrientTarget, string>;
+  weightEntries!: Table<WeightEntry, string>;
+  plan!: Table<Plan, string>;
   settings!: Table<AppSettings, string>;
 
   constructor() {
@@ -75,6 +81,28 @@ export class MealPrepDatabase extends Dexie {
     this.version(2).stores({
       searchCache: 'query, fetchedAt',
     });
+
+    // v3 (Plan): body weight and the editable plan itself.
+    this.version(3)
+      .stores({
+        // One row per day — the date IS the key, so logging twice corrects
+        // rather than duplicating.
+        weightEntries: 'date, loggedAt',
+        plan: 'id',
+      })
+      .upgrade(async (transaction) => {
+        // Targets predating this version have no `direction`. Defaulting every
+        // one to 'min' would turn sodium into a goal to reach, so the seeds
+        // decide, and anything unknown stays a minimum.
+        await transaction
+          .table('targets')
+          .toCollection()
+          .modify((target: { key?: string; direction?: string }) => {
+            if (target.direction !== undefined) return;
+            target.direction =
+              target.key === undefined ? 'min' : (defaultTargetFor(target.key)?.direction ?? 'min');
+          });
+      });
   }
 }
 
@@ -93,6 +121,8 @@ export const TABLE_NAMES = [
   'searchCache',
   'targets',
   'settings',
+  'weightEntries',
+  'plan',
 ] as const;
 
 /**

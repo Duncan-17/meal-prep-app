@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { LogFromFridgeSheet } from '@/features/log/LogFromFridgeSheet';
@@ -28,7 +29,12 @@ export function LogScreen() {
 
   return (
     <div className="screen">
-      <h1 className="screen__title">Log</h1>
+      <div className="screen__head">
+        <h1 className="screen__title">Log</h1>
+        <Link className="btn" to="/plan">
+          Plan
+        </Link>
+      </div>
 
       <div className="weeknav">
         <button

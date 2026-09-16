@@ -267,14 +267,18 @@ export interface SearchCacheEntry {
   fetchedAt: number;
 }
 
-export interface NutrientTarget {
-  /** Canonical nutrient key. */
-  key: string;
-  /** Daily amount in the nutrient's canonical unit. */
-  amount: number;
-  /** true = RDA/DV placeholder, shown in the UI as a default not a goal. */
-  isDefault: boolean;
-}
+// `NutrientTarget`, `Plan`, `WeightGoal` and `WeightEntry` live in
+// `@/domain/plan` — they carry goal direction and weekly logic that belongs
+// beside the functions reading them. Re-exported so `@/domain/types` stays the
+// single import for entity shapes.
+export type {
+  GoalDirection,
+  NutrientTarget,
+  Plan,
+  WeightEntry,
+  WeightGoal,
+  WeightUnit,
+} from '@/domain/plan';
 
 export interface AppSettings {
   id: 'settings';

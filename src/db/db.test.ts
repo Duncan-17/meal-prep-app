@@ -338,7 +338,12 @@ describe('defaults', () => {
 
   it('does not overwrite an edited target', async () => {
     await ensureDefaults();
-    await db.targets.put({ key: 'protein_g', amount: 200, isDefault: false });
+    await db.targets.put({
+      key: 'protein_g',
+      amount: 200,
+      direction: 'min',
+      isDefault: false,
+    });
     await ensureDefaults();
     expect((await db.targets.get('protein_g'))?.amount).toBe(200);
   });
