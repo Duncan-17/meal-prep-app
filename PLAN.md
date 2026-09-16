@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **Phases 0–7 complete (2026-09-16). Only Phase 8 (PWA polish) remains.**
+> Status: **All eight phases complete (2026-09-16). Remaining work is deployment, not code.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -288,6 +288,10 @@ Icon set, `vite-plugin-pwa` with Workbox precache + runtime caching for proxy ro
 degradation to cached data, install prompt, iOS safe-area handling, backup reminder.
 
 > **Done when:** it works on the subway.
+>
+> ✅ **Built 2026-09-16** — Workbox precache (including the chart chunk, so Specific mode works
+> offline), `/api` on the navigation-fallback denylist, a generated icon set with a maskable
+> variant, a platform-branched install prompt, an offline banner, and the backup export/import UI.
 
 ---
 

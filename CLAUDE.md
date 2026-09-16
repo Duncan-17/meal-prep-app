@@ -21,7 +21,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phases 0–7 complete. Only Phase 8 (PWA polish) remains.**
+**All eight phases complete. The app is feature-complete and installable; what remains is deployment.**
 
 `tsc -b` clean across three projects, ESLint clean, **392 tests** across 17 files.
 
@@ -35,7 +35,22 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 | 5 Cook → Fridge     | ✅ mark cooked, fridge list, adjust, discard                    |
 | 6 Logging           | ✅ from-fridge + Quick Add, favourites, stock restore on delete |
 | 7 Insight           | ✅ meters, Day Detail, weekly trends, editable Plan             |
-| 8 PWA polish        | ⬜ next — service worker, offline, install on phone             |
+| 8 PWA polish        | ✅ service worker, offline, icons, install prompt, backup UI    |
+
+### The only thing left: deploy
+
+Everything is built and tested locally. To reach a phone it needs **SETUP.md item 5** — a
+Cloudflare Pages project connected to the GitHub repo, with `USDA_API_KEY` added as an encrypted
+secret. Build command `npm run build`, output directory `dist`.
+
+Two things to check on that first deploy, both recorded as unknowns rather than assumptions:
+
+1. **`_redirects` SPA fallback.** Wrangler warns the `/*  /index.html  200` rule is an infinite
+   loop and ignores it; fallback worked locally anyway, so something else served the shell.
+   Hard-refresh `/calendar` on the deployed site before assuming it works.
+2. **Service worker + Pages Functions together.** `/api` is on the navigation-fallback denylist
+   and was verified locally against a production build under wrangler, but the deployed edge is
+   the real test.
 
 ### Not yet confirmed by the user
 
