@@ -21,9 +21,9 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 ## Current status
 
-**Phases 0–6 complete. The core loop works end to end. Phase 7 (Insight) needs the 2500-cal targets.**
+**Phases 0–7 complete. Only Phase 8 (PWA polish) remains.**
 
-`tsc -b` clean across three projects, ESLint clean, **340 tests** across 15 files.
+`tsc -b` clean across three projects, ESLint clean, **392 tests** across 17 files.
 
 | Phase               | State                                                           |
 | ------------------- | --------------------------------------------------------------- |
@@ -34,8 +34,8 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 | 4 Calendar          | ✅ week view, tap-to-schedule, scale, past-due nudge            |
 | 5 Cook → Fridge     | ✅ mark cooked, fridge list, adjust, discard                    |
 | 6 Logging           | ✅ from-fridge + Quick Add, favourites, stock restore on delete |
-| 7 Insight           | ⬜ next — **blocked** on SETUP.md item 9 (2500-cal targets)     |
-| 8 PWA polish        | ⬜ — also where the 538 kB bundle gets code-split               |
+| 7 Insight           | ✅ meters, Day Detail, weekly trends, editable Plan             |
+| 8 PWA polish        | ⬜ next — service worker, offline, install on phone             |
 
 ### Not yet confirmed by the user
 

@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **Phases 0–6 complete (2026-09-15). The core loop works. Phase 7 (Insight) next.**
+> Status: **Phases 0–7 complete (2026-09-16). Only Phase 8 (PWA polish) remains.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -277,6 +277,10 @@ Targets table + Settings editor, Specific mode bars, Day Detail full grouped pan
 indicators, Recharts weekly trends, pinned-nutrient management.
 
 > **Done when:** you can see how a real week measured up.
+>
+> ✅ **Built 2026-09-16** — an editable Plan (weight, macros, water, every micronutrient, daily and
+> weekly, FDA template), direction-aware meters, Day Detail, and Recharts trends indexed to % of
+> target. Targets carry a direction: sodium is a limit, not a goal to reach.
 
 ### Phase 8 — PWA polish
 

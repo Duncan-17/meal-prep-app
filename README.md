@@ -7,10 +7,10 @@ calendar, track servings as fridge stock, and log meals to see macro + micronutr
 - **[SETUP.md](SETUP.md)** — accounts, keys and decisions needed from you
 - **[CLAUDE.md](CLAUDE.md)** — build status + conventions, auto-loaded by Claude Code
 
-> **Status:** Phases 0–6 are complete — **340 tests** passing, with typecheck, lint and production
-> build all clean. **The core loop works end to end**: build Components, schedule a cook, mark it
-> cooked into the fridge, log meals from it, and watch stock drop and return. Phase 7 (Insight)
-> is next and needs your 2500-cal targets. Source is
+> **Status:** Phases 0–7 are complete — **392 tests** passing, with typecheck, lint and production
+> build all clean. The full loop works: build Components, schedule a cook, mark it cooked into the
+> fridge, log meals from it, and see the week against an editable plan. Only Phase 8 (PWA polish)
+> remains before it installs on a phone. Source is
 > backed up at <https://github.com/Duncan-17/meal-prep-app> (private).
 
 ## Running it
