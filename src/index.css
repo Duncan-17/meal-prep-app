@@ -1714,3 +1714,38 @@ body {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* ── Offline banner & install prompt ───────────────────────────────── */
+
+.offline {
+  margin: 0;
+  padding: calc(7px + env(safe-area-inset-top)) 16px 7px;
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.shell__install {
+  padding: 16px 16px 0;
+  padding-block-start: calc(16px + env(safe-area-inset-top));
+}
+
+.shell__install:empty {
+  display: none;
+}
+
+.install {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.install__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
