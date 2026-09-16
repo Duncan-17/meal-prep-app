@@ -12,6 +12,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 import { TargetRow } from '@/features/settings/TargetRow';
 import { WeightPlan } from '@/features/settings/WeightPlan';
+import { PinnedNutrients } from '@/features/settings/PinnedNutrients';
 import { listTargets, planCustomisation, resetAllTargets } from '@/db/plan';
 import {
   NUTRIENTS,
@@ -74,6 +75,8 @@ export function PlanScreen() {
           <NutrientGroupSection key={group} group={group} byKey={byKey} showAll={showAll} />
         ))}
       </section>
+
+      <PinnedNutrients />
 
       <section className="section">
         <h2 className="section__title">Start over</h2>

@@ -5,7 +5,7 @@
  * closing, and the reason `db/logs.ts` does both inside one transaction.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 
@@ -13,9 +13,14 @@ import { LogFromFridgeSheet } from '@/features/log/LogFromFridgeSheet';
 import { QuickAddSheet } from '@/features/log/QuickAddSheet';
 import { listFridge } from '@/db/fridge';
 import { dayTotals, deleteMealLog, listLogsForDay } from '@/db/logs';
-import { coverageNote } from '@/domain/coverage';
-import { DEFAULT_PINNED_NUTRIENTS, formatAmount, nutrientName } from '@/nutrition/registry';
+import { DayDetail } from '@/features/log/DayDetail';
+import { TargetBar } from '@/ui/TargetBar';
+import { listTargets } from '@/db/plan';
+import { targetsByKey } from '@/nutrition/targets';
+import { DEFAULT_PINNED_NUTRIENTS, formatAmount } from '@/nutrition/registry';
 import { addDays, relativeDay, todayKey, type DayKey } from '@/domain/dates';
+import { db } from '@/db/schema';
+import type { NutrientTarget } from '@/domain/plan';
 import type { FridgeEntry, MealLog, NutrientAggregate } from '@/domain/types';
 
 export function LogScreen() {
@@ -26,6 +31,8 @@ export function LogScreen() {
   const logs = useLiveQuery(() => listLogsForDay(date), [date]);
   const totals = useLiveQuery(() => dayTotals(date), [date, logs]);
   const stock = useLiveQuery(() => listFridge(), []);
+  const targets = useLiveQuery(() => listTargets(), []);
+  const byKey = targetsByKey(targets ?? []);
 
   return (
     <div className="screen">
@@ -57,7 +64,7 @@ export function LogScreen() {
       </div>
 
       {totals !== undefined && Object.keys(totals.nutrients).length > 0 && (
-        <DayTotals totals={totals} />
+        <DayTotals totals={totals} targets={byKey} />
       )}
 
       <section className="section">
@@ -163,33 +170,49 @@ function LoggedMeal({ log, onDelete }: { log: MealLog; onDelete: () => void }) {
 }
 
 /**
- * The day so far.
+ * The day so far, against the plan.
  *
- * Coverage is shown wherever a total is partial — the number is not wrong, it
- * is incomplete, and saying so is the entire reason coverage exists.
+ * Pinned nutrients get meters; the rest live in the full panel below. Coverage
+ * rides along on every one — the number is not wrong when coverage is partial,
+ * it is incomplete, and saying so is the entire reason coverage exists.
  */
-function DayTotals({ totals }: { totals: NutrientAggregate }) {
-  const shown = DEFAULT_PINNED_NUTRIENTS.filter((key) => key in totals.nutrients);
+function DayTotals({
+  totals,
+  targets,
+}: {
+  totals: NutrientAggregate;
+  targets: Map<string, NutrientTarget>;
+}) {
+  const [pinned, setPinned] = useState<string[]>([...DEFAULT_PINNED_NUTRIENTS]);
+  const settings = useLiveQuery(() => db.settings.get('settings'), []);
+
+  // Settings own the pinned list once it exists; the constant is the seed.
+  useEffect(() => {
+    if (settings?.pinnedNutrients !== undefined && settings.pinnedNutrients.length > 0) {
+      setPinned(settings.pinnedNutrients);
+    }
+  }, [settings]);
+
+  const shown = pinned.filter((key) => key in totals.nutrients);
   if (shown.length === 0) return null;
 
   return (
-    <section className="section">
-      <h2 className="section__title">Today so far</h2>
-      <ul className="totals">
-        {shown.map((key) => {
-          const note = coverageNote(totals.coverage, key);
-          return (
-            <li key={key} className="totals__row">
-              <span>{nutrientName(key)}</span>
-              <span className="totals__value">
-                {formatAmount(key, totals.nutrients[key] ?? 0)}
-                {note !== null && <span className="summary__coverage">{note}</span>}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <>
+      <section className="section">
+        <h2 className="section__title">Today so far</h2>
+        {shown.map((key) => (
+          <TargetBar
+            key={key}
+            nutrientKey={key}
+            amount={totals.nutrients[key] ?? 0}
+            target={targets.get(key)}
+            coverage={totals.coverage}
+          />
+        ))}
+      </section>
+
+      <DayDetail totals={totals} targets={targets} />
+    </>
   );
 }
 

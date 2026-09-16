@@ -6,12 +6,13 @@
  * logs, so it arrives in Phase 7 (PLAN.md §5).
  */
 
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { ScheduleSheet } from '@/features/calendar/ScheduleSheet';
 import { MarkCookedSheet } from '@/features/calendar/MarkCookedSheet';
-import { PhasePlaceholder } from '@/ui/PhasePlaceholder';
+// Recharts lives behind this boundary — see WeekInsight's own note.
+const WeekInsight = lazy(() => import('@/features/calendar/WeekInsight'));
 import {
   batchYield,
   deleteBatch,
@@ -40,6 +41,7 @@ export function CalendarScreen() {
   const [scheduling, setScheduling] = useState<DayKey | null>(null);
   const [openDay, setOpenDay] = useState<DayKey | null>(null);
   const [cooking, setCooking] = useState<Batch | null>(null);
+  const [mode, setMode] = useState<'overview' | 'specific'>('overview');
 
   const days = weekDays(weekStart);
   const lastDay = days[6] ?? weekStart;
@@ -73,6 +75,19 @@ export function CalendarScreen() {
         >
           ›
         </button>
+      </div>
+
+      <div className="segmented segmented--sm">
+        {(['overview', 'specific'] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={`segmented__option${mode === option ? ' segmented__option--on' : ''}`}
+            onClick={() => setMode(option)}
+          >
+            {option === 'overview' ? 'Overview' : 'Specific'}
+          </button>
+        ))}
       </div>
 
       {startOfWeek(todayKey()) !== weekStart && (
@@ -177,15 +192,11 @@ export function CalendarScreen() {
         </section>
       )}
 
-      <PhasePlaceholder
-        phase={7}
-        title="Insight"
-        items={[
-          'Specific mode — pinned micronutrient bars',
-          'Day Detail — full nutrient panel vs target, with coverage',
-          'Needs your 2500-cal targets (SETUP.md item 9)',
-        ]}
-      />
+      {mode === 'specific' && (
+        <Suspense fallback={<p className="screen__sub">Loading charts…</p>}>
+          <WeekInsight weekStart={weekStart} />
+        </Suspense>
+      )}
 
       <ScheduleSheet day={scheduling} onClose={() => setScheduling(null)} />
       <MarkCookedSheet batch={cooking} onClose={() => setCooking(null)} />
