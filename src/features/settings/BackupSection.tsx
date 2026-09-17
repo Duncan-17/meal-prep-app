@@ -12,7 +12,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 import { db } from '@/db/schema';
 import { downloadBackup, importBackup } from '@/db/backup';
-import { backupSummary, totalRows } from '@/domain/backup';
+import { backupSummary, parseBackup, totalRows } from '@/domain/backup';
 import { dayDifference, formatDay, toDayKey, todayKey } from '@/domain/dates';
 
 /** Past this many days, the reminder stops being a quiet line of text. */
@@ -57,7 +57,6 @@ export function BackupSection() {
     try {
       const json = await file.text();
       const parsed: unknown = JSON.parse(json);
-      const { parseBackup } = await import('@/domain/backup');
       const backup = parseBackup(parsed);
       const rows = totalRows(backup);
       const tables = backupSummary(backup)
