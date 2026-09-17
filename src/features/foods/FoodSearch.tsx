@@ -103,22 +103,38 @@ function Preview({ food }: { food: AdaptedFood }) {
 }
 
 function SearchError({ error }: { error: Error }) {
-  const isMissingKey = error instanceof FoodApiError && error.status === 503;
-  const isRateLimited = error instanceof FoodApiError && error.status === 429;
+  const apiError = error instanceof FoodApiError ? error : null;
+  const isMissingKey = apiError?.status === 503;
+
+  /**
+   * USDA throttles rapid searches and reports it as a 400 with a generic nginx
+   * body, not a 429. The proxy already retries with a seconds-scale backoff;
+   * if one still gets through, "searched too quickly" is the truth, whereas
+   * the raw "returned 400" reads like the app sent something malformed.
+   */
+  const isThrottled =
+    apiError !== null &&
+    (apiError.status === 429 || (apiError.status === 502 && /returned 400/.test(error.message)));
+
+  if (isThrottled) {
+    return (
+      <div className="notice notice--warn">
+        <p className="notice__title">USDA is throttling us</p>
+        <p className="notice__body">
+          Their search rejects requests that arrive too close together. Give it a couple of seconds
+          and try again — the same search usually works straight away.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="notice notice--error">
       <p className="notice__title">
-        {isMissingKey
-          ? 'The USDA key is not configured'
-          : isRateLimited
-            ? 'USDA rate limit reached'
-            : 'Search failed'}
+        {isMissingKey ? 'The USDA key is not configured' : 'Search failed'}
       </p>
       <p className="notice__body">{error.message}</p>
-      {error instanceof FoodApiError && error.detail !== undefined && (
-        <p className="notice__body">{error.detail}</p>
-      )}
+      {apiError?.detail !== undefined && <p className="notice__body">{apiError.detail}</p>}
     </div>
   );
 }

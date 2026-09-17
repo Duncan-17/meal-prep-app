@@ -20,7 +20,7 @@ import { componentColors } from '@/db/components';
 import { listFridge } from '@/db/fridge';
 import { suggestUnusedSwatch } from '@/domain/color';
 import { nutritionForGrams } from '@/domain/nutrients';
-import { resolveToGrams, COMMON_UNITS } from '@/nutrition/units';
+import { defaultPortion, resolveToGrams, unitOptionsFor } from '@/nutrition/units';
 import { formatAmount } from '@/nutrition/registry';
 import type { AdaptedFood, PortionStyle } from '@/domain/types';
 
@@ -69,12 +69,10 @@ export function AddFridgeItemSheet({ open, onClose }: Props) {
   function pick(picked: AdaptedFood) {
     setFood(picked);
     setLabel(picked.name);
-    const portions = Object.keys(picked.portionGrams ?? {});
     // If the food knows what one of it weighs, counting is the natural default.
-    if (portions.includes('each')) {
-      setUnitOfSize('each');
-      setUnitSize(1);
-    }
+    const portion = defaultPortion(picked);
+    setUnitSize(portion.quantity);
+    setUnitOfSize(portion.unit);
   }
 
   // Grams in ONE unit — one avocado, or one gram of milk if measured by weight.
@@ -250,13 +248,5 @@ export function AddFridgeItemSheet({ open, onClose }: Props) {
 }
 
 function unitOptions(food: AdaptedFood): string[] {
-  const portions = Object.keys(food.portionGrams ?? {});
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const unit of [...portions, ...COMMON_UNITS]) {
-    if (seen.has(unit)) continue;
-    seen.add(unit);
-    out.push(unit);
-  }
-  return out;
+  return unitOptionsFor(food);
 }

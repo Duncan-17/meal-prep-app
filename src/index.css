@@ -1717,14 +1717,23 @@ body {
   background: var(--surface-sunken);
 }
 
+/*
+ * Both of these draw a ring that sits ON the cell edge. Grid children paint in
+ * DOM order, so without lifting them the next cell's background covers the
+ * right-hand side of the ring — which reads as the borders overlapping.
+ */
 .daycell--today {
+  position: relative;
+  z-index: 1;
   border-color: var(--accent);
   border-width: 2px;
 }
 
 .daycell--selected {
+  position: relative;
+  z-index: 2;
   outline: 2px solid var(--accent);
-  outline-offset: -1px;
+  outline-offset: -2px;
 }
 
 .daycell__number {
@@ -1823,4 +1832,18 @@ body {
   color: var(--text-dim);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Kills the double-tap-to-zoom delay on anything tappable. Pairs with the
+ * locked viewport: without it iOS still waits ~300ms on every tap to see
+ * whether a second one is coming.
+ */
+button,
+a,
+select,
+input,
+label,
+.daycell {
+  touch-action: manipulation;
 }

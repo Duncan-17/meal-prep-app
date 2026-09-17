@@ -27,6 +27,7 @@ import { fetchFoodDetail } from '@/features/foods/api';
 import { componentColors, getComponent, saveComponent } from '@/db/components';
 import { upsertIngredient, getIngredients } from '@/db/ingredients';
 import { suggestUnusedSwatch } from '@/domain/color';
+import { defaultPortion } from '@/nutrition/units';
 import { db } from '@/db/schema';
 import type { AdaptedFood } from '@/domain/types';
 
@@ -135,7 +136,9 @@ export function ComponentBuilder() {
             ...prior,
             ingredients: [
               ...prior.ingredients,
-              { uid: nextUid(), food: resolved, quantity: 100, unit: 'g' },
+              // The food's own portion beats 100 g: a burger knows it weighs
+              // 291 g "per item", so "1 item" is the honest default.
+              { uid: nextUid(), food: resolved, ...defaultPortion(resolved) },
             ],
           },
     );

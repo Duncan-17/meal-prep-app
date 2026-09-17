@@ -18,7 +18,7 @@ import { FoodSearch } from '@/features/foods/FoodSearch';
 import { logMeal, type LogItemDraft } from '@/db/logs';
 import { listFavorites, recordFavoriteUse, saveFavorite, deleteFavorite } from '@/db/favorites';
 import { nutritionForGrams } from '@/domain/nutrients';
-import { resolveToGrams, COMMON_UNITS } from '@/nutrition/units';
+import { defaultPortion, resolveToGrams, unitOptionsFor } from '@/nutrition/units';
 import { formatAmount } from '@/nutrition/registry';
 import type { DayKey } from '@/domain/dates';
 import type { AdaptedFood, MealSlot, QuickAddFavorite } from '@/domain/types';
@@ -54,6 +54,13 @@ export function QuickAddSheet({ open, date, slot, onClose }: Props) {
   const resolved = chosen === null ? null : resolveToGrams(quantity, unit, chosen);
   const grams = resolved?.grams ?? 0;
   const nutrients = chosen === null ? {} : nutritionForGrams(chosen.nutritionPer100g, grams);
+
+  function pickFood(picked: AdaptedFood) {
+    const portion = defaultPortion(picked);
+    setChosen(picked);
+    setQuantity(portion.quantity);
+    setUnit(portion.unit);
+  }
 
   async function logChosen() {
     if (chosen === null || grams <= 0) return;
@@ -143,7 +150,7 @@ export function QuickAddSheet({ open, date, slot, onClose }: Props) {
             </section>
           )}
 
-          <FoodSearch onSelect={setChosen} />
+          <FoodSearch onSelect={pickFood} />
         </>
       ) : (
         <>
@@ -230,13 +237,5 @@ export function QuickAddSheet({ open, date, slot, onClose }: Props) {
 }
 
 function unitOptions(food: AdaptedFood): string[] {
-  const portions = Object.keys(food.portionGrams ?? {});
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const unit of [...COMMON_UNITS, ...portions]) {
-    if (seen.has(unit)) continue;
-    seen.add(unit);
-    out.push(unit);
-  }
-  return out;
+  return unitOptionsFor(food);
 }

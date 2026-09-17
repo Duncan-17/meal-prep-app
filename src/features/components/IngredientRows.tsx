@@ -25,7 +25,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { COMMON_UNITS, resolveToGrams } from '@/nutrition/units';
+import { resolveToGrams, unitOptionsFor } from '@/nutrition/units';
 import type { GramConfidence } from '@/domain/types';
 import type { DraftIngredient } from '@/features/components/draft';
 
@@ -179,15 +179,13 @@ function ConfidenceNote({ confidence, unit }: { confidence: GramConfidence; unit
   );
 }
 
-/** Offer whatever portions the food knows about, plus the standard units. */
+/**
+ * The food's own portions first, then the generic units.
+ *
+ * Its own measurements have real gram weights behind them; the generic list
+ * may need a density guess, so it should not be what the eye lands on first.
+ */
 function unitOptions(item: DraftIngredient): string[] {
-  const portions = Object.keys(item.food.portionGrams ?? {});
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const unit of [...COMMON_UNITS, ...portions, item.unit]) {
-    if (seen.has(unit)) continue;
-    seen.add(unit);
-    out.push(unit);
-  }
-  return out;
+  const options = unitOptionsFor(item.food);
+  return options.includes(item.unit) ? options : [...options, item.unit];
 }

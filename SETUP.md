@@ -115,13 +115,15 @@ the key arrives by email in seconds.
 > not made publicly available. Any API keys discovered online, such as those in a code
 > repository, will be deactivated to prevent malicious use."_
 
-That is precisely why this project has a Pages Function proxy (PLAN.md §2). The key lives on
-Cloudflare's servers; the browser calls `/api/...` on your own domain and never sees the key.
+That is precisely why this project proxies every lookup through a Cloudflare Worker (PLAN.md §2).
+The key lives on Cloudflare's servers; the browser calls `/api/...` on your own domain and never
+sees the key.
 
 **Do not paste the key into chat, or into any file in this repo.**
 
-- **Production** — Cloudflare dashboard → your Pages project → **Settings** →
-  **Variables and Secrets** → add `USDA_API_KEY`, type **Secret**, then redeploy.
+- **Production** — Cloudflare dashboard → the `meal-prep-app` **Worker** → **Settings** →
+  **Variables and Secrets** → add `USDA_API_KEY`, type **Secret**. Workers apply secrets
+  immediately; no redeploy needed.
 - **Local dev** — put it in `.dev.vars` in the project root. Already gitignored, and
   `.dev.vars.example` is committed as the template with an empty value.
 
@@ -131,7 +133,7 @@ Cloudflare's servers; the browser calls `/api/...` on your own domain and never 
 
 Vite inlines every `VITE_`-prefixed variable into the client bundle **as plain text** at build
 time. It would be published to every visitor and scraped within days — the proxy would be
-pointless. The name stays `USDA_API_KEY`, read server-side by the Pages Function only, never via
+pointless. The name stays `USDA_API_KEY`, read server-side by the Worker only, never via
 `import.meta.env`.
 
 #### If it does leak
@@ -209,18 +211,18 @@ If you don't have one, I'll make a plain typographic placeholder.
 
 ## Quick status
 
-| #   | Item                            | Blocks               | Status                             |
-| --- | ------------------------------- | -------------------- | ---------------------------------- |
-| 1   | Moved out of OneDrive           | Phase 0              | ✅                                 |
-| 1b  | Reopen VS Code on new path      | Phase 0              | ✅                                 |
-| 2   | Node.js 24 LTS + deps installed | Phase 0              | ✅                                 |
-| 3   | Git identity                    | Phase 0              | ✅ (already set)                   |
-| 4   | GitHub repo                     | Deploy + **backup**  | ✅                                 |
-| 5   | Cloudflare Pages project        | Deploy               | ⬜                                 |
-| 6   | Phone install test              | Deploy               | ⬜                                 |
-| 7   | USDA API key                    | Phase 2              | ✅ (in `.dev.vars`)                |
-| 8   | OFF contact string              | Phase 6 barcode only | ⏸️ deferred by choice              |
-| 9   | 2500-cal targets                | Phase 7              | ⬜ (FDA defaults seeded meanwhile) |
-| 10  | Pinned nutrients                | Phase 7              | ⬜ (defaults fine)                 |
-| 11  | Real recipes                    | —                    | ⬜ (optional)                      |
-| 12  | App icon                        | Phase 8              | ⬜ (optional)                      |
+| #   | Item                            | Blocks                        | Status                                      |
+| --- | ------------------------------- | ----------------------------- | ------------------------------------------- |
+| 1   | Moved out of OneDrive           | Phase 0                       | ✅                                          |
+| 1b  | Reopen VS Code on new path      | Phase 0                       | ✅                                          |
+| 2   | Node.js 24 LTS + deps installed | Phase 0                       | ✅                                          |
+| 3   | Git identity                    | Phase 0                       | ✅ (already set)                            |
+| 4   | GitHub repo                     | Deploy + **backup**           | ✅                                          |
+| 5   | Cloudflare Worker deployed      | Deploy                        | ✅ (a Worker, not Pages)                    |
+| 6   | Phone install test              | —                             | ⬜ open the Worker URL → Add to Home Screen |
+| 7   | USDA API key                    | Phase 2                       | ✅ (in `.dev.vars`)                         |
+| 8   | OFF contact string              | Phase 6 barcode only          | ⏸️ deferred by choice                       |
+| 9   | Your real 2500-cal targets      | nothing — FDA defaults in use | ⬜ editable on the Plan screen              |
+| 10  | Pinned nutrients                | —                             | ✅ editable on the Plan screen              |
+| 11  | Real recipes                    | —                             | 🟡 in progress — you are building these now |
+| 12  | App icon                        | —                             | ✅ generated (`scripts/make-icons.mjs`)     |

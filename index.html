@@ -2,7 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!--
+      Zoom is locked: this is a fixed-layout app, and pinch-zooming a tab bar
+      and a month grid only ever gets in the way.
+
+      Two honest caveats. iOS Safari ignores `user-scalable=no` in a normal
+      browser tab on purpose, for accessibility — it takes effect only once the
+      app is installed to the home screen. And this does block someone who
+      genuinely needs to magnify text; the fix if that ever bites is to delete
+      `maximum-scale` and `user-scalable`, not to work around them.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <title>Meal Prep</title>
     <meta name="description" content="Plan batch cooking, track fridge stock, log meals." />
 

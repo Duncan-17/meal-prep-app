@@ -1,7 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
-> Status: **All eight phases complete (2026-09-16). Remaining work is deployment, not code.**
+> Status: **All eight phases complete and deployed (2026-09-17). In feedback-and-refinement.**
 
 A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
 calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
@@ -40,14 +40,14 @@ React 19 + TypeScript + Vite 7
 ├── Recharts                          [Phase 7]   ← nutrient trends
 ├── dnd-kit                           [Phase 3]   ← ingredient reorder only
 ├── date-fns                                      ← week math, timezone-safe
-└── Cloudflare Pages + one Pages Function          ← static host + API proxy
+└── Cloudflare Worker + static assets              ← host + API proxy, one deploy
 ```
 
 **`useLiveQuery` is the core pattern.** Every screen reads Dexie reactively; a write anywhere
 re-renders whatever observes it. No cache-invalidation layer and no global store — this is why
 the dependency list is so short.
 
-**Why a Pages Function proxy** (`functions/api/[[route]].ts`, ~40 lines):
+**Why a server-side proxy** (`worker/index.ts`):
 
 - The USDA key would otherwise ship inside the client bundle, where it can be scraped and
   rate-limited against you.
@@ -56,6 +56,12 @@ the dependency list is so short.
 - Edge caching makes repeat ingredient lookups free.
 
 Same deploy, same repo, no separate service to run.
+
+> Originally a Cloudflare **Pages Function**; moved to a **Worker with static assets** on
+> 2026-09-17 because Cloudflare's dashboard now creates Workers by default and the Pages-shaped
+> config failed at the deploy step. Same code, different shape — and the Worker's
+> `not_found_handling = "single-page-application"` finally replaced the `_redirects` rule that
+> wrangler had been silently rejecting as an infinite loop.
 
 ### Folder structure
 
@@ -67,8 +73,8 @@ src/
   features/    calendar/  components/  fridge/  log/  settings/
   ui/          Sheet, Stepper, PercentPicker, ColorPicker, NutrientTable, TabBar
   routes/      route definitions + app shell
-functions/
-  api/         Cloudflare Pages Function (USDA + OFF proxy)
+worker/
+  index.ts     the Cloudflare Worker — /api proxy, plus the ASSETS binding for dist/
 ```
 
 `domain/` contains **only pure functions** — no Dexie imports, no React. All the math that can
@@ -141,11 +147,17 @@ touches nutrition totals.
 ### Tables
 
 `ingredients` · `components` · `batches` · `fridgeEntries` · `stockAdjustments` · `mealLogs` ·
-`quickAddFavorites` · `foodCache` · `targets` · `settings`
+`quickAddFavorites` · `foodCache` · `searchCache` · `targets` · `settings` · `weightEntries` ·
+`plan`
 
 ---
 
 ## 4. Resolved UI consequences
+
+**Cooking versus eating.** The calendar carries two kinds of fact and draws them differently: a
+plan is a bar, an actual meal is a dot. The first build drew marks per scheduled _batch_ and
+nothing at all for meals — so you could cook, eat, and see no trace of eating. Meal logs are the
+primary content of that screen.
 
 **Full panel without a wall of numbers.** Storage is complete; display is layered.
 
@@ -158,6 +170,10 @@ touches nutrition totals.
 picker. On save, if the chosen color sits within a perceptual-distance threshold of an existing
 Component's color, show a non-blocking `similar to 🟥 Chicken Thighs` note. Full freedom kept,
 calendar stays readable.
+
+**Portion defaults.** Picking a food defaults to **its own portion**, not 100 g — USDA knows a
+Whopper weighs 291 g "per item", and making the user convert that by hand wastes data already in
+hand. Falls back to 100 g only when the food carries no portion at all.
 
 **Unit resolution.** `resolveToGrams(qty, unit, ingredient)` tries, in order:
 
@@ -211,7 +227,7 @@ function **with tests**, complete Dexie schema, JSON export/import, dev seed dat
 
 ### Phase 2 — Food lookup · needs USDA API key
 
-Pages Function proxy, USDA + OFF adapters, `foodCache` table, debounced search UI with source
+Server-side proxy, USDA + OFF adapters, `foodCache` table, debounced search UI with source
 badges, manual-entry fallback for anything not found.
 
 > **Done when:** searching "chicken thigh" returns real nutrition and the second search is
@@ -302,7 +318,7 @@ degradation to cached data, install prompt, iOS safe-area handling, backup remin
 | Sparse micronutrient data misleads         | Coverage tracking from Phase 1                                      |
 | IndexedDB wiped by browser cleanup         | JSON export in Phase 1, backup reminder in Phase 8                  |
 | iOS barcode scanning unsupported           | ZXing fallback + manual barcode entry                               |
-| USDA rate limits / key exposure            | Pages Function proxy + local `foodCache`                            |
+| USDA rate limits / key exposure            | Worker proxy + local `foodCache`                                    |
 | Volume→gram guessing skews nutrition       | Confidence flag surfaced in UI, one-time user override cached       |
 | Recipe edits corrupting history            | Snapshot-on-write at Batch / FridgeEntry / MealLog                  |
 | ~~OneDrive syncing `node_modules`~~        | Resolved — project moved to `C:\Users\dncan\Projects\meal-prep-app` |

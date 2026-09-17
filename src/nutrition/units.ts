@@ -82,6 +82,10 @@ const UNIT_ALIASES: Record<string, string> = {
   units: 'unit',
   portions: 'portion',
   ea: 'each',
+  // USDA writes "1 item" for whole foods like a burger or a muffin. It means
+  // the same as "each", and folding it in makes those resolve without asking.
+  item: 'each',
+  items: 'each',
 };
 
 /**
@@ -257,6 +261,49 @@ export function weakestConfidence(results: readonly GramResult[]): GramConfidenc
     }
   }
   return weakest;
+}
+
+/**
+ * The most natural way to measure one of this food.
+ *
+ * A burger knows it weighs 291 g "per item"; defaulting that to 100 g makes
+ * the user do arithmetic the data already did. Whole-unit portions win over
+ * volumes, because "1 burger" is what someone actually buys and eats.
+ */
+export function defaultPortion(food: Pick<Ingredient, 'portionGrams'>): {
+  quantity: number;
+  unit: string;
+} {
+  const portions = food.portionGrams;
+  if (portions !== undefined) {
+    // Prefer a countable whole unit over a cup or a tablespoon.
+    for (const unit of WHOLE_UNIT_PREFERENCE) {
+      if (portions[unit] !== undefined) return { quantity: 1, unit };
+    }
+    const first = Object.keys(portions)[0];
+    if (first !== undefined) return { quantity: 1, unit: first };
+  }
+  // Nothing known — 100 g is the basis every nutrition figure is quoted in.
+  return { quantity: 100, unit: 'g' };
+}
+
+const WHOLE_UNIT_PREFERENCE = ['each', 'serving', 'piece', 'slice', 'unit', 'portion'];
+
+/**
+ * Units to offer for a food, its own portions first.
+ *
+ * The food's own measurements are the ones with real gram weights behind them;
+ * the generic list below is a fallback that may need a density guess.
+ */
+export function unitOptionsFor(food: Pick<Ingredient, 'portionGrams'>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const unit of [...Object.keys(food.portionGrams ?? {}), ...COMMON_UNITS]) {
+    if (seen.has(unit)) continue;
+    seen.add(unit);
+    out.push(unit);
+  }
+  return out;
 }
 
 /** Units offered in the ingredient editor, in a sensible order. */
