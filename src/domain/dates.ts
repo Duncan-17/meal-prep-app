@@ -80,6 +80,62 @@ export function weekDays(key: DayKey, weekStartsOn: WeekStart = DEFAULT_WEEK_STA
   return Array.from({ length: 7 }, (_, index) => addDays(start, index));
 }
 
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// ── Months ──────────────────────────────────────────────────────────────────
+
+export function startOfMonth(key: DayKey): DayKey {
+  const date = fromDayKey(key);
+  return toDayKey(new Date(date.getFullYear(), date.getMonth(), 1));
+}
+
+/**
+ * Shift by whole months, clamping to the last real day.
+ *
+ * `new Date(2026, 0, 31)` plus one month is 3 March, because February has no
+ * 31st and JavaScript silently rolls over. Stepping through a calendar must
+ * land on 28 February instead.
+ */
+export function addMonths(key: DayKey, months: number): DayKey {
+  const date = fromDayKey(key);
+  const day = date.getDate();
+  const target = new Date(date.getFullYear(), date.getMonth() + months, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  target.setDate(Math.min(day, lastDay));
+  return toDayKey(target);
+}
+
+export function isSameMonth(a: DayKey, b: DayKey): boolean {
+  return a.slice(0, 7) === b.slice(0, 7);
+}
+
+/**
+ * The full grid for a month: whole weeks, so it always starts on the week's
+ * first day and ends on its last. Leading and trailing days belong to the
+ * neighbouring months — `isSameMonth` tells the UI to dim them.
+ */
+export function monthGrid(key: DayKey, weekStartsOn: WeekStart = DEFAULT_WEEK_START): DayKey[] {
+  const first = startOfMonth(key);
+  const gridStart = startOfWeek(first, weekStartsOn);
+
+  const date = fromDayKey(first);
+  const lastOfMonth = toDayKey(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+  const gridEnd = addDays(startOfWeek(lastOfMonth, weekStartsOn), 6);
+
+  const length = dayDifference(gridStart, gridEnd) + 1;
+  return Array.from({ length }, (_, index) => addDays(gridStart, index));
+}
+
+/** "September 2026" */
+export function formatMonth(key: DayKey): string {
+  return fromDayKey(key).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
+/** Weekday column headings, in the order the grid uses. */
+export function weekdayHeadings(weekStartsOn: WeekStart = DEFAULT_WEEK_START): string[] {
+  return Array.from({ length: 7 }, (_, index) => WEEKDAY_SHORT[(weekStartsOn + index) % 7] ?? '');
+}
+
 export function isToday(key: DayKey, now: Date = new Date()): boolean {
   return key === todayKey(now);
 }
@@ -94,8 +150,6 @@ export function isFuture(key: DayKey, now: Date = new Date()): boolean {
 }
 
 // ── Display ─────────────────────────────────────────────────────────────────
-
-const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function weekdayShort(key: DayKey): string {
   return WEEKDAY_SHORT[fromDayKey(key).getDay()] ?? '';

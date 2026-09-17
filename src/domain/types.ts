@@ -142,11 +142,20 @@ export interface Batch {
   createdAt: number;
 }
 
-/** Cooked stock. Snapshots nutrition per unit at cook time. */
+/**
+ * Stock in the fridge. Snapshots nutrition per unit at the moment it lands.
+ *
+ * Usually this comes from cooking a Batch, but not always: a gallon of milk or
+ * six avocados go straight in without a recipe or a cook. Those carry no
+ * `batchId` and no `componentId`, which is why both are optional — a bought
+ * item has no cook history to point at, and inventing one would be a lie.
+ */
 export interface FridgeEntry {
   id?: number;
-  batchId: number;
-  componentId: number;
+  /** Absent for anything added directly rather than cooked. */
+  batchId?: number;
+  /** Absent for anything that is not made from a Component. */
+  componentId?: number;
   componentName: string;
   componentColor: string;
   portionStyle: PortionStyle;
@@ -182,6 +191,13 @@ export interface MealLogItem {
   /** Set when kind === 'fridge'; the entry the stock came out of. */
   fridgeEntryId?: number;
   label: string;
+  /**
+   * Snapshot of the source's colour, so the calendar can draw a dot per item
+   * without walking back to a Component that may since have been recoloured
+   * or deleted. Absent on anything logged before this existed, and on Quick
+   * Add items with no colour of their own.
+   */
+  color?: string;
   quantity: number;
   unit: string;
   grams: number;

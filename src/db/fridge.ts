@@ -10,7 +10,13 @@
 import { db } from '@/db/schema';
 import { batchNutrition } from '@/db/batches';
 import { perUnitForActualYield } from '@/domain/portions';
-import type { AdjustmentReason, FridgeEntry, StockAdjustment } from '@/domain/types';
+import type {
+  AdjustmentReason,
+  Coverage,
+  FridgeEntry,
+  NutrientMap,
+  StockAdjustment,
+} from '@/domain/types';
 
 /**
  * Turn a planned batch into fridge stock.
@@ -60,6 +66,52 @@ export async function markCooked(batchId: number, actualYield: number): Promise<
 
     return entryId;
   });
+}
+
+export interface DirectFridgeItem {
+  label: string;
+  color: string;
+  portionStyle: FridgeEntry['portionStyle'];
+  /** Servings for discrete, grams for bulk. */
+  quantity: number;
+  unit: string;
+  /** Nutrition for ONE unit of it. */
+  nutritionPerUnit: NutrientMap;
+  /** Weight of one unit, for coverage weighting. */
+  gramsPerUnit: number;
+  coverage?: Coverage;
+}
+
+/**
+ * Put something in the fridge that was never cooked — a gallon of milk, six
+ * avocados, a tub of yoghurt.
+ *
+ * No `batchId` and no `componentId`: there is no recipe and no cook behind it,
+ * and inventing one would put a fake entry on the calendar. Everything
+ * downstream (logging, percentages, discarding) works identically, because it
+ * all reads the entry rather than the batch.
+ */
+export async function addFridgeItem(item: DirectFridgeItem): Promise<number> {
+  if (!(item.quantity > 0)) {
+    throw new Error(`Quantity must be greater than zero, got ${item.quantity}.`);
+  }
+  if (item.label.trim() === '') throw new Error('Give it a name.');
+
+  const now = Date.now();
+  return db.fridgeEntries.add({
+    componentName: item.label.trim(),
+    componentColor: item.color,
+    portionStyle: item.portionStyle,
+    unit: item.unit,
+    initialQuantity: item.quantity,
+    remaining: item.quantity,
+    nutritionPerUnit: item.nutritionPerUnit,
+    coverage: item.coverage ?? {},
+    gramsPerUnit: item.gramsPerUnit,
+    // Bought rather than cooked, but the field is what every view sorts by.
+    cookedAt: now,
+    createdAt: now,
+  } as FridgeEntry);
 }
 
 /** What the planned yield was, as the default in the Mark cooked sheet. */
@@ -165,7 +217,8 @@ export async function deleteFridgeEntry(entryId: number): Promise<void> {
       await db.fridgeEntries.delete(entryId);
 
       // Hand the batch back to the calendar so it can be cooked again.
-      if (entry !== undefined) {
+      // A directly-added item has no batch, and never did.
+      if (entry?.batchId !== undefined) {
         await db.batches.update(entry.batchId, { status: 'planned' });
       }
     },

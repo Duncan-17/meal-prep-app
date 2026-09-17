@@ -947,95 +947,6 @@ body {
   font-weight: 600;
 }
 
-/* ── Week strip ────────────────────────────────────────────────────── */
-
-.week {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin: 12px 0 16px;
-}
-
-.day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  min-height: 74px;
-  padding: 7px 2px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-}
-
-.day--today {
-  border-color: var(--accent);
-}
-
-.day--past {
-  opacity: 0.62;
-}
-
-.day--open {
-  background: var(--surface-sunken);
-  border-color: var(--accent);
-}
-
-.day__weekday {
-  color: var(--text-dim);
-  font-size: 10.5px;
-  letter-spacing: 0.02em;
-}
-
-.day__number {
-  font-size: 15px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.day--today .day__number {
-  color: var(--accent);
-}
-
-.day__marks {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 3px;
-  margin-top: 2px;
-}
-
-/* Discrete = fixed square, bulk = rounded blob (PLAN.md §5). */
-.mark {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-}
-
-.mark--bulk {
-  border-radius: 50%;
-  width: 10px;
-  height: 10px;
-}
-
-.mark--skipped {
-  opacity: 0.35;
-}
-
-.mark--cooked {
-  box-shadow:
-    0 0 0 1.5px var(--surface),
-    0 0 0 3px currentColor;
-}
-
-.day__more {
-  color: var(--text-dim);
-  font-size: 9.5px;
-}
-
 /* ── Schedule sheet ────────────────────────────────────────────────── */
 
 .card--button {
@@ -1748,4 +1659,168 @@ body {
   display: flex;
   gap: 8px;
   margin-left: auto;
+}
+
+/* ── Month grid ────────────────────────────────────────────────────── */
+
+.monthhead {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.monthhead__cell {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding-bottom: 3px;
+}
+
+.month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+/*
+ * Cells are square-ish and deliberately taller than the old week strip: they
+ * have to hold a bar row, a date, and up to six dots without crushing any of
+ * them.
+ */
+.daycell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  aspect-ratio: 1 / 1.12;
+  min-height: 62px;
+  padding: 4px 3px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.daycell--outside {
+  opacity: 0.38;
+}
+
+.daycell--past:not(.daycell--outside) {
+  background: var(--surface-sunken);
+}
+
+.daycell--today {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.daycell--selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.daycell__number {
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.daycell--today .daycell__number {
+  color: var(--accent);
+}
+
+/* Cooking is a PLAN — a bar across the top. */
+.daycell__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 4px;
+}
+
+.plannedbar {
+  display: block;
+  height: 3px;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--text-dim);
+}
+
+.plannedbar--cooked {
+  /* Cooked is done, so it recedes; planned is the thing still to do. */
+  opacity: 0.4;
+}
+
+.plannedbar--skipped {
+  opacity: 0.22;
+}
+
+/* Eating is a FACT — a dot per item. */
+.daycell__dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 3px;
+  flex: 1;
+  min-height: 9px;
+}
+
+.eatendot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Quick Add has no Component behind it, so it gets a neutral outline. */
+.eatendot--quick {
+  background: transparent;
+  border: 1.5px solid var(--text-dim);
+}
+
+.daycell__more {
+  color: var(--text-dim);
+  font-size: 9px;
+  line-height: 7px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0 0 18px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend__bar {
+  width: 14px;
+  height: 3px;
+}
+
+.legend__dot {
+  width: 7px;
+  height: 7px;
+}
+
+.daypanel__total {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }

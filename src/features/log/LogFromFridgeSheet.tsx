@@ -59,6 +59,7 @@ export function LogFromFridgeSheet({ entry, date, slot, onClose }: Props) {
       kind: 'fridge',
       fridgeEntryId: entry.id!,
       label: entry.componentName,
+      color: entry.componentColor,
       quantity,
       unit: entry.unit,
       grams,

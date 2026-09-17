@@ -27,6 +27,8 @@ export interface LogItemDraft {
   kind: 'fridge' | 'quick';
   fridgeEntryId?: number;
   label: string;
+  /** Snapshot of the source colour, so the calendar can dot it. */
+  color?: string;
   quantity: number;
   unit: string;
   grams: number;
@@ -209,6 +211,7 @@ function toStoredItem(item: LogItemDraft): MealLogItem {
     nutrients: item.nutrients,
     coverage: item.coverage ?? {},
     ...(item.fridgeEntryId === undefined ? {} : { fridgeEntryId: item.fridgeEntryId }),
+    ...(item.color === undefined ? {} : { color: item.color }),
   };
 }
 

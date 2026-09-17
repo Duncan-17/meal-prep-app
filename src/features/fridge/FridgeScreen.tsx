@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { AdjustSheet } from '@/features/fridge/AdjustSheet';
+import { AddFridgeItemSheet } from '@/features/fridge/AddFridgeItemSheet';
 import { PhasePlaceholder } from '@/ui/PhasePlaceholder';
 import { listFridge } from '@/db/fridge';
 import { fractionRemaining } from '@/domain/portions';
@@ -20,6 +21,7 @@ import type { FridgeEntry } from '@/domain/types';
 export function FridgeScreen() {
   const entries = useLiveQuery(() => listFridge(), []);
   const [adjusting, setAdjusting] = useState<FridgeEntry | null>(null);
+  const [adding, setAdding] = useState(false);
 
   // Keep the open sheet in step with live data after an adjustment.
   const live =
@@ -27,8 +29,15 @@ export function FridgeScreen() {
 
   return (
     <div className="screen">
-      <h1 className="screen__title">Fridge</h1>
-      <p className="screen__sub">What is cooked and waiting.</p>
+      <div className="screen__head">
+        <div>
+          <h1 className="screen__title">Fridge</h1>
+          <p className="screen__sub">What is cooked, bought and waiting.</p>
+        </div>
+        <button type="button" className="btn btn--primary" onClick={() => setAdding(true)}>
+          + Add
+        </button>
+      </div>
 
       {entries === undefined ? (
         <p className="screen__sub">Loading…</p>
@@ -55,6 +64,7 @@ export function FridgeScreen() {
       />
 
       <AdjustSheet entry={live} onClose={() => setAdjusting(null)} />
+      <AddFridgeItemSheet open={adding} onClose={() => setAdding(false)} />
     </div>
   );
 }
@@ -113,8 +123,9 @@ function EmptyFridge() {
     <div className="placeholder">
       <p style={{ margin: '0 0 10px', fontWeight: 600 }}>Nothing cooked yet</p>
       <p className="screen__sub" style={{ margin: 0 }}>
-        Schedule a cook on the Calendar, then mark it cooked — it lands here as stock you can log
-        meals from.
+        Two ways in: schedule a cook on the Calendar and mark it cooked, or tap{' '}
+        <strong>+ Add</strong>
+        for something you bought rather than made — milk, avocados, yoghurt.
       </p>
     </div>
   );
