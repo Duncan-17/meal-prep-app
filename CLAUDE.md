@@ -220,6 +220,21 @@ asked. Do not re-ask, and never substitute their Apple ID (`dncanzano@icloud.com
 
 ---
 
+## Deploying
+
+Cloudflare Pages, project **meal-prep-app**, built from the GitHub repo's `main` branch.
+
+- Build command `npm run build`, output directory `dist` (also declared in `wrangler.toml`).
+- `.node-version` pins Node 22. Without it Pages may pick a default older than the 20.19 that
+  Vite 7 requires, and the build fails on a machine that is not this one.
+- `USDA_API_KEY` is a **Secret** under Settings → Variables and Secrets. Not an environment
+  variable, and never in the repo.
+- The same Cloudflare account hosts an unrelated `unitedclash` Pages project and an
+  `unitedclash-proxy` Worker. Never rename this project into their namespace or connect Git to
+  theirs — `unitedclash` is deliberately "No Git connection".
+
+---
+
 ## Conventions
 
 **`src/domain/` is pure.** No Dexie imports, no React, no I/O — only functions over plain data.
