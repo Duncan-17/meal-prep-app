@@ -1,3 +1,0 @@
-# Client-side routing: serve index.html for any path the build didn't emit,
-# so /calendar and /fridge work on a hard refresh or a shared link.
-/*  /index.html  200

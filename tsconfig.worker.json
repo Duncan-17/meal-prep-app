@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.functions.tsbuildinfo",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
     "target": "ES2022",
     "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
 
-    // Cloudflare's runtime, not the DOM and not Node. A Pages Function that
-    // reached for `window` or `process` would typecheck here and fail at the
-    // edge, so this project is kept deliberately separate from the app's.
+    // Cloudflare's runtime, not the DOM and not Node. A Worker that reached
+    // for `window` or `process` would typecheck here and fail at the edge, so
+    // this project is kept deliberately separate from the app's.
     "types": ["@cloudflare/workers-types"],
 
     "strict": true,
@@ -25,5 +25,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["functions"]
+  "include": ["worker"]
 }

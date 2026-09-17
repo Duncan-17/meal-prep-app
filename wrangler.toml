@@ -1,9 +1,28 @@
-# Cloudflare Pages configuration.
+# Cloudflare Worker configuration.
 #
 # Secrets are NOT here. `USDA_API_KEY` lives in `.dev.vars` locally (gitignored)
-# and as an encrypted secret in the Pages dashboard in production. Anything in
+# and as an encrypted secret in the Worker's dashboard settings. Anything in
 # this file is committed and therefore public.
+#
+# This was a Pages project until 2026-09-17. Cloudflare's dashboard now creates
+# Workers by default, and a Worker with static assets is where the platform is
+# heading — so the app is served by the `[assets]` binding and `/api/*` is
+# handled by the Worker in `worker/index.ts`.
 
 name = "meal-prep-app"
+main = "worker/index.ts"
 compatibility_date = "2026-09-10"
-pages_build_output_dir = "dist"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+# Client-side routing: anything that is not a real file is served index.html so
+# a hard refresh on /calendar works. This replaces the `_redirects` rule, which
+# wrangler rejected as an infinite loop and which was never actually applied.
+not_found_handling = "single-page-application"
+
+# API calls reach the Worker BEFORE the asset handler. Without this the SPA
+# fallback above would answer /api/* with index.html — the exact failure mode
+# the service worker's navigateFallbackDenylist guards against on the client.
+run_worker_first = ["/api/*"]

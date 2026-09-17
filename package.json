@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:api": "wrangler pages dev --port 8788",
-    "serve:full": "npm run build && wrangler pages dev --port 8788",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name meal-prep-app",
+    "dev:api": "wrangler dev --port 8788",
+    "serve:full": "npm run build && wrangler dev --port 8788",
+    "deploy": "npm run build && wrangler deploy",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
