@@ -173,7 +173,11 @@ calendar stays readable.
 
 **Portion defaults.** Picking a food defaults to **its own portion**, not 100 g — USDA knows a
 Whopper weighs 291 g "per item", and making the user convert that by hand wastes data already in
-hand. Falls back to 100 g only when the food carries no portion at all.
+hand. Falls back to 100 g only when the food genuinely carries no portion.
+
+That data lives **only on the detail endpoint**: FDC search responses contain no `foodPortions`
+whatsoever. So every screen offering a food picker fetches the detail record on selection, which
+also buys full-precision nutrition since search rounds to about three significant figures.
 
 **Unit resolution.** `resolveToGrams(qty, unit, ingredient)` tries, in order:
 

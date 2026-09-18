@@ -1,0 +1,56 @@
+{
+  "fdcId": 170727,
+  "description": "BURGER KING, WHOPPER, no cheese",
+  "dataType": "SR Legacy",
+  "foodNutrients": [
+    {
+      "nutrientNumber": "435",
+      "nutrientName": "Folate, DFE",
+      "unitName": "UG",
+      "value": 70
+    },
+    {
+      "nutrientNumber": "204",
+      "nutrientName": "Total lipid (fat)",
+      "unitName": "G",
+      "value": 12.8
+    },
+    {
+      "nutrientNumber": "210",
+      "nutrientName": "Sucrose",
+      "unitName": "G",
+      "value": 1.7
+    },
+    {
+      "nutrientNumber": "211",
+      "nutrientName": "Glucose",
+      "unitName": "G",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "214",
+      "nutrientName": "Maltose",
+      "unitName": "G",
+      "value": 0.67
+    },
+    {
+      "nutrientNumber": "255",
+      "nutrientName": "Water",
+      "unitName": "G",
+      "value": 56.4
+    },
+    {
+      "nutrientNumber": "269",
+      "nutrientName": "Total Sugars",
+      "unitName": "G",
+      "value": 4.22
+    },
+    {
+      "nutrientNumber": "301",
+      "nutrientName": "Calcium, Ca",
+      "unitName": "MG",
+      "value": 39
+    }
+  ],
+  "foodPortions": []
+}

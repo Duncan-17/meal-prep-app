@@ -1,0 +1,79 @@
+{
+  "fdcId": 170727,
+  "description": "BURGER KING, WHOPPER, no cheese",
+  "dataType": "SR Legacy",
+  "foodNutrients": [
+    {
+      "nutrient": {
+        "number": "951",
+        "name": "Proximates",
+        "unitName": "g"
+      }
+    },
+    {
+      "nutrient": {
+        "number": "255",
+        "name": "Water",
+        "unitName": "g"
+      },
+      "amount": 56.43
+    },
+    {
+      "nutrient": {
+        "number": "208",
+        "name": "Energy",
+        "unitName": "kcal"
+      },
+      "amount": 233
+    },
+    {
+      "nutrient": {
+        "number": "268",
+        "name": "Energy",
+        "unitName": "kJ"
+      },
+      "amount": 974
+    },
+    {
+      "nutrient": {
+        "number": "203",
+        "name": "Protein",
+        "unitName": "g"
+      },
+      "amount": 10.74
+    },
+    {
+      "nutrient": {
+        "number": "204",
+        "name": "Total lipid (fat)",
+        "unitName": "g"
+      },
+      "amount": 12.84
+    },
+    {
+      "nutrient": {
+        "number": "207",
+        "name": "Ash",
+        "unitName": "g"
+      },
+      "amount": 1.43
+    },
+    {
+      "nutrient": {
+        "number": "956",
+        "name": "Carbohydrates",
+        "unitName": "g"
+      }
+    }
+  ],
+  "foodPortions": [
+    {
+      "amount": 1,
+      "gramWeight": 291,
+      "measureUnit": {
+        "name": "undetermined"
+      },
+      "modifier": "item"
+    }
+  ]
+}

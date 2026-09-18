@@ -16,6 +16,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Sheet } from '@/ui/Sheet';
 import { FoodSearch } from '@/features/foods/FoodSearch';
 import { logMeal, type LogItemDraft } from '@/db/logs';
+import { fetchFoodDetail } from '@/features/foods/api';
 import { listFavorites, recordFavoriteUse, saveFavorite, deleteFavorite } from '@/db/favorites';
 import { nutritionForGrams } from '@/domain/nutrients';
 import { defaultPortion, resolveToGrams, unitOptionsFor } from '@/nutrition/units';
@@ -37,6 +38,7 @@ export function QuickAddSheet({ open, date, slot, onClose }: Props) {
   const [unit, setUnit] = useState('g');
   const [alsoFavorite, setAlsoFavorite] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   function reset() {
     setChosen(null);
@@ -55,11 +57,22 @@ export function QuickAddSheet({ open, date, slot, onClose }: Props) {
   const grams = resolved?.grams ?? 0;
   const nutrients = chosen === null ? {} : nutritionForGrams(chosen.nutritionPer100g, grams);
 
-  function pickFood(picked: AdaptedFood) {
-    const portion = defaultPortion(picked);
-    setChosen(picked);
-    setQuantity(portion.quantity);
-    setUnit(portion.unit);
+  /**
+   * The detail endpoint is where serving sizes live — search results carry
+   * none. It also returns full-precision nutrition, where search rounds.
+   */
+  async function pickFood(picked: AdaptedFood) {
+    setLoading(true);
+    setError(null);
+    try {
+      const { food: detailed } = await fetchFoodDetail(picked);
+      const portion = defaultPortion(detailed);
+      setChosen(detailed);
+      setQuantity(portion.quantity);
+      setUnit(portion.unit);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function logChosen() {
@@ -150,7 +163,8 @@ export function QuickAddSheet({ open, date, slot, onClose }: Props) {
             </section>
           )}
 
-          <FoodSearch onSelect={pickFood} />
+          <FoodSearch onSelect={(picked) => void pickFood(picked)} />
+          {loading && <p className="foodsearch__status">Fetching serving sizes…</p>}
         </>
       ) : (
         <>

@@ -16,6 +16,7 @@ import { Sheet } from '@/ui/Sheet';
 import { ColorPicker } from '@/ui/ColorPicker';
 import { FoodSearch } from '@/features/foods/FoodSearch';
 import { addFridgeItem } from '@/db/fridge';
+import { fetchFoodDetail } from '@/features/foods/api';
 import { componentColors } from '@/db/components';
 import { listFridge } from '@/db/fridge';
 import { suggestUnusedSwatch } from '@/domain/color';
@@ -46,6 +47,7 @@ export function AddFridgeItemSheet({ open, onClose }: Props) {
   const [unitOfSize, setUnitOfSize] = useState('g');
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const existing = usedColors ?? [];
   const chosenColor = color ?? suggestUnusedSwatch(existing.map((entry) => entry.color));
@@ -66,13 +68,24 @@ export function AddFridgeItemSheet({ open, onClose }: Props) {
     onClose();
   }
 
-  function pick(picked: AdaptedFood) {
-    setFood(picked);
-    setLabel(picked.name);
-    // If the food knows what one of it weighs, counting is the natural default.
-    const portion = defaultPortion(picked);
-    setUnitSize(portion.quantity);
-    setUnitOfSize(portion.unit);
+  /**
+   * Search results carry NO portion data — USDA only returns `foodPortions` on
+   * the detail endpoint. Picking straight from a search result is why this
+   * used to default to 100 g for a burger that knows it weighs 291 g.
+   */
+  async function pick(picked: AdaptedFood) {
+    setLoading(true);
+    setError(null);
+    try {
+      const { food: detailed } = await fetchFoodDetail(picked);
+      setFood(detailed);
+      setLabel(detailed.name);
+      const portion = defaultPortion(detailed);
+      setUnitSize(portion.quantity);
+      setUnitOfSize(portion.unit);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Grams in ONE unit — one avocado, or one gram of milk if measured by weight.
@@ -118,7 +131,8 @@ export function AddFridgeItemSheet({ open, onClose }: Props) {
           <p className="screen__sub">
             Something you bought rather than cooked — milk, avocados, yoghurt.
           </p>
-          <FoodSearch onSelect={pick} />
+          <FoodSearch onSelect={(picked) => void pick(picked)} />
+          {loading && <p className="foodsearch__status">Fetching serving sizes…</p>}
         </>
       ) : (
         <>
@@ -158,22 +172,7 @@ export function AddFridgeItemSheet({ open, onClose }: Props) {
 
           <label className="field">
             <span className="field__label">
-              {style === 'discrete' ? 'How many' : 'How many containers'}
-            </span>
-            <input
-              className="field__input yield__qty"
-              type="number"
-              inputMode="decimal"
-              step="any"
-              min="0"
-              value={count}
-              onChange={(event) => setCount(Number(event.target.value))}
-            />
-          </label>
-
-          <label className="field">
-            <span className="field__label">
-              {style === 'discrete' ? 'Size of one' : 'Size of one container'}
+              {style === 'discrete' ? 'One serving is' : 'One container is'}
             </span>
             <div className="yield">
               <input
@@ -197,6 +196,21 @@ export function AddFridgeItemSheet({ open, onClose }: Props) {
                 ))}
               </select>
             </div>
+          </label>
+
+          <label className="field">
+            <span className="field__label">
+              {style === 'discrete' ? 'How many servings' : 'How many containers'}
+            </span>
+            <input
+              className="field__input yield__qty"
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min="0"
+              value={count}
+              onChange={(event) => setCount(Number(event.target.value))}
+            />
           </label>
 
           {perUnitGrams <= 0 ? (
