@@ -287,7 +287,7 @@ export function defaultPortion(food: Pick<Ingredient, 'portionGrams'>): {
   return { quantity: 100, unit: 'g' };
 }
 
-const WHOLE_UNIT_PREFERENCE = ['each', 'serving', 'piece', 'slice', 'unit', 'portion'];
+const WHOLE_UNIT_PREFERENCE = ['serving', 'each', 'piece', 'slice', 'unit', 'portion'];
 
 /**
  * Units to offer for a food, its own portions first.

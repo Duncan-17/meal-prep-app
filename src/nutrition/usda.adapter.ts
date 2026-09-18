@@ -84,10 +84,67 @@ export function adaptUsdaFood(raw: unknown): AdaptedFood | null {
   const brand = asString(food.brandOwner) ?? asString(food.brandName);
   if (brand !== null && brand.length > 0) adapted.brand = brand;
 
-  const portions = adaptPortions(food.foodPortions);
-  if (portions !== null) adapted.portionGrams = portions;
+  // Two different shapes again. Foundation/SR Legacy/Survey use `foodPortions`;
+  // Branded foods have NONE of those and carry `servingSize` instead. Reading
+  // only the first is why a branded burger defaulted to 100 g.
+  const portions = {
+    ...(adaptPortions(food.foodPortions) ?? {}),
+    ...(adaptServingSize(food) ?? {}),
+  };
+  if (Object.keys(portions).length > 0) adapted.portionGrams = portions;
 
   return adapted;
+}
+
+/**
+ * A Branded food's serving size, as grams for one serving.
+ *
+ * Only mass units are taken. A serving quoted in millilitres would need a
+ * density to become grams, and `resolveToGrams` already has a ladder for that
+ * — guessing here would bury an approximation inside what looks like a
+ * measured figure.
+ */
+function adaptServingSize(food: Record<string, unknown>): Record<string, number> | null {
+  const size = asNumber(food.servingSize);
+  const unit = asString(food.servingSizeUnit);
+  if (size === null || size <= 0 || unit === null) return null;
+
+  const grams = servingUnitToGrams(size, unit);
+  if (grams === null) return null;
+
+  const out: Record<string, number> = { serving: grams };
+
+  // "1 patty", "2 cookies" — a name the user recognises, when it is a plain
+  // count of something. Anything more elaborate is left alone.
+  const household = asString(food.householdServingFullText);
+  const match = household === null ? null : /^\s*(\d+(?:\.\d+)?)\s+([a-z ]+?)\s*$/i.exec(household);
+  const countText = match?.[1];
+  const nameText = match?.[2];
+  if (countText !== undefined && nameText !== undefined) {
+    const count = Number(countText);
+    const key = normalizeUnit(nameText.trim());
+    if (count > 0 && key !== '' && out[key] === undefined) {
+      out[key] = grams / count;
+    }
+  }
+
+  return out;
+}
+
+const SERVING_MASS_UNITS: Record<string, number> = {
+  g: 1,
+  grm: 1,
+  gram: 1,
+  grams: 1,
+  mg: 0.001,
+  kg: 1000,
+  oz: 28.349523125,
+  lb: 453.59237,
+};
+
+function servingUnitToGrams(size: number, unit: string): number | null {
+  const factor = SERVING_MASS_UNITS[unit.trim().toLowerCase()];
+  return factor === undefined ? null : size * factor;
 }
 
 /** Map a `/foods/search` response into a list of adapted foods. */

@@ -137,13 +137,51 @@ export async function fetchFoodDetail(
     const adapted = adaptUsdaFood(body);
     if (adapted === null) return { food, precise: false };
 
-    const raw = new Map<string, unknown>([[foodKey('usda', adapted.sourceId), body]]);
-    await cacheFoods([{ ...adapted, precise: true }], raw);
-    return { food: adapted, precise: true };
+    const merged = mergeDetail(food, adapted);
+    const raw = new Map<string, unknown>([[foodKey('usda', merged.sourceId), body]]);
+    await cacheFoods([merged], raw);
+    return { food: merged, precise: merged.precise === true };
   } catch {
     // Aborted or offline — the caller still gets something usable.
     return { food, precise: false };
   }
+}
+
+/**
+ * Combine a search result with its detail record, taking the better half of
+ * each. **A detail fetch must never make the data worse.**
+ *
+ * That is not hypothetical. FDC's detail response for a Branded food returns
+ * `foodNutrients` entries carrying only an internal `id` and an `amount` — no
+ * nutrient number, no name, no unit — and an empty `labelNutrients`. There is
+ * nothing to map. The search result for the same food carries all fifteen
+ * nutrients fully described. Blindly preferring the detail record would wipe
+ * the nutrition off every branded food in the database.
+ *
+ * So: portions come from the detail record (search has none at all), and
+ * nutrition comes from whichever actually knows more.
+ */
+function mergeDetail(fromSearch: AdaptedFood, fromDetail: AdaptedFood): AdaptedFood {
+  const detailKnows = Object.keys(fromDetail.nutritionPer100g).length;
+  const searchKnows = Object.keys(fromSearch.nutritionPer100g).length;
+  const useDetailNutrition = detailKnows >= searchKnows;
+
+  const portions = {
+    ...(fromSearch.portionGrams ?? {}),
+    ...(fromDetail.portionGrams ?? {}),
+  };
+
+  return {
+    ...fromDetail,
+    nutritionPer100g: useDetailNutrition
+      ? fromDetail.nutritionPer100g
+      : fromSearch.nutritionPer100g,
+    ...(Object.keys(portions).length > 0 ? { portionGrams: portions } : {}),
+    // Only the detail endpoint gives full precision; if its nutrition was
+    // unusable then what we kept is the rounded search copy, and saying
+    // otherwise would be a lie the cache then remembers.
+    precise: useDetailNutrition,
+  };
 }
 
 function toApiError(body: unknown, status: number): FoodApiError {

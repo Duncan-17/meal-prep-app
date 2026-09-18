@@ -48,10 +48,19 @@ from `main` on every push.
 - **USDA throttles and reports it as a 400, not a 429.** Measured: back to back, the same query
   failed ~1 in 3; spaced two seconds apart, 16 in a row passed. The Worker retries with a
   SECONDS-scale backoff — a 120 ms one did nothing. Do not "fix" this by removing the retry.
-- **FDC search responses carry NO `foodPortions`, and round their numbers.** Every screen that
-  lets the user pick a food must `fetchFoodDetail` first — otherwise a burger that knows it
-  weighs 291 g defaults to "100 g". This bit the fridge and Quick Add sheets after the builder
-  was already doing it right; `portions.live.test.ts` pins both halves.
+- **FDC has three response shapes, and neither endpoint is sufficient alone.**
+  - Search carries no `foodPortions` at all and rounds its numbers, so a picker that uses it
+    raw defaults a 291 g burger to "100 g".
+  - Detail carries the portions — but for **Branded** foods its `foodNutrients` have only an
+    internal id and an amount, no descriptor, and `labelNutrients` is empty. Adapting it yields
+    ZERO nutrients while the search result for the same food has all fifteen.
+  - Branded foods also have no `foodPortions`; their serving size is in `servingSize` /
+    `householdServingFullText`.
+
+  Hence `mergeDetail` in `features/foods/api.ts`: portions from detail, nutrition from whichever
+  knows more. **A detail fetch must never make the data worse.** `portions.live.test.ts` and
+  `branded.live.test.ts` pin every branch against real captured responses.
+
 - **Batch `scale` is separate from the snapshot.** The snapshot is one base batch; scale says how
   many.
 - **Colour distinctness is OKLab, not RGB**, and the chart palette was validated for

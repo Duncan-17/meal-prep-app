@@ -1,0 +1,98 @@
+{
+  "fdcId": 1870455,
+  "description": "BURGER",
+  "dataType": "Branded",
+  "brandOwner": "WML Solutions, LLC ",
+  "foodNutrients": [
+    {
+      "nutrientNumber": "203",
+      "nutrientName": "Protein",
+      "unitName": "G",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "204",
+      "nutrientName": "Total lipid (fat)",
+      "unitName": "G",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "205",
+      "nutrientName": "Carbohydrate, by difference",
+      "unitName": "G",
+      "value": 23.5
+    },
+    {
+      "nutrientNumber": "208",
+      "nutrientName": "Energy",
+      "unitName": "KCAL",
+      "value": 88
+    },
+    {
+      "nutrientNumber": "269",
+      "nutrientName": "Total Sugars",
+      "unitName": "G",
+      "value": 11.8
+    },
+    {
+      "nutrientNumber": "291",
+      "nutrientName": "Fiber, total dietary",
+      "unitName": "G",
+      "value": 5.9
+    },
+    {
+      "nutrientNumber": "301",
+      "nutrientName": "Calcium, Ca",
+      "unitName": "MG",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "303",
+      "nutrientName": "Iron, Fe",
+      "unitName": "MG",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "306",
+      "nutrientName": "Potassium, K",
+      "unitName": "MG",
+      "value": 206
+    },
+    {
+      "nutrientNumber": "307",
+      "nutrientName": "Sodium, Na",
+      "unitName": "MG",
+      "value": 3180
+    },
+    {
+      "nutrientNumber": "318",
+      "nutrientName": "Vitamin A, IU",
+      "unitName": "IU",
+      "value": 1180
+    },
+    {
+      "nutrientNumber": "401",
+      "nutrientName": "Vitamin C, total ascorbic acid",
+      "unitName": "MG",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "601",
+      "nutrientName": "Cholesterol",
+      "unitName": "MG",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "605",
+      "nutrientName": "Fatty acids, total trans",
+      "unitName": "G",
+      "value": 0
+    },
+    {
+      "nutrientNumber": "606",
+      "nutrientName": "Fatty acids, total saturated",
+      "unitName": "G",
+      "value": 0
+    }
+  ]
+}

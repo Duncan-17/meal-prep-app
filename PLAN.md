@@ -179,6 +179,13 @@ That data lives **only on the detail endpoint**: FDC search responses contain no
 whatsoever. So every screen offering a food picker fetches the detail record on selection, which
 also buys full-precision nutrition since search rounds to about three significant figures.
 
+But the detail record cannot simply replace the search result. For **Branded** foods its
+nutrients arrive with no descriptor at all — an internal id and an amount, nothing else — and
+adapting it produces zero nutrients where the search result had fifteen. Branded foods also lack
+`foodPortions` entirely and keep their serving size in `servingSize`. So the two responses are
+**merged**: portions from detail, nutrition from whichever actually knows more. A detail fetch
+must never make the data worse.
+
 **Unit resolution.** `resolveToGrams(qty, unit, ingredient)` tries, in order:
 
 1. Mass units → direct conversion

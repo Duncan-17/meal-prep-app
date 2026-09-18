@@ -1,0 +1,43 @@
+{
+  "fdcId": 1870455,
+  "description": "BURGER",
+  "dataType": "Branded",
+  "brandOwner": "WML Solutions, LLC ",
+  "servingSize": 17,
+  "servingSizeUnit": "g",
+  "householdServingFullText": "1 Tbsp",
+  "foodNutrients": [
+    {
+      "type": "FoodNutrient",
+      "id": 23480915,
+      "amount": 0
+    },
+    {
+      "type": "FoodNutrient",
+      "id": 23480907,
+      "amount": 5.9
+    },
+    {
+      "type": "FoodNutrient",
+      "id": 23480909,
+      "amount": 0
+    },
+    {
+      "type": "FoodNutrient",
+      "id": 23480908,
+      "amount": 0
+    },
+    {
+      "type": "FoodNutrient",
+      "id": 23480905,
+      "amount": 88
+    },
+    {
+      "type": "FoodNutrient",
+      "id": 23480903,
+      "amount": 0
+    }
+  ],
+  "foodPortions": [],
+  "labelNutrients": {}
+}
