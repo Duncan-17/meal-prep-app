@@ -37,7 +37,7 @@ export function LogScreen() {
   return (
     <div className="screen">
       <div className="screen__head">
-        <h1 className="screen__title">Log</h1>
+        <h1 className="screen__title">Diary</h1>
         <Link className="btn" to="/plan">
           Plan
         </Link>

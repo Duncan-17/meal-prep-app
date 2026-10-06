@@ -45,8 +45,8 @@ export function PinnedNutrients() {
     <section className="section">
       <h2 className="section__title">Pinned nutrients</h2>
       <p className="screen__sub">
-        Shown as meters on the Log screen. The first {MAX_SERIES} are the lines on the weekly chart
-        — order matters.
+        Shown as meters on the Diary screen. The first {MAX_SERIES} are the lines on the weekly
+        chart — order matters.
       </p>
 
       <ol className="pinned">

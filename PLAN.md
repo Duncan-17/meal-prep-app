@@ -28,6 +28,15 @@ Single user, no auth, local-first.
 
 Multi-device sync / auth · sharing · expiration alerts · recipe photos.
 
+> Re-confirmed 2026-10-06. The user hit this in practice — a phone shows nothing a laptop
+> entered — was offered sync, and chose to stay local. The handoff is the JSON backup:
+> Plan → Export a backup, then Restore from a file on the other device. It replaces rather than
+> merges, which is the honest limitation of a snapshot.
+
+> **Naming, 2026-10-06.** The UI calls them **Recipes** and the log tab **Diary**; "Component"
+> was vague to the one person using it. The CODE keeps `Component` — stored snapshots carry
+> `componentId`/`componentName` and renaming the model would rewrite history for no gain.
+
 ---
 
 ## 2. Architecture
@@ -199,18 +208,18 @@ Returns a confidence flag that feeds coverage.
 
 ## 5. Screens
 
-Bottom tab bar, four tabs — **Calendar · Components · Fridge · Log** — plus a floating "+" on
+Bottom tab bar, four tabs — **Calendar · Recipes · Fridge · Diary** — plus a floating "+" on
 Calendar and Fridge for quick logging.
 
-| Screen                | Content                                                                                                                                                                                                               |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Calendar**          | Week strip with `‹ ›` nav. _Overview_: one mark per meal log, colored by Component — fixed squares for discrete, size-scaled blobs for bulk. _Specific_: mini bars for pinned micronutrients. Tap a day → Day Detail. |
-| **Day Detail**        | Every MealLog that day, full grouped nutrient table vs. target, coverage indicators, edit/delete individual entries.                                                                                                  |
-| **Component Library** | Card list with color dot, category, yield. Tap → detail (ingredients, per-unit nutrition, Edit / Schedule / Delete).                                                                                                  |
-| **Component Builder** | Name, color, category, portion style, unit, base yield, ingredient list with search + reorder, live nutrition summary.                                                                                                |
-| **Fridge**            | Discrete: `4 of 6 servings left`. Bulk: progress bar + `62% left · ≈1.9kg`. Actions: Log, Adjust, Discard remaining.                                                                                                  |
-| **Log Meal**          | _From Fridge_ tab — steppers for discrete, percent picker (of remaining) for bulk with live gram/kcal preview. _Quick Add_ tab — search, barcode scan, manual entry, favorites row.                                   |
-| **Settings**          | Nutrient targets editor, pinned-nutrient management, JSON export/import.                                                                                                                                              |
+| Screen                                      | Content                                                                                                                                                                                                               |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Calendar**                                | Week strip with `‹ ›` nav. _Overview_: one mark per meal log, colored by Component — fixed squares for discrete, size-scaled blobs for bulk. _Specific_: mini bars for pinned micronutrients. Tap a day → Day Detail. |
+| **Day Detail**                              | Every MealLog that day, full grouped nutrient table vs. target, coverage indicators, edit/delete individual entries.                                                                                                  |
+| **Recipes** (code: Component Library)       | Card list with color dot, category, yield. Tap → detail (ingredients, per-unit nutrition, Edit / Schedule / Delete).                                                                                                  |
+| **Recipe Builder** (code: ComponentBuilder) | Name, color, category, portion style, unit, base yield, ingredient list with search + reorder, live nutrition summary.                                                                                                |
+| **Fridge**                                  | Discrete: `4 of 6 servings left`. Bulk: progress bar + `62% left · ≈1.9kg`. Actions: Log, Adjust, Discard remaining.                                                                                                  |
+| **Log Meal**                                | _From Fridge_ tab — steppers for discrete, percent picker (of remaining) for bulk with live gram/kcal preview. _Quick Add_ tab — search, barcode scan, manual entry, favorites row.                                   |
+| **Settings**                                | Nutrient targets editor, pinned-nutrient management, JSON export/import.                                                                                                                                              |
 
 ---
 

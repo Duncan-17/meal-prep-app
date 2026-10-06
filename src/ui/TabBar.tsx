@@ -24,7 +24,7 @@ const TABS: Tab[] = [
   },
   {
     to: '/components',
-    label: 'Components',
+    label: 'Recipes',
     icon: (
       <svg className="tabbar__icon" viewBox="0 0 24 24" aria-hidden="true">
         <rect x="3" y="3" width="7.5" height="7.5" rx="2" {...stroke} />
@@ -46,7 +46,7 @@ const TABS: Tab[] = [
   },
   {
     to: '/log',
-    label: 'Log',
+    label: 'Diary',
     icon: (
       <svg className="tabbar__icon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3.2-7 3.2v-15a2 2 0 0 1 2-2Z" {...stroke} />

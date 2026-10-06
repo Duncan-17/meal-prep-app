@@ -57,7 +57,7 @@ export function ScheduleSheet({ day, onClose }: Props) {
         <p className="screen__sub">Loading…</p>
       ) : components.length === 0 ? (
         <p className="screen__sub">
-          No Components yet. Build one first — the Components tab is where they live.
+          No recipes yet. Build one first — the Recipes tab is where they live.
         </p>
       ) : selected === null ? (
         <ul className="cards">

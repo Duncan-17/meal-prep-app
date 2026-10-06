@@ -38,7 +38,7 @@ export function DayPanel({ day, batches, logs, onSchedule, onCook }: Props) {
       <h3 className="plangroup__title">Eaten</h3>
       {items.length === 0 ? (
         <p className="screen__sub">
-          Nothing logged. <Link to="/log">Log something</Link>.
+          Nothing logged. <Link to="/log">Add something</Link>.
         </p>
       ) : (
         <ul className="cards">

@@ -8,8 +8,9 @@ calendar, track servings as fridge stock, and log meals to see macro + micronutr
 - **[CLAUDE.md](CLAUDE.md)** — build status + conventions, auto-loaded by Claude Code
 
 > **Status:** **Live and in use** — all eight phases complete, **406 tests** passing, deployed to
-> Cloudflare as a Worker. Build Components, schedule a cook, mark it cooked into the fridge, log
-> meals from it, add things you simply bought, and see the month against an editable plan.
+> Cloudflare as a Worker. Build Recipes, schedule a cook, mark it cooked into the fridge, log meals
+> from it, add things you simply bought, and see the month against an editable plan. Data is
+> local to each device by design — move it with the JSON backup on the Plan screen.
 > Installable, offline-capable, and now being refined against real use. Source is
 > backed up at <https://github.com/Duncan-17/meal-prep-app> (private).
 

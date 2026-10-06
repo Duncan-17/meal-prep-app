@@ -19,8 +19,8 @@ export function ComponentLibraryScreen() {
     <div className="screen">
       <div className="screen__head">
         <div>
-          <h1 className="screen__title">Components</h1>
-          <p className="screen__sub">Reusable batch-cookable items.</p>
+          <h1 className="screen__title">Recipes</h1>
+          <p className="screen__sub">Things you cook a batch of, built from ingredients.</p>
         </div>
         <Link className="btn btn--primary" to="/components/new">
           + New
@@ -79,10 +79,10 @@ function describe(component: Component): string {
 function EmptyLibrary() {
   return (
     <div className="placeholder">
-      <p style={{ margin: '0 0 10px', fontWeight: 600 }}>No Components yet</p>
+      <p style={{ margin: '0 0 10px', fontWeight: 600 }}>No recipes yet</p>
       <p className="screen__sub" style={{ margin: 0 }}>
-        A Component is something you cook a batch of — chicken thighs, a pot of rice, a tub of
-        guacamole. Build one and it becomes schedulable, cookable and loggable.
+        A recipe is something you cook a batch of — chicken thighs, a pot of rice, a tub of
+        guacamole. Name it, list what goes in, and it becomes schedulable, cookable and loggable.
       </p>
     </div>
   );

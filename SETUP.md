@@ -209,6 +209,26 @@ If you don't have one, I'll make a plain typographic placeholder.
 
 ---
 
+## Moving your data between devices
+
+Everything lives in **this browser, on this device**. Your phone and your laptop keep entirely
+separate databases — that is deliberate (PLAN.md §1, re-confirmed 2026-10-06), not a bug.
+
+To move it:
+
+1. On the device that has the data: **Diary → Plan → Export a backup**. A JSON file lands in
+   your downloads.
+2. Get the file onto the other device however suits — AirDrop, email, a cloud folder.
+3. There: **Plan → Restore from a file**, pick it, confirm.
+
+⚠️ **Restore replaces, it does not merge.** Whatever is on the receiving device is wiped. If both
+devices have things you want, export the receiving one first.
+
+The same export is your only backup against clearing site data, or iOS evicting storage from a
+site you have not opened in about seven weeks. The Plan screen nags when it has been a fortnight.
+
+---
+
 ## Quick status
 
 | #   | Item                            | Blocks                        | Status                                      |

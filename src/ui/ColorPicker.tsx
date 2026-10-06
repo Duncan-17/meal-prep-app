@@ -20,7 +20,7 @@ import {
 interface Props {
   value: string;
   onChange: (hex: string) => void;
-  /** Other Components, for the clash check. */
+  /** Other recipes, for the clash check. */
   existing: ReadonlyArray<{ name: string; color: string }>;
 }
 

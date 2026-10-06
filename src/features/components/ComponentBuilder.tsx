@@ -185,7 +185,7 @@ export function ComponentBuilder() {
 
   return (
     <div className="screen">
-      <h1 className="screen__title">{draft.id === undefined ? 'New Component' : 'Edit'}</h1>
+      <h1 className="screen__title">{draft.id === undefined ? 'New recipe' : 'Edit recipe'}</h1>
 
       <label className="field">
         <span className="field__label">Name</span>

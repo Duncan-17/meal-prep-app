@@ -65,6 +65,16 @@ from `main` on every push.
   many.
 - **Colour distinctness is OKLab, not RGB**, and the chart palette was validated for
   colour-vision deficiency rather than chosen by eye.
+- **UI names and code names differ on purpose.** The tabs read **Recipes** and **Diary**; the
+  code says `Component` and `log` everywhere, and must keep doing so. Every stored snapshot —
+  batches, fridge entries, meal logs — carries `componentId` / `componentName`, so renaming the
+  model means a migration that rewrites history for no user-visible gain. Routes stay `/components`
+  and `/log` for the same reason. Change labels freely; leave identifiers alone.
+- **Local-only is a decision, not an oversight** (confirmed by the user 2026-10-06). Data lives in
+  IndexedDB, which is per-browser and per-device, so a phone never sees what a laptop entered.
+  Moving data between devices is Plan → Export a backup → Restore from a file, which REPLACES
+  rather than merges. The user was offered sync and chose to keep it local. Do not build sync
+  without asking again.
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
   render a neutral dot on purpose; rewriting them would be rewriting history.
 
