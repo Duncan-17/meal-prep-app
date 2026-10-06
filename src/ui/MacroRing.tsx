@@ -18,6 +18,7 @@
 import { progressFor, type NutrientTarget } from '@/domain/plan';
 import { formatAmount, getNutrient, nutrientName } from '@/nutrition/registry';
 import { STATUS_COLORS, macroColor, prefersDark } from '@/ui/vizPalette';
+import { placeSegments, type Segment } from '@/domain/contributions';
 
 interface Props {
   nutrientKey: string;
@@ -25,6 +26,12 @@ interface Props {
   target: NutrientTarget | undefined;
   /** Diameter in px. The stroke scales with it. */
   size?: number;
+  /**
+   * Split the arc by the food each part came from. Past the goal the ring is
+   * full and the segments share it by their proportion of the total, so the
+   * mix stays readable; the label and the "over" line carry the overshoot.
+   */
+  segments?: readonly Segment[] | undefined;
 }
 
 /** The registry's formal names are too long to sit under a 96px ring. */
@@ -35,7 +42,7 @@ const SHORT_LABEL: Record<string, string> = {
   energy_kcal: 'Calories',
 };
 
-export function MacroRing({ nutrientKey, amount, target, size = 96 }: Props) {
+export function MacroRing({ nutrientKey, amount, target, size = 96, segments }: Props) {
   const dark = prefersDark();
   const unit = getNutrient(nutrientKey)?.unit ?? '';
 
@@ -87,21 +94,45 @@ export function MacroRing({ nutrientKey, amount, target, size = 96 }: Props) {
           stroke="var(--surface-sunken)"
           strokeWidth={stroke}
         />
-        {drawn > 0 && (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={colour}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            // Start at twelve o'clock rather than three.
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          />
-        )}
+        {drawn > 0 && segments !== undefined && segments.length > 0 && target !== undefined
+          ? placeSegments(segments, over ? Math.max(amount, target.amount) : target.amount).map(
+              ({ segment, start, length }, index, all) => {
+                // A hairline gap between neighbours, so two close colours
+                // still read as two foods. Skipped on slivers it would erase.
+                const gap = all.length > 1 && length * circumference > 4 ? 1.5 : 0;
+                return (
+                  <circle
+                    key={`${segment.label}-${index}`}
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="none"
+                    stroke={segment.color ?? 'var(--segment-neutral)'}
+                    strokeWidth={stroke}
+                    strokeDasharray={`${length * circumference - gap} ${circumference}`}
+                    strokeDashoffset={-start * circumference}
+                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                  >
+                    <title>{`${segment.label} · ${formatAmount(nutrientKey, segment.amount)} ${unit}`}</title>
+                  </circle>
+                );
+              },
+            )
+          : drawn > 0 && (
+              <circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke={colour}
+                strokeWidth={stroke}
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={dashOffset}
+                // Start at twelve o'clock rather than three.
+                transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              />
+            )}
       </svg>
 
       <span className="ring__centre">

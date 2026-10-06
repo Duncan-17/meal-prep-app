@@ -139,9 +139,6 @@ export function MarkCookedSheet({ batch, onClose, onCooked }: Props) {
           {lines !== null && lines.length > 0 && (
             <section className="section">
               <h3 className="plangroup__title">What actually went in</h3>
-              <p className="screen__sub">
-                Adjust anything that differed. Nutrition is recalculated from these.
-              </p>
 
               <ul className="amounts">
                 {lines.map((line) => {

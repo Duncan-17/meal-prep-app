@@ -16,6 +16,7 @@ import { listFridge } from '@/db/fridge';
 import { dayTotals, deleteMealLog, listLogsForDay } from '@/db/logs';
 import { DayDetail } from '@/features/log/DayDetail';
 import { TargetBar } from '@/ui/TargetBar';
+import { segmentsForLogs, type SegmentsFor } from '@/ui/SegmentedFill';
 import { listTargets } from '@/db/plan';
 import { targetsByKey } from '@/nutrition/targets';
 import { DEFAULT_PINNED_NUTRIENTS, formatAmount } from '@/nutrition/registry';
@@ -37,14 +38,20 @@ export function LogScreen() {
   const stock = useLiveQuery(() => listFridge(), []);
   const targets = useLiveQuery(() => listTargets(), []);
   const byKey = targetsByKey(targets ?? []);
+  const segmentsFor = segmentsForLogs(logs ?? []);
 
   return (
     <div className="screen">
       <div className="screen__head">
         <h1 className="screen__title">Diary</h1>
-        <Link className="btn" to="/plan">
-          Plan
-        </Link>
+        <div className="screen__actions">
+          <Link className="btn" to="/plan">
+            Plan
+          </Link>
+          <button type="button" className="btn btn--primary" onClick={() => setQuickAdd(true)}>
+            + Log food
+          </button>
+        </div>
       </div>
 
       <div className="weeknav">
@@ -68,7 +75,7 @@ export function LogScreen() {
       </div>
 
       {totals !== undefined && targets !== undefined && (
-        <TodaySummary totals={totals} targets={byKey} />
+        <TodaySummary totals={totals} targets={byKey} segmentsFor={segmentsFor} />
       )}
 
       <section className="section">
@@ -93,9 +100,7 @@ export function LogScreen() {
         {stock === undefined ? (
           <p className="screen__sub">Loading…</p>
         ) : stock.length === 0 ? (
-          <p className="screen__sub">
-            Nothing cooked. Schedule a batch on the Calendar and mark it cooked.
-          </p>
+          <p className="screen__sub">Nothing in the fridge.</p>
         ) : (
           <ul className="cards">
             {stock.map((entry) => (
@@ -123,12 +128,8 @@ export function LogScreen() {
         )}
       </section>
 
-      <button type="button" className="btn btn--primary" onClick={() => setQuickAdd(true)}>
-        + Quick Add something else
-      </button>
-
       {totals !== undefined && Object.keys(totals.nutrients).length > 0 && (
-        <PinnedTotals totals={totals} targets={byKey} />
+        <PinnedTotals totals={totals} targets={byKey} segmentsFor={segmentsFor} />
       )}
 
       <LogFromFridgeSheet
@@ -153,6 +154,12 @@ function LoggedMeal({ log, onDelete }: { log: MealLog; onDelete: () => void }) {
       <span className="card__body">
         {log.items.map((item, index) => (
           <span key={`${item.label}-${index}`} className="card__name">
+            {/* The key to the bars above: this food's slice is this colour. */}
+            <span
+              className={`eatendot loggeddot${item.color === undefined ? ' eatendot--quick' : ''}`}
+              style={item.color === undefined ? undefined : { background: item.color }}
+              aria-hidden="true"
+            />
             {item.label}
             <span className="card__meta">
               {' '}
@@ -194,9 +201,11 @@ function LoggedMeal({ log, onDelete }: { log: MealLog; onDelete: () => void }) {
 function PinnedTotals({
   totals,
   targets,
+  segmentsFor,
 }: {
   totals: NutrientAggregate;
   targets: Map<string, NutrientTarget>;
+  segmentsFor: SegmentsFor;
 }) {
   const [pinned, setPinned] = useState<string[]>([...DEFAULT_PINNED_NUTRIENTS]);
   const settings = useLiveQuery(() => db.settings.get('settings'), []);
@@ -209,7 +218,9 @@ function PinnedTotals({
   }, [settings]);
 
   const shown = pinned.filter((key) => key in totals.nutrients && !RINGED.has(key));
-  if (shown.length === 0) return <DayDetail totals={totals} targets={targets} />;
+  if (shown.length === 0) {
+    return <DayDetail totals={totals} targets={targets} segmentsFor={segmentsFor} />;
+  }
 
   return (
     <>
@@ -222,11 +233,12 @@ function PinnedTotals({
             amount={totals.nutrients[key] ?? 0}
             target={targets.get(key)}
             coverage={totals.coverage}
+            segments={segmentsFor(key)}
           />
         ))}
       </section>
 
-      <DayDetail totals={totals} targets={targets} />
+      <DayDetail totals={totals} targets={targets} segmentsFor={segmentsFor} />
     </>
   );
 }

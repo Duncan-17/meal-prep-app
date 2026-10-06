@@ -15,6 +15,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { TrendsChart } from '@/features/insight/TrendsChart';
 import { WeightChart } from '@/features/insight/WeightChart';
 import { TargetBar } from '@/ui/TargetBar';
+import { segmentsForLogs } from '@/ui/SegmentedFill';
+import { listLogsInRange } from '@/db/logs';
+import { weekDays } from '@/domain/dates';
 import { daysLogged, weekSeries, weekTotals, weekWeights } from '@/db/insight';
 import { getPlan, listTargets } from '@/db/plan';
 import { db } from '@/db/schema';
@@ -30,6 +33,12 @@ export default function WeekInsight({ weekStart }: { weekStart: DayKey }) {
   const targets = useLiveQuery(() => listTargets(), []);
   const plan = useLiveQuery(() => getPlan(), []);
   const settings = useLiveQuery(() => db.settings.get('settings'), []);
+  const days = weekDays(weekStart);
+  const weekLogs = useLiveQuery(
+    () => listLogsInRange(days[0] ?? weekStart, days[days.length - 1] ?? weekStart),
+    [weekStart],
+  );
+  const segmentsFor = segmentsForLogs(weekLogs ?? []);
 
   if (series === undefined || totals === undefined || targets === undefined) {
     return <p className="screen__sub">Loading…</p>;
@@ -68,6 +77,7 @@ export default function WeekInsight({ weekStart }: { weekStart: DayKey }) {
                     target === undefined ? undefined : { ...target, amount: weeklyAmount(target) }
                   }
                   coverage={totals.coverage}
+                  segments={segmentsFor(key)}
                 />
               );
             })}

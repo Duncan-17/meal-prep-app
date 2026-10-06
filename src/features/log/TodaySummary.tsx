@@ -15,6 +15,7 @@ import { coverageNote, isLowCoverage } from '@/domain/coverage';
 import { progressFor, type NutrientTarget } from '@/domain/plan';
 import { formatAmount } from '@/nutrition/registry';
 import { STATUS_COLORS } from '@/ui/vizPalette';
+import { SegmentedFill, type SegmentsFor } from '@/ui/SegmentedFill';
 import type { NutrientAggregate } from '@/domain/types';
 
 const MACROS = ['carbs_g', 'fat_g', 'protein_g'] as const;
@@ -22,9 +23,12 @@ const MACROS = ['carbs_g', 'fat_g', 'protein_g'] as const;
 interface Props {
   totals: NutrientAggregate;
   targets: Map<string, NutrientTarget>;
+  /** Split the calorie bar and each ring by the food it came from. */
+  segmentsFor?: SegmentsFor;
 }
 
-export function TodaySummary({ totals, targets }: Props) {
+export function TodaySummary({ totals, targets, segmentsFor }: Props) {
+  const energySegments = segmentsFor?.('energy_kcal') ?? [];
   const energy = totals.nutrients.energy_kcal ?? 0;
   const energyTarget = targets.get('energy_kcal');
 
@@ -65,13 +69,26 @@ export function TodaySummary({ totals, targets }: Props) {
               role="img"
               aria-label={`${Math.round((progress?.fraction ?? 0) * 100)}% of your calorie goal`}
             >
-              <span
-                className="today__barfill"
-                style={{
-                  width: `${fraction * 100}%`,
-                  background: over ? STATUS_COLORS.warning : 'var(--accent)',
-                }}
-              />
+              {energySegments.length > 0 ? (
+                <SegmentedFill
+                  segments={energySegments}
+                  full={energyTarget.amount}
+                  unit="kcal"
+                  format={(value) => formatAmount('energy_kcal', value)}
+                />
+              ) : (
+                <span
+                  className="today__barfill"
+                  style={{
+                    width: `${fraction * 100}%`,
+                    background: over ? STATUS_COLORS.warning : 'var(--accent)',
+                  }}
+                />
+              )}
+              {/* Past the goal the fill stops at the end; this says so. */}
+              {over && (
+                <span className="meter__over" style={{ background: STATUS_COLORS.warning }} />
+              )}
             </div>
             <p className="today__goal">
               of {formatAmount('energy_kcal', energyTarget.amount)} kcal
@@ -88,6 +105,7 @@ export function TodaySummary({ totals, targets }: Props) {
             nutrientKey={key}
             amount={totals.nutrients[key] ?? 0}
             target={targets.get(key)}
+            segments={segmentsFor?.(key)}
           />
         ))}
       </div>

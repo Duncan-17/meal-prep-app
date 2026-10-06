@@ -15,6 +15,8 @@ import { coverageNote } from '@/domain/coverage';
 import { progressFor, type NutrientTarget } from '@/domain/plan';
 import { formatAmount, getNutrient, nutrientName } from '@/nutrition/registry';
 import { STATUS_COLORS } from '@/ui/vizPalette';
+import { SegmentedFill } from '@/ui/SegmentedFill';
+import type { Segment } from '@/domain/contributions';
 import type { Coverage } from '@/domain/types';
 
 interface Props {
@@ -24,9 +26,22 @@ interface Props {
   coverage?: Coverage;
   /** Compact form for the calendar's Specific mode. */
   dense?: boolean;
+  /**
+   * Split the fill by the food each part came from. Without it, one fill in
+   * the status colour. With it, the status lives in the word below and the
+   * overshoot marker, and the fill answers "from what?".
+   */
+  segments?: readonly Segment[] | undefined;
 }
 
-export function TargetBar({ nutrientKey, amount, target, coverage, dense = false }: Props) {
+export function TargetBar({
+  nutrientKey,
+  amount,
+  target,
+  coverage,
+  dense = false,
+  segments,
+}: Props) {
   const unit = getNutrient(nutrientKey)?.unit ?? '';
   const note = coverage === undefined ? null : coverageNote(coverage, nutrientKey);
 
@@ -77,10 +92,19 @@ export function TargetBar({ nutrientKey, amount, target, coverage, dense = false
           target.direction === 'max' ? 'limit' : 'goal'
         }`}
       >
-        <span
-          className="meter__fill"
-          style={{ width: `${Math.min(100, Math.max(0, fraction * 100))}%`, background: fill }}
-        />
+        {segments !== undefined && segments.length > 0 ? (
+          <SegmentedFill
+            segments={segments}
+            full={target.amount}
+            unit={unit}
+            format={(value) => formatAmount(nutrientKey, value)}
+          />
+        ) : (
+          <span
+            className="meter__fill"
+            style={{ width: `${Math.min(100, Math.max(0, fraction * 100))}%`, background: fill }}
+          />
+        )}
         {/* Overshoot needs to be visible, not silently clipped at the end. */}
         {fraction > 1 && <span className="meter__over" style={{ background: fill }} />}
       </div>

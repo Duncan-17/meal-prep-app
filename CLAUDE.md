@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **470 tests** across 22 files.
+`tsc -b` clean across three projects, ESLint clean, **486 tests** across 23 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -57,6 +57,15 @@ Roughly in order, all in response to using the thing:
   pinned and given default goals by a v4 Dexie upgrade.
 - **Search you can choose from** — results re-ranked (plain food first), capped at 15, and labelled:
   headline + details, a raw / cooked / dry chip, brand and USDA category.
+- **Bars split by source** — every meter built from more than one food (Diary calorie bar, macro
+  rings, nutrient meters, the week's bars) is drawn in segments, one per food, in that food's
+  colour, proportional to what it contributed. The Diary puts a matching dot before each food.
+- **Calendar Meals / Trends toggle** — Trends shows each day's calories, three columns filling
+  toward the carb/fat/protein goals, and a border: green = calories and all three macros met,
+  orange = calories only. Today is a filled marker on the date; the selected day a dark outline.
+- **Tutorial text removed** — the leftover Phase 6 box on Fridge, the descriptions under the
+  Fridge / Recipes / Foods headings, the cook sheet's hint; empty states cut to one line. The
+  Diary's add button is now **+ Log food** in the header, beside Plan.
 
 ### Things a future session should not re-derive
 
@@ -126,6 +135,17 @@ Roughly in order, all in response to using the thing:
   shown with a dashed "Likely" chip so it never reads as stated.
 - **The Worker slims search responses** to the fields the adapter reads (347 kB → 82 kB for 25
   results). Nutrients keep number/unit/value so a registry fix can still re-map them.
+- **Bar segments come from item snapshots, not a lookup.** `contributionsFor`
+  (`domain/contributions.ts`) reads `MealLog.items[].nutrients`; the same food eaten twice is ONE
+  segment. Quick Add items now snapshot a colour from `swatchForName` (stable per name, from the
+  validated swatches) — without it every Quick Add slice was the same grey. Items logged before
+  colours existed stay neutral (`--segment-neutral`): history is not back-filled.
+- **With segments, status moves out of the fill.** A segmented meter cannot also be green/orange,
+  so "goal met" / "over" lives in the word under it and the overshoot marker at its end. Do not
+  reintroduce a status-coloured fill on top.
+- **"Met" on the calendar border is `progressFor`'s** (`dayGoalState` in `domain/plan.ts`):
+  calories and carbs/fat within ±10%, protein at or above. A day 28% over calories is NOT met. An
+  unlogged day gets no border at all — a gap, not a failure.
 - **The search cache is versioned** (`SEARCH_CACHE_VERSION` in `db/foods.ts`). Bump it whenever a
   search starts returning something old cached entries lack, or the old page replays for a week.
 
@@ -229,6 +249,10 @@ npm run dev                      # must be running first
 node scripts/screenshot.mjs      # all routes, 390px and 1280px
 node scripts/screenshot.mjs /calendar
 ```
+
+From the Bash tool (Git Bash), prefix route arguments with `MSYS_NO_PATHCONV=1` — otherwise
+`/calendar` is rewritten to `C:/Program Files/Git/calendar` and the script fails silently under a
+`grep`.
 
 Writes to `.screenshots/` (gitignored), seeds a little data per browser context so screens are
 not all empty states, and flags any route that scrolls horizontally. **Read the images** — the
@@ -353,5 +377,5 @@ scripts/
   make-icons.mjs   regenerates the PWA icon set from one inline SVG
 ```
 
-`src/ui/PhasePlaceholder.tsx` still exists but should no longer render on any screen — all eight
-phases have landed. If one appears, that screen regressed.
+`src/ui/PhasePlaceholder.tsx` was deleted 2026-10-06 — Fridge was still rendering a Phase 6 box
+from it long after Phase 6 shipped.

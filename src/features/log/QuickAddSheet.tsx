@@ -19,6 +19,7 @@ import { logMeal, type LogItemDraft } from '@/db/logs';
 import { fetchFoodDetail } from '@/features/foods/api';
 import { listFavorites, recordFavoriteUse, saveFavorite, deleteFavorite } from '@/db/favorites';
 import { nutritionForGrams } from '@/domain/nutrients';
+import { swatchForName } from '@/domain/color';
 import { defaultPortion, resolveToGrams, unitOptionsFor } from '@/nutrition/units';
 import { formatAmount } from '@/nutrition/registry';
 import type { DayKey } from '@/domain/dates';
@@ -91,6 +92,8 @@ export function QuickAddSheet({ open, date, slot, onClose, initialFood }: Props)
     const item: LogItemDraft = {
       kind: 'quick',
       label: chosen.name,
+      // Stable per food name, so its slice of a bar is the same colour every day.
+      color: swatchForName(chosen.name),
       quantity,
       unit,
       grams,
@@ -117,6 +120,7 @@ export function QuickAddSheet({ open, date, slot, onClose, initialFood }: Props)
           {
             kind: 'quick',
             label: favorite.label,
+            color: swatchForName(favorite.label),
             quantity: favorite.quantity,
             unit: favorite.unit,
             grams: favorite.grams,

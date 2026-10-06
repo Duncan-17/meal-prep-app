@@ -11,7 +11,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 import { AdjustSheet } from '@/features/fridge/AdjustSheet';
 import { AddFridgeItemSheet } from '@/features/fridge/AddFridgeItemSheet';
-import { PhasePlaceholder } from '@/ui/PhasePlaceholder';
 import { listFridge } from '@/db/fridge';
 import { fractionRemaining } from '@/domain/portions';
 import { formatAmount } from '@/nutrition/registry';
@@ -29,11 +28,8 @@ export function FridgeScreen() {
 
   return (
     <div className="screen">
-      <div className="screen__head">
-        <div>
-          <h1 className="screen__title">Fridge</h1>
-          <p className="screen__sub">What is cooked, bought and waiting.</p>
-        </div>
+      <div className="screen__head screen__head--gap">
+        <h1 className="screen__title">Fridge</h1>
         <button type="button" className="btn btn--primary" onClick={() => setAdding(true)}>
           + Add
         </button>
@@ -52,16 +48,6 @@ export function FridgeScreen() {
           ))}
         </ul>
       )}
-
-      <PhasePlaceholder
-        phase={6}
-        title="Logging meals"
-        items={[
-          'From Fridge — stepper for discrete, percent picker for bulk',
-          'Quick Add — search, manual entry, favourites',
-          'Stock deducts transactionally; deleting a log restores it',
-        ]}
-      />
 
       <AdjustSheet entry={live} onClose={() => setAdjusting(null)} />
       <AddFridgeItemSheet open={adding} onClose={() => setAdding(false)} />
@@ -121,12 +107,7 @@ function StockCard({ entry, onAdjust }: { entry: FridgeEntry; onAdjust: () => vo
 function EmptyFridge() {
   return (
     <div className="placeholder">
-      <p style={{ margin: '0 0 10px', fontWeight: 600 }}>Nothing cooked yet</p>
-      <p className="screen__sub" style={{ margin: 0 }}>
-        Two ways in: schedule a cook on the Calendar and mark it cooked, or tap{' '}
-        <strong>+ Add</strong>
-        for something you bought rather than made — milk, avocados, yoghurt.
-      </p>
+      <p style={{ margin: 0, fontWeight: 600 }}>The fridge is empty</p>
     </div>
   );
 }

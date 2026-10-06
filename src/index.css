@@ -9,6 +9,8 @@
   --accent: #3d7a5a;
   --accent-contrast: #ffffff;
   --danger: #b3402f;
+  /* A bar segment from food logged before colours existed. */
+  --segment-neutral: #a9aaa4;
 
   --radius: 12px;
   --tabbar-h: 56px;
@@ -27,6 +29,7 @@
     --accent: #6bbf90;
     --accent-contrast: #10231a;
     --danger: #e0705c;
+    --segment-neutral: #5d6168;
 
     color-scheme: dark;
   }
@@ -499,6 +502,48 @@ body {
   flex: none;
   text-decoration: none;
   white-space: nowrap;
+}
+
+/* More than one action in a head — Diary's Plan and Log food. */
+.screen__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* A head holding only an action, now its explanatory line is gone. */
+.screen__head--end {
+  justify-content: flex-end;
+}
+
+/* Room below a head that no longer has a subtitle to provide it. */
+.screen__head--end,
+.screen__head--gap {
+  margin-bottom: 12px;
+}
+
+/* ── Segmented fills: one bar, split by the food each part came from ── */
+
+.segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition:
+    width 140ms ease-out,
+    left 140ms ease-out;
+}
+
+/* A hairline in the surface colour, so two close colours read as two foods. */
+.segment--split {
+  box-shadow: inset -1.5px 0 0 var(--surface);
+}
+
+/* The Diary's key to those colours: a dot before each food eaten. */
+.loggeddot {
+  display: inline-block;
+  margin-right: 7px;
+  vertical-align: 0.05em;
 }
 
 /* ── Component cards ───────────────────────────────────────────────── */
@@ -1758,18 +1803,21 @@ body {
  * DOM order, so without lifting them the next cell's background covers the
  * right-hand side of the ring — which reads as the borders overlapping.
  */
-.daycell--today {
-  position: relative;
-  z-index: 1;
-  border-color: var(--accent);
-  border-width: 2px;
-}
-
+/*
+ * Today and the selected day used to draw the same green ring, so on the
+ * day you opened the app you could not tell which was which. Now they differ
+ * in kind: TODAY is a filled marker on the date, SELECTED is a dark outline
+ * around the whole cell. Each can appear without the other.
+ *
+ * The outline sits just outside the border, so it never fights the Trends
+ * view's goal border, and is lifted above neighbours — grid children paint
+ * in DOM order, and the next cell would otherwise cover its right edge.
+ */
 .daycell--selected {
   position: relative;
   z-index: 2;
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
 }
 
 .daycell__number {
@@ -1780,7 +1828,66 @@ body {
 }
 
 .daycell--today .daycell__number {
-  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* ── Trends view: a day as its numbers ─────────────────────────────── */
+
+/* Goal state lives in the border colour, set inline; this makes it visible. */
+.daycell--goal {
+  border-width: 2.5px;
+}
+
+.daycell__kcal {
+  min-height: 11px;
+  color: var(--text-dim);
+  font-size: 9.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 11px;
+}
+
+/* Three columns — carbs, fat, protein — filling toward their goals. */
+.macrofill {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  width: 100%;
+  min-height: 26px;
+  padding: 0 2px;
+}
+
+.macrofill__col {
+  display: flex;
+  align-items: flex-end;
+  flex: 1;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  overflow: hidden;
+}
+
+.macrofill__level {
+  display: block;
+  width: 100%;
+  transition: height 160ms ease-out;
+}
+
+.legend__swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 2px;
+}
+
+.legend__frame {
+  width: 15px;
+  height: 11px;
+  flex: none;
+  border: 2.5px solid;
+  border-radius: 3px;
 }
 
 /* Cooking is a PLAN — a bar across the top. */
@@ -1945,6 +2052,7 @@ label,
 }
 
 .today__bar {
+  position: relative;
   height: 10px;
   margin-top: 11px;
   border-radius: 999px;

@@ -194,3 +194,21 @@ export function suggestUnusedSwatch(used: readonly string[]): string {
   }
   return best;
 }
+
+/**
+ * A stable colour for something that has none of its own — a Quick Add food.
+ *
+ * The same name always gets the same swatch, so "eggs" is the same colour in
+ * Monday's protein bar and Thursday's. Without this every Quick Add item drew
+ * neutral grey, and splitting a bar by source would have split it into
+ * indistinguishable greys. Collisions are possible (twelve swatches) and
+ * harmless: every segment is still labelled.
+ */
+export function swatchForName(name: string): string {
+  let hash = 5381;
+  for (const char of name.trim().toLowerCase()) {
+    hash = ((hash << 5) + hash + char.charCodeAt(0)) | 0;
+  }
+  const index = Math.abs(hash) % SUGGESTED_SWATCHES.length;
+  return SUGGESTED_SWATCHES[index] ?? '#71787f';
+}

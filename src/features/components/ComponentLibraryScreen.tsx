@@ -61,8 +61,7 @@ export function ComponentLibraryScreen() {
 function RecipeList({ components }: { components: Component[] | undefined }) {
   return (
     <>
-      <div className="screen__head">
-        <p className="screen__sub">Things you cook a batch of, built from ingredients.</p>
+      <div className="screen__head screen__head--end">
         <Link className="btn btn--primary" to="/components/new">
           + New recipe
         </Link>
@@ -120,11 +119,7 @@ function describe(component: Component): string {
 function EmptyLibrary() {
   return (
     <div className="placeholder">
-      <p style={{ margin: '0 0 10px', fontWeight: 600 }}>No recipes yet</p>
-      <p className="screen__sub" style={{ margin: 0 }}>
-        A recipe is something you cook a batch of — chicken thighs, a pot of rice, a tub of
-        guacamole. Name it, list what goes in, and it becomes schedulable, cookable and loggable.
-      </p>
+      <p style={{ margin: 0, fontWeight: 600 }}>No recipes yet</p>
     </div>
   );
 }

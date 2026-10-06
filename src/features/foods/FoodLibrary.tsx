@@ -38,10 +38,7 @@ export function FoodLibrary() {
 
   return (
     <>
-      <div className="screen__head">
-        <p className="screen__sub">
-          Foods you type in yourself, for anything the database does not have.
-        </p>
+      <div className="screen__head screen__head--end">
         <button type="button" className="btn btn--primary" onClick={() => setCreating(true)}>
           + New food
         </button>
@@ -51,12 +48,7 @@ export function FoodLibrary() {
         <p className="screen__sub">Loading…</p>
       ) : foods.length === 0 ? (
         <div className="placeholder">
-          <p style={{ margin: '0 0 10px', fontWeight: 600 }}>No foods of your own yet</p>
-          <p className="screen__sub" style={{ margin: 0 }}>
-            For the specific yoghurt drink, protein bar or supermarket own-brand thing that USDA has
-            never heard of. Type the label in once, then add however many you bought straight to the
-            fridge.
-          </p>
+          <p style={{ margin: 0, fontWeight: 600 }}>No foods of your own yet</p>
         </div>
       ) : (
         <ul className="cards">

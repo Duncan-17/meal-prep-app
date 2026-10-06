@@ -25,13 +25,16 @@ import {
 } from '@/nutrition/registry';
 import type { NutrientTarget } from '@/domain/plan';
 import type { NutrientAggregate } from '@/domain/types';
+import type { SegmentsFor } from '@/ui/SegmentedFill';
 
 interface Props {
   totals: NutrientAggregate;
   targets: Map<string, NutrientTarget>;
+  /** Split each meter by the food it came from. */
+  segmentsFor?: SegmentsFor;
 }
 
-export function DayDetail({ totals, targets }: Props) {
+export function DayDetail({ totals, targets, segmentsFor }: Props) {
   const [showEmpty, setShowEmpty] = useState(false);
   const [openGroups, setOpenGroups] = useState<Set<NutrientGroup>>(new Set(['macro']));
 
@@ -94,6 +97,7 @@ export function DayDetail({ totals, targets }: Props) {
                     nutrientKey={definition.key}
                     totals={totals}
                     target={targets.get(definition.key)}
+                    segments={segmentsFor?.(definition.key)}
                   />
                 ))}
 
@@ -119,10 +123,12 @@ function PanelRow({
   nutrientKey,
   totals,
   target,
+  segments,
 }: {
   nutrientKey: string;
   totals: NutrientAggregate;
   target: NutrientTarget | undefined;
+  segments: ReturnType<SegmentsFor> | undefined;
 }) {
   const amount = totals.nutrients[nutrientKey] ?? 0;
 
@@ -133,6 +139,7 @@ function PanelRow({
         amount={amount}
         target={target}
         coverage={totals.coverage}
+        segments={segments}
       />
     );
   }

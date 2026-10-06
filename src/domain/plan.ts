@@ -224,3 +224,41 @@ function formatNumber(value: number): string {
   if (Number.isInteger(value)) return String(value);
   return value.toFixed(value < 10 ? 2 : 1).replace(/\.?0+$/, '');
 }
+
+// ── A day at a glance ───────────────────────────────────────────────────────
+
+/**
+ * How a day measured up, for the calendar's Trends view border.
+ *
+ * - `all` — calories AND carbs, fat and protein all met.
+ * - `calories` — calories met, at least one macro not.
+ * - `none` — calories not met (whatever the macros did).
+ *
+ * "Met" is `progressFor`'s, the same rule every meter uses: calories within
+ * ±10% of the goal, protein at or above its floor. So the border never
+ * disagrees with the Diary. A macro with no goal set has nothing to miss and
+ * is skipped; with no calorie goal there is nothing to judge at all.
+ */
+export type DayGoalState = 'all' | 'calories' | 'none';
+
+export const DAY_MACROS = ['carbs_g', 'fat_g', 'protein_g'] as const;
+
+export function dayGoalState(
+  nutrients: Readonly<Record<string, number>>,
+  targets: ReadonlyMap<string, NutrientTarget>,
+): DayGoalState {
+  if (!isMet(nutrients, targets, 'energy_kcal')) return 'none';
+  const macrosMet = DAY_MACROS.every((key) => !targets.has(key) || isMet(nutrients, targets, key));
+  return macrosMet ? 'all' : 'calories';
+}
+
+function isMet(
+  nutrients: Readonly<Record<string, number>>,
+  targets: ReadonlyMap<string, NutrientTarget>,
+  key: string,
+): boolean {
+  const target = targets.get(key);
+  const amount = nutrients[key];
+  if (target === undefined || amount === undefined) return false;
+  return progressFor(amount, target).status === 'met';
+}

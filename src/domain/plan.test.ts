@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   TARGET_TOLERANCE,
+  dayGoalState,
   describeGoal,
   fromDisplayWeight,
   hasCustomWeekly,
@@ -223,5 +224,46 @@ describe('weightOutlook', () => {
     const outlook = weightOutlook(85, { weeklyChangeKg: -0.5 }, '2026-09-15', addDays);
     expect(outlook.weeksRemaining).toBeNull();
     expect(outlook.projectedDate).toBeNull();
+  });
+});
+
+describe('dayGoalState', () => {
+  const targets = new Map<string, NutrientTarget>([
+    [
+      'energy_kcal',
+      { key: 'energy_kcal', amount: 2500, direction: 'target' as const, isDefault: false },
+    ],
+    ['carbs_g', { key: 'carbs_g', amount: 275, direction: 'target' as const, isDefault: false }],
+    ['fat_g', { key: 'fat_g', amount: 78, direction: 'target' as const, isDefault: false }],
+    ['protein_g', { key: 'protein_g', amount: 150, direction: 'min' as const, isDefault: false }],
+  ]);
+
+  it('is all when calories and every macro are met', () => {
+    expect(
+      dayGoalState({ energy_kcal: 2450, carbs_g: 270, fat_g: 80, protein_g: 165 }, targets),
+    ).toBe('all');
+  });
+
+  it('is calories when calories land but a macro misses', () => {
+    expect(
+      dayGoalState({ energy_kcal: 2500, carbs_g: 400, fat_g: 40, protein_g: 90 }, targets),
+    ).toBe('calories');
+  });
+
+  it('is none when calories miss, whatever the macros did', () => {
+    expect(
+      dayGoalState({ energy_kcal: 1500, carbs_g: 275, fat_g: 78, protein_g: 150 }, targets),
+    ).toBe('none');
+    // 3200 is 28% over — not "met" either.
+    expect(dayGoalState({ energy_kcal: 3200 }, targets)).toBe('none');
+  });
+
+  it('treats missing macro data as not met, not as met', () => {
+    expect(dayGoalState({ energy_kcal: 2500 }, targets)).toBe('calories');
+  });
+
+  it('skips a macro with no goal set', () => {
+    const noFat = new Map([...targets].filter(([key]) => key !== 'fat_g'));
+    expect(dayGoalState({ energy_kcal: 2500, carbs_g: 275, protein_g: 150 }, noFat)).toBe('all');
   });
 });

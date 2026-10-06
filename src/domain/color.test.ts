@@ -10,6 +10,7 @@ import {
   perceptualDistance,
   readableTextColor,
   rgbToOklab,
+  swatchForName,
   suggestUnusedSwatch,
 } from '@/domain/color';
 
@@ -176,5 +177,22 @@ describe('suggestUnusedSwatch', () => {
   it('still returns something when every swatch is taken', () => {
     const result = suggestUnusedSwatch([...SUGGESTED_SWATCHES]);
     expect(SUGGESTED_SWATCHES).toContain(result);
+  });
+});
+
+describe('swatchForName', () => {
+  it('gives the same food the same colour every time, ignoring case and spaces', () => {
+    expect(swatchForName('Eggs')).toBe(swatchForName('  eggs '));
+  });
+
+  it('always picks one of the validated swatches', () => {
+    for (const name of ['Eggs', 'Steak', 'Rice', 'Yeo Valley kefir drink', '']) {
+      expect(SUGGESTED_SWATCHES).toContain(swatchForName(name));
+    }
+  });
+
+  it('spreads different foods across the palette', () => {
+    const names = ['eggs', 'steak', 'rice', 'oats', 'milk', 'apple', 'tuna', 'bread'];
+    expect(new Set(names.map(swatchForName)).size).toBeGreaterThan(4);
   });
 });
