@@ -1,37 +1,58 @@
 # Meal Prep
 
-A personal-use PWA for meal planning: build reusable Components, schedule batch-cooking on a
-calendar, track servings as fridge stock, and log meals to see macro + micronutrient trends.
+A personal-use PWA for meal planning. Build reusable **recipes**, schedule batch-cooking on a
+calendar, track what you cooked as **fridge** stock, and log what you eat against an editable
+plan — with the full USDA nutrient panel behind it, not just calories.
 
-- **[PLAN.md](PLAN.md)** — architecture, data model, phased build plan
-- **[SETUP.md](SETUP.md)** — accounts, keys and decisions needed from you
-- **[CLAUDE.md](CLAUDE.md)** — build status + conventions, auto-loaded by Claude Code
+> **Status: live and in use.** All eight build phases complete, **439 tests** passing, deployed to
+> Cloudflare as a Worker and installable on a phone. Now being refined against real use.
 
-> **Status:** **Live and in use** — all eight phases complete, **406 tests** passing, deployed to
-> Cloudflare as a Worker. Build Recipes, schedule a cook, mark it cooked into the fridge, log meals
-> from it, add things you simply bought, and see the month against an editable plan. Data is
-> local to each device by design — move it with the JSON backup on the Plan screen.
-> Installable, offline-capable, and now being refined against real use. Source is
-> backed up at <https://github.com/Duncan-17/meal-prep-app> (private).
+- **[CLAUDE.md](CLAUDE.md)** — current status, conventions, and where to pick up. Start here.
+- **[PLAN.md](PLAN.md)** — architecture, data model, the decisions and why
+- **[SETUP.md](SETUP.md)** — accounts and keys, and the two things still waiting on the user
+
+## What it does
+
+1. **Recipes** — build something you cook a batch of from USDA-sourced ingredients, with live
+   nutrition. Or define your own **foods** by hand for whatever the database has never heard of.
+2. **Calendar** — schedule a cook on a month grid. Cooking shows as a bar, eating as a dot.
+3. **Mark cooked** — confirm what actually went in and what it actually made; nutrition is
+   recomputed from that rather than from the plan.
+4. **Fridge** — stock, as counts or a percentage remaining. Things you simply bought go in too.
+5. **Diary** — log from the fridge or quick-add. Calories as a bar, macros as rings, the full
+   panel below.
+6. **Plan** — every nutrient target, daily and weekly, seeded from FDA values and fully editable.
+
+Two properties it holds onto throughout: **missing data is never zero** (every total carries a
+coverage figure saying how much of it was actually measured), and **history is never rewritten**
+(editing a recipe does not change what you already ate).
 
 ## Running it
 
 ```powershell
 npm install
-npm run dev
+npm run dev:api   # terminal 1 — wrangler on :8788, serves the /api proxy
+npm run dev       # terminal 2 — vite on :5173, open THIS one
 ```
 
-Then open the printed `Network:` URL on your phone to test on a real device.
+Food search needs both; everything else works with just `npm run dev`.
 
-| Script            | Does                                    |
-| ----------------- | --------------------------------------- |
-| `npm run dev`     | Dev server with hot reload              |
-| `npm run build`   | Typecheck + production build to `dist/` |
-| `npm run preview` | Serve the production build locally      |
-| `npm test`        | Run the domain-logic test suite         |
-| `npm run lint`    | ESLint                                  |
-| `npm run format`  | Prettier, write in place                |
+| Script                        | Does                                             |
+| ----------------------------- | ------------------------------------------------ |
+| `npm run dev`                 | Vite dev server, host exposed for phone testing  |
+| `npm run dev:api`             | Wrangler serving the Worker and its `/api` proxy |
+| `npm run build`               | Typecheck + production build to `dist/`          |
+| `npm test`                    | Vitest                                           |
+| `npm run lint` / `format`     | ESLint / Prettier                                |
+| `npm run deploy`              | Build and deploy to Cloudflare from this machine |
+| `node scripts/screenshot.mjs` | Visual check at phone and desktop widths         |
 
 ## Stack
 
-React 19 · TypeScript · Vite · Dexie (IndexedDB) · React Router · Cloudflare Pages
+React 19 · TypeScript · Vite 7 · Dexie (IndexedDB) · React Router · Recharts · Workbox ·
+Cloudflare Worker with static assets
+
+Data is **local to each device** by design — there is no account and no sync. Move it between
+devices with the JSON backup on the Plan screen.
+
+Source: <https://github.com/Duncan-17/meal-prep-app> (private)

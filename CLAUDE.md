@@ -23,22 +23,33 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **406 tests** across 18 files.
+`tsc -b` clean across three projects, ESLint clean, **439 tests** across 21 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
 
 ### Shipped since the phases finished
 
-- **Editable Plan** — weight goal with a rate, every nutrient target daily and weekly, FDA
-  template, direction-aware goals (sodium is a limit, protein a floor).
-- **Month calendar** — cooking drawn as a bar, eating as a dot per logged item. The dots fixed a
-  real bug: the first build drew marks per scheduled _batch_, so eating left no trace at all,
-  despite PLAN.md §5 always specifying "one mark per meal log".
+Roughly in order, all in response to using the thing:
+
+- **Editable Plan** — weight goal with a rate and a 7-day smoothed current weight, every nutrient
+  target daily and weekly, FDA template, direction-aware goals (sodium is a limit, protein a
+  floor).
+- **Month calendar** — paged by month. Cooking is a bar across the top of a day (solid = still to
+  cook, hollow = cooked); eating is a dot per logged item below it. The dots fixed a real bug:
+  the first build drew marks per scheduled _batch_, so eating left no trace at all, despite
+  PLAN.md §5 always having specified "one mark per meal log".
 - **Direct fridge items** — a gallon of milk or six avocados, no recipe and no cook behind them.
 - **Portion-aware defaults** — picking a food defaults to its own portion ("1 item = 291 g" for a
   burger) rather than 100 g.
-- **Zoom locked**, tap delay removed.
+- **Macro rings on the Diary** — calories as a wide bar, carbs/fat/protein as rings that fill.
+- **Amount of each** — its own section in the recipe builder, separate from picking ingredients.
+- **A real cook sheet** — "Mark cooked" lists the ingredients, lets each amount be adjusted, and
+  recomputes nutrition from what actually went in.
+- **Foods library** — a second half of the Recipes tab for foods you type in yourself, with a
+  "+ Fridge" action for "I bought eight of them".
+- **Renamed in the UI** — Components → Recipes, Log → Diary.
+- **Zoom locked**, tap delay removed, mobile calendar overlap fixed.
 
 ### Things a future session should not re-derive
 
@@ -90,6 +101,34 @@ from `main` on every push.
   without asking again.
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
   render a neutral dot on purpose; rewriting them would be rewriting history.
+
+## Where to pick up
+
+Nothing is half-finished and nothing is blocked. The working tree is clean, `main` is pushed, and
+the deployed Worker matches it.
+
+**Open questions the user has not answered:**
+
+| Question                | Why it is open                                                                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile. |
+| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
+| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
+
+**Things that would plausibly annoy the user next**, in the order I would expect:
+
+1. **The Plan screen is an enormous scroll on mobile** — every nutrient gets its own slider. It
+   wants the same collapse-by-group treatment the Day Detail panel has. Flagged to the user
+   2026-10-06; they have not asked for it yet.
+2. **Barcode scanning** is still absent (PLAN.md §6). Needs the OFF contact string AND a ZXing
+   fallback, since Safari has no `BarcodeDetector`.
+3. **The bundle is ~570 kB** before the lazy chart chunk. Fine over a fast connection, not
+   obviously fine on a phone.
+
+**Do not start any of these without asking.** The user drives what gets built; every good change
+so far came from them using it and saying what was wrong.
+
+---
 
 ## Environment facts
 
@@ -257,15 +296,31 @@ picker) and the calendar mark.
 
 ```
 src/
-  db/          Dexie schema, migrations, backup (export/import), dev seed
-  domain/      PURE functions — scaling, aggregation, coverage, portions. Tested.
-  nutrition/   registry, usda.adapter, off.adapter, targets, units
-  features/    calendar/ components/ fridge/ log/ settings/
-  ui/          shared primitives (TabBar, Sheet, Stepper, PercentPicker, ColorPicker)
+  db/          Dexie schema + every write path. schema, batches, fridge, logs,
+               components, ingredients (incl. custom foods), plan, favorites,
+               insight, backup, init, seed.dev
+  domain/      PURE — no Dexie, no React, all tested. nutrients, coverage,
+               portions, components, dates, plan, color, backup, types
+  nutrition/   registry (75 nutrients), usda.adapter, units, targets
+  features/
+    calendar/  month grid, day panel, schedule + mark-cooked sheets
+    components/ recipe library (two tabs), builder, detail, amounts, ingredient rows
+    foods/     USDA search + the user's own Foods library and form
+    fridge/    stock list, adjust, add-direct
+    log/       the Diary: today summary (rings), day detail, log sheets
+    settings/  the Plan screen — targets, weight, pinned nutrients, backup
+    insight/   Recharts trends + weight chart (lazy-loaded)
+  ui/          TabBar, Sheet, Stepper, PercentPicker, ColorPicker, MacroRing,
+               TargetBar, InstallPrompt, vizPalette
   routes/      router + AppShell
-worker/       The Cloudflare Worker: /api proxy for USDA, and the ASSETS binding
-              that serves dist/. Holds the API key server-side.
+worker/
+  index.ts     The Cloudflare Worker: /api proxy for USDA, plus the ASSETS
+               binding that serves dist/. Holds the API key server-side.
+scripts/
+  screenshot.mjs   visual checks at both viewports (see above)
+  seed-browser.mjs browser-side seed shared by visual scripts
+  make-icons.mjs   regenerates the PWA icon set from one inline SVG
 ```
 
-All eight phases have landed, so `src/ui/PhasePlaceholder.tsx` should no longer appear on any
-screen. If one does, that screen regressed.
+`src/ui/PhasePlaceholder.tsx` still exists but should no longer render on any screen — all eight
+phases have landed. If one appears, that screen regressed.

@@ -289,6 +289,8 @@ Week view with `‹ ›` nav, Overview/Specific toggle (Overview only for now), 
 > ✅ **Built 2026-09-15** — week strip with `‹ ›`, tap-to-schedule, scale picker, past-due nudge
 > offering "didn't cook it". Overview mode only, as planned. Days are local `YYYY-MM-DD` via
 > `domain/dates.ts` (31 tests) — `new Date('2026-09-15')` is UTC midnight and would shift the day.
+> **Superseded 2026-09-17**: the week strip became a month grid and meal logs became the primary
+> content — see §9.
 
 ### Phase 5 — Cook → Fridge
 
@@ -358,8 +360,33 @@ degradation to cached data, install prompt, iOS safe-area handling, backup remin
 
 ## 8. Inputs still needed
 
-See **SETUP.md** for the full checklist.
+All three original blockers are resolved — the USDA key is in place, and the app is deployed as a
+Cloudflare **Worker** (not a Pages project; see CLAUDE.md § Deploying).
 
-1. **USDA FoodData Central API key** — blocks Phase 2
-2. **Your 2500-cal plan targets** (calories, macros, any micro goals) — blocks Phase 7
-3. **Cloudflare Pages project** — blocks Phase 0 deploy (local dev unaffected)
+One input remains, and it blocks nothing:
+
+- **Your real 2500-cal targets.** The Plan screen is live and seeded with FDA Daily Values, each
+  labelled "FDA default" so a number you never chose never reads as one you did. Replace them on
+  the Plan screen whenever you like.
+
+Deliberately deferred, as a decision rather than an oversight:
+
+- **An Open Food Facts contact string**, which gates barcode scanning only (PLAN.md §6).
+
+See **SETUP.md** for the full record.
+
+---
+
+## 9. What changed after the phases
+
+The eight phases describe how it was _built_. These are the decisions that came out of actually
+_using_ it, and they override the phase text where they disagree:
+
+| Date       | Change                                                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| 2026-09-17 | Calendar became a **month grid**; meal logs became its primary content (the phase build showed only cooking)      |
+| 2026-10-06 | UI renamed: Components → **Recipes**, Log → **Diary**. Code identifiers deliberately unchanged                    |
+| 2026-10-06 | Diary leads with **macro rings**; the recipe builder gained an **Amount of each** section                         |
+| 2026-10-06 | "Mark cooked" became a real confirmation — adjust each ingredient, recompute nutrition from what actually went in |
+| 2026-10-06 | Recipes tab split in two, adding a **Foods** library for items you type in yourself                               |
+| 2026-10-06 | Multi-device sync re-confirmed **out of scope**; the JSON backup is the handoff                                   |
