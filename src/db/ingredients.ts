@@ -7,7 +7,8 @@
  */
 
 import { db } from '@/db/schema';
-import type { AdaptedFood, Ingredient } from '@/domain/types';
+import { normalizeUnit } from '@/nutrition/units';
+import type { AdaptedFood, Ingredient, NutrientMap } from '@/domain/types';
 
 /**
  * Find or create the ingredient for a food, returning its id.
@@ -79,4 +80,108 @@ export async function rememberPortionWeight(
     portionGrams: { ...(ingredient.portionGrams ?? {}), [unit]: grams },
     updatedAt: Date.now(),
   });
+}
+
+// ── Custom foods ────────────────────────────────────────────────────────────
+
+/**
+ * Foods the user typed in themselves, because USDA does not have them.
+ *
+ * These are ordinary `Ingredient` rows with `source: 'manual'` — the specific
+ * yoghurt drink from one supermarket is a food like any other, it just has no
+ * FDC id behind it. Reusing the same table means they work everywhere a
+ * looked-up food works: in a recipe, in the fridge, in Quick Add.
+ */
+export async function listCustomFoods(): Promise<Ingredient[]> {
+  const rows = await db.ingredients.where('source').equals('manual').toArray();
+  return rows.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export interface CustomFoodDraft {
+  /** Set when editing an existing one. */
+  id?: number;
+  name: string;
+  /** What one serving weighs, in grams. */
+  servingGrams: number;
+  /** What the user calls one of them — "bottle", "bar", "each". */
+  servingLabel: string;
+  /** Canonical keys → amount PER 100 G. The form converts from per-serving. */
+  nutritionPer100g: NutrientMap;
+}
+
+export async function saveCustomFood(draft: CustomFoodDraft): Promise<number> {
+  const name = draft.name.trim();
+  if (name === '') throw new Error('Give the food a name.');
+  if (!(draft.servingGrams > 0)) {
+    throw new Error(`A serving must weigh more than zero, got ${draft.servingGrams}.`);
+  }
+
+  const now = Date.now();
+  const label = normalizeUnit(draft.servingLabel.trim() || 'serving');
+
+  // Both the user's own word for it and a generic `serving` key, so
+  // `resolveToGrams` finds a weight whichever the UI happens to ask for.
+  const portionGrams: Record<string, number> = {
+    serving: draft.servingGrams,
+    [label]: draft.servingGrams,
+  };
+
+  if (draft.id !== undefined) {
+    const existing = await db.ingredients.get(draft.id);
+    if (existing === undefined) throw new Error('That food no longer exists.');
+    await db.ingredients.put({
+      ...existing,
+      name,
+      nutritionPer100g: draft.nutritionPer100g,
+      portionGrams,
+      updatedAt: now,
+    });
+    return draft.id;
+  }
+
+  return db.ingredients.add({
+    name,
+    source: 'manual',
+    // Stable and local-only; never collides with an FDC id.
+    sourceId: `custom-${now}`,
+    nutritionPer100g: draft.nutritionPer100g,
+    portionGrams,
+    createdAt: now,
+    updatedAt: now,
+  } as Ingredient);
+}
+
+export class FoodInUseError extends Error {
+  constructor(public readonly recipes: number) {
+    super(
+      `This food is in ${recipes} recipe${recipes === 1 ? '' : 's'}. Remove it from those first, or the recipe loses its nutrition.`,
+    );
+    this.name = 'FoodInUseError';
+  }
+}
+
+/**
+ * Delete a custom food, unless a recipe still lists it.
+ *
+ * Same reasoning as deleting a Component with cook history: the recipe's stored
+ * nutrition was computed from this food, and removing it silently would leave a
+ * recipe referencing something that no longer exists.
+ */
+export async function deleteCustomFood(id: number): Promise<void> {
+  await db.transaction('rw', [db.ingredients, db.components], async () => {
+    const components = await db.components.toArray();
+    const used = components.filter((component) =>
+      component.ingredients.some((entry) => entry.ingredientId === id),
+    ).length;
+    if (used > 0) throw new FoodInUseError(used);
+    await db.ingredients.delete(id);
+  });
+}
+
+/** How many recipes list this food — shown before offering to delete. */
+export async function customFoodUsage(id: number): Promise<number> {
+  const components = await db.components.toArray();
+  return components.filter((component) =>
+    component.ingredients.some((entry) => entry.ingredientId === id),
+  ).length;
 }

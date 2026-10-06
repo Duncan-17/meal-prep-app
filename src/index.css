@@ -2095,3 +2095,25 @@ label,
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Segmented control, full width (library tabs) ──────────────────── */
+
+.segmented--full {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 10px 0 16px;
+}
+
+.segmented--full .segmented__option {
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+/* ── Custom food form ──────────────────────────────────────────────── */
+
+.customfood__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}

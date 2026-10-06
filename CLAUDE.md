@@ -65,6 +65,11 @@ from `main` on every push.
   many.
 - **Colour distinctness is OKLab, not RGB**, and the chart palette was validated for
   colour-vision deficiency rather than chosen by eye.
+- **A custom food is just an `Ingredient` with `source: 'manual'`.** No new table — the specific
+  yoghurt drink is a food like any other, it simply has no FDC id. That is what lets it work in a
+  recipe, in the fridge and in Quick Add without special cases. Entered PER SERVING because that
+  is how a label reads, stored per 100 g because that is what everything downstream expects;
+  `customfoods.test.ts` pins the conversion both ways.
 - **The cook sheet records what ACTUALLY went in.** `markCooked` takes an optional actual
   nutrition aggregate; the Batch keeps its scheduled snapshot (that is what you _planned_, and the
   calendar still shows it) while the FridgeEntry carries what you really cooked. Do not "simplify"

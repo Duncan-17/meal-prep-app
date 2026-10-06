@@ -5,25 +5,66 @@
  * without a refresh and without a store (PLAN.md §2).
  */
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+
+import { FoodLibrary } from '@/features/foods/FoodLibrary';
 
 import { listComponents } from '@/db/components';
 import { formatAmount } from '@/nutrition/registry';
 import type { Component } from '@/domain/types';
 
+/**
+ * Two libraries under one tab.
+ *
+ * **Recipes** are things you assemble and cook a batch of. **Foods** are single
+ * items you type in yourself because the database has never heard of them — the
+ * specific yoghurt drink, a particular protein bar.
+ *
+ * A segmented toggle rather than two stacked lists: on a phone, stacking them
+ * means scrolling past every recipe to reach the foods, and the two are used at
+ * completely different moments.
+ */
+type Tab = 'recipes' | 'foods';
+
 export function ComponentLibraryScreen() {
   const components = useLiveQuery(() => listComponents(), []);
+  const [tab, setTab] = useState<Tab>('recipes');
 
   return (
     <div className="screen">
+      <h1 className="screen__title">Recipes &amp; foods</h1>
+
+      <div className="segmented segmented--full">
+        <button
+          type="button"
+          className={`segmented__option${tab === 'recipes' ? ' segmented__option--on' : ''}`}
+          onClick={() => setTab('recipes')}
+        >
+          Recipes
+        </button>
+        <button
+          type="button"
+          className={`segmented__option${tab === 'foods' ? ' segmented__option--on' : ''}`}
+          onClick={() => setTab('foods')}
+        >
+          Foods
+        </button>
+      </div>
+
+      {tab === 'foods' ? <FoodLibrary /> : <RecipeList components={components} />}
+    </div>
+  );
+}
+
+function RecipeList({ components }: { components: Component[] | undefined }) {
+  return (
+    <>
       <div className="screen__head">
-        <div>
-          <h1 className="screen__title">Recipes</h1>
-          <p className="screen__sub">Things you cook a batch of, built from ingredients.</p>
-        </div>
+        <p className="screen__sub">Things you cook a batch of, built from ingredients.</p>
         <Link className="btn btn--primary" to="/components/new">
-          + New
+          + New recipe
         </Link>
       </div>
 
@@ -50,7 +91,7 @@ export function ComponentLibraryScreen() {
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }
 
