@@ -123,6 +123,51 @@ describe('markCooked', () => {
     await expect(markCooked(9999, 6)).rejects.toThrow(/no longer exists/);
   });
 
+  describe('when what actually went in differed from the plan', () => {
+    it('uses the actual nutrition rather than the batch snapshot', async () => {
+      const batchId = await scheduleBatch(discrete, '2026-09-16');
+      // Used more rice than planned: 1500 kcal in the pan, not 1200.
+      const entryId = await markCooked(batchId, 6, {
+        nutrients: { energy_kcal: 1500, protein_g: 240 },
+        coverage: { energy_kcal: 1, protein_g: 1 },
+        totalGrams: 1700,
+      });
+
+      const entry = await db.fridgeEntries.get(entryId);
+      expect(entry?.nutritionPerUnit.energy_kcal).toBe(250); // 1500 / 6
+      expect(entry?.gramsPerUnit).toBeCloseTo(1700 / 6, 6);
+    });
+
+    it('leaves the batch snapshot alone — that is still what was PLANNED', async () => {
+      const batchId = await scheduleBatch(discrete, '2026-09-16');
+      await markCooked(batchId, 6, {
+        nutrients: { energy_kcal: 1500 },
+        coverage: { energy_kcal: 1 },
+        totalGrams: 1700,
+      });
+
+      const batch = await db.batches.get(batchId);
+      expect(batch?.nutritionPerBase.energy_kcal).toBe(1200);
+      expect(batch?.totalGrams).toBe(1400);
+    });
+
+    it('takes the actual coverage too, not the recipe you scheduled', async () => {
+      const batchId = await scheduleBatch(discrete, '2026-09-16');
+      const entryId = await markCooked(batchId, 6, {
+        nutrients: { energy_kcal: 1500, vitamin_b12_ug: 2 },
+        coverage: { energy_kcal: 1, vitamin_b12_ug: 0.3 },
+        totalGrams: 1700,
+      });
+      expect((await db.fridgeEntries.get(entryId))?.coverage.vitamin_b12_ug).toBe(0.3);
+    });
+
+    it('falls back to the snapshot when nothing was adjusted', async () => {
+      const batchId = await scheduleBatch(discrete, '2026-09-16');
+      const entryId = await markCooked(batchId, 6);
+      expect((await db.fridgeEntries.get(entryId))?.nutritionPerUnit.energy_kcal).toBe(200);
+    });
+  });
+
   it('reports the planned yield for the sheet default', () => {
     expect(plannedYield(6, 2)).toBe(12);
   });

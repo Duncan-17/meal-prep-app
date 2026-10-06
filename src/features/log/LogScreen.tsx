@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { LogFromFridgeSheet } from '@/features/log/LogFromFridgeSheet';
+import { TodaySummary } from '@/features/log/TodaySummary';
 import { QuickAddSheet } from '@/features/log/QuickAddSheet';
 import { listFridge } from '@/db/fridge';
 import { dayTotals, deleteMealLog, listLogsForDay } from '@/db/logs';
@@ -22,6 +23,9 @@ import { addDays, relativeDay, todayKey, type DayKey } from '@/domain/dates';
 import { db } from '@/db/schema';
 import type { NutrientTarget } from '@/domain/plan';
 import type { FridgeEntry, MealLog, NutrientAggregate } from '@/domain/types';
+
+/** Already drawn as rings at the top — never repeat these in the list below. */
+const RINGED = new Set(['energy_kcal', 'carbs_g', 'fat_g', 'protein_g']);
 
 export function LogScreen() {
   const [date, setDate] = useState<DayKey>(() => todayKey());
@@ -63,8 +67,8 @@ export function LogScreen() {
         </button>
       </div>
 
-      {totals !== undefined && Object.keys(totals.nutrients).length > 0 && (
-        <DayTotals totals={totals} targets={byKey} />
+      {totals !== undefined && targets !== undefined && (
+        <TodaySummary totals={totals} targets={byKey} />
       )}
 
       <section className="section">
@@ -123,6 +127,10 @@ export function LogScreen() {
         + Quick Add something else
       </button>
 
+      {totals !== undefined && Object.keys(totals.nutrients).length > 0 && (
+        <PinnedTotals totals={totals} targets={byKey} />
+      )}
+
       <LogFromFridgeSheet
         entry={fromFridge}
         date={date}
@@ -176,7 +184,14 @@ function LoggedMeal({ log, onDelete }: { log: MealLog; onDelete: () => void }) {
  * rides along on every one — the number is not wrong when coverage is partial,
  * it is incomplete, and saying so is the entire reason coverage exists.
  */
-function DayTotals({
+/**
+ * The pinned nutrients the rings do NOT already cover.
+ *
+ * Calories and the three macros live in the rings above; repeating them here
+ * showed the same number twice on one screen. This is the micronutrient tail —
+ * iron, B12, whatever the user pinned — which has nowhere else to appear.
+ */
+function PinnedTotals({
   totals,
   targets,
 }: {
@@ -193,13 +208,13 @@ function DayTotals({
     }
   }, [settings]);
 
-  const shown = pinned.filter((key) => key in totals.nutrients);
-  if (shown.length === 0) return null;
+  const shown = pinned.filter((key) => key in totals.nutrients && !RINGED.has(key));
+  if (shown.length === 0) return <DayDetail totals={totals} targets={targets} />;
 
   return (
     <>
       <section className="section">
-        <h2 className="section__title">Today so far</h2>
+        <h2 className="section__title">Also tracking</h2>
         {shown.map((key) => (
           <TargetBar
             key={key}

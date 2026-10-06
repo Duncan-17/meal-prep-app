@@ -13,6 +13,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ColorPicker } from '@/ui/ColorPicker';
 import { FoodSearch } from '@/features/foods/FoodSearch';
 import { IngredientRows } from '@/features/components/IngredientRows';
+import { AmountsSection } from '@/features/components/AmountsSection';
 import { NutritionSummary } from '@/features/components/NutritionSummary';
 import {
   draftNutrition,
@@ -204,9 +205,9 @@ export function ComponentBuilder() {
           value={draft.category}
           onChange={(event) => patch({ category: event.target.value })}
           placeholder="Protein"
-          list="component-categories"
+          list="recipe-categories"
         />
-        <datalist id="component-categories">
+        <datalist id="recipe-categories">
           {['Protein', 'Carb', 'Veg', 'Sauce', 'Side', 'Breakfast'].map((option) => (
             <option key={option} value={option} />
           ))}
@@ -241,6 +242,11 @@ export function ComponentBuilder() {
         )}
       </section>
 
+      <AmountsSection
+        items={draft.ingredients}
+        onChange={(ingredients) => patch({ ingredients })}
+      />
+
       <NutritionSummary
         aggregate={nutrition}
         baseQuantity={baseQuantity}
@@ -272,7 +278,7 @@ export function ComponentBuilder() {
           disabled={blocking.length > 0 || saving}
           onClick={() => void handleSave()}
         >
-          {saving ? 'Saving…' : 'Save Component'}
+          {saving ? 'Saving…' : 'Save recipe'}
         </button>
       </div>
 

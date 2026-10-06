@@ -19,7 +19,7 @@ Single user, no auth, local-first.
 | 3   | Targets      | Custom 2500-cal plan, user-editable; RDA/DV seeds until real numbers supplied   |
 | 4   | Micros       | **Full USDA panel** stored; curated pinned subset displayed by default (§4)     |
 | 5   | Scheduling   | Tap-to-schedule. `dnd-kit` used only for ingredient reordering in v1            |
-| 6   | Cook flow    | Manual "Mark cooked" with actual-yield confirmation                             |
+| 6   | Cook flow    | Manual "Mark cooked" with actual-yield **and actual-ingredient** confirmation   |
 | 7   | Discard      | Yes — separate `stockAdjustments` audit trail, never counts as eaten            |
 | 8   | Backup       | Yes — full JSON export/import                                                   |
 | 9   | Quick Add    | Yes — saveable favorites in a separate lightweight table                        |
@@ -167,6 +167,16 @@ touches nutrition totals.
 plan is a bar, an actual meal is a dot. The first build drew marks per scheduled _batch_ and
 nothing at all for meals — so you could cook, eat, and see no trace of eating. Meal logs are the
 primary content of that screen.
+
+**The day at a glance.** The Diary leads with calories as a wide bar and the three macros as
+rings that fill toward their goal (2026-10-06, after the user asked for MyFitnessPal-style
+readability). Rings are meters, not charts: one value against one limit, same-ramp track,
+overshoot shown by completing the ring AND changing colour rather than silently stopping at full.
+The pinned micronutrient list sits below and deliberately excludes anything already in a ring —
+showing calories three times on one screen was the opposite of readable.
+
+**Amounts are their own step.** Choosing _what_ goes in a recipe and deciding _how much_ are
+different jobs, so the builder has a separate "Amount of each" section below the ingredient list.
 
 **Full panel without a wall of numbers.** Storage is complete; display is layered.
 

@@ -33,6 +33,32 @@ export const STATUS_COLORS = {
   critical: '#d03b3b',
 } as const;
 
+/**
+ * The three macro rings.
+ *
+ * These are the FIRST THREE slots of the validated set, not a free choice.
+ * That subset is the one documented as clearing the all-pairs gates in both
+ * modes (worst pair CVD ΔE 9.2 light / 9.4 dark) — and three rings sitting
+ * side by side is an all-pairs situation, not an adjacent one.
+ *
+ * MyFitnessPal draws fat in purple; this draws it blue, because a purple that
+ * had not been through the validator is a guess, and every ring is labelled
+ * anyway so hue is never the only signal.
+ */
+export const MACRO_COLORS = {
+  carbs_g: { light: '#1baf7a', dark: '#199e70' },
+  fat_g: { light: '#2a78d6', dark: '#3987e5' },
+  protein_g: { light: '#eb6834', dark: '#d95926' },
+} as const;
+
+export type MacroKey = keyof typeof MACRO_COLORS;
+
+export function macroColor(key: string, dark: boolean): string {
+  const entry = MACRO_COLORS[key as MacroKey];
+  if (entry === undefined) return dark ? SERIES_DARK[0] : SERIES_LIGHT[0];
+  return dark ? entry.dark : entry.light;
+}
+
 export function seriesColor(index: number, dark: boolean): string {
   const palette = dark ? SERIES_DARK : SERIES_LIGHT;
   // Clamp rather than wrap: cycling would give two series the same colour.

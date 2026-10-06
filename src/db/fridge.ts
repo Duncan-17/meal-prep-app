@@ -14,6 +14,7 @@ import type {
   AdjustmentReason,
   Coverage,
   FridgeEntry,
+  NutrientAggregate,
   NutrientMap,
   StockAdjustment,
 } from '@/domain/types';
@@ -29,7 +30,19 @@ import type {
  * Coverage carries over unchanged: knowing half the B12 of a batch means
  * knowing half the B12 of every serving of it.
  */
-export async function markCooked(batchId: number, actualYield: number): Promise<number> {
+export async function markCooked(
+  batchId: number,
+  actualYield: number,
+  /**
+   * What actually went in, when it differed from the plan.
+   *
+   * The Batch snapshot records what was *scheduled*; this records what was
+   * *cooked*. Both matter and neither replaces the other — the batch keeps its
+   * plan so the calendar still shows what you intended, while the fridge entry
+   * carries the truth you will eat from.
+   */
+  actual?: Pick<NutrientAggregate, 'nutrients' | 'coverage' | 'totalGrams'>,
+): Promise<number> {
   if (!(actualYield > 0)) {
     throw new Error(`Actual yield must be greater than zero, got ${actualYield}.`);
   }
@@ -41,8 +54,9 @@ export async function markCooked(batchId: number, actualYield: number): Promise<
       throw new Error('That batch is already cooked and in the fridge.');
     }
 
-    const totalNutrition = batchNutrition(batch);
-    const totalGrams = batch.totalGrams * batch.scale;
+    const totalNutrition = actual?.nutrients ?? batchNutrition(batch);
+    const totalGrams = actual?.totalGrams ?? batch.totalGrams * batch.scale;
+    const coverage = actual?.coverage ?? batch.coveragePerBase;
     const cookedAt = Date.now();
 
     const entryId = await db.fridgeEntries.add({
@@ -56,7 +70,7 @@ export async function markCooked(batchId: number, actualYield: number): Promise<
       initialQuantity: actualYield,
       remaining: actualYield,
       nutritionPerUnit: perUnitForActualYield(totalNutrition, actualYield),
-      coverage: batch.coveragePerBase,
+      coverage,
       gramsPerUnit: totalGrams / actualYield,
       cookedAt,
       createdAt: cookedAt,

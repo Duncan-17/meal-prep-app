@@ -65,6 +65,14 @@ from `main` on every push.
   many.
 - **Colour distinctness is OKLab, not RGB**, and the chart palette was validated for
   colour-vision deficiency rather than chosen by eye.
+- **The cook sheet records what ACTUALLY went in.** `markCooked` takes an optional actual
+  nutrition aggregate; the Batch keeps its scheduled snapshot (that is what you _planned_, and the
+  calendar still shows it) while the FridgeEntry carries what you really cooked. Do not "simplify"
+  by writing actuals back onto the batch.
+- **Macro ring colours are the first three VALIDATED palette slots**, not a free choice. Three
+  rings side by side is an all-pairs situation. MyFitnessPal draws fat purple; this draws it blue
+  because an unvalidated purple is a guess. Every ring is labelled, so hue is never the only
+  signal.
 - **UI names and code names differ on purpose.** The tabs read **Recipes** and **Diary**; the
   code says `Component` and `log` everywhere, and must keep doing so. Every stored snapshot —
   batches, fridge entries, meal logs — carries `componentId` / `componentName`, so renaming the

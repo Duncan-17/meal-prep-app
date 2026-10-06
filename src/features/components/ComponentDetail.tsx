@@ -67,7 +67,7 @@ export function ComponentDetail() {
   return (
     <div className="screen">
       <Link className="linkbtn" to="/components">
-        ‹ Components
+        ‹ Recipes
       </Link>
 
       <div className="detail__head">
@@ -142,7 +142,7 @@ export function ComponentDetail() {
             className="btn"
             onClick={() => setConfirming(true)}
             disabled={hasHistory}
-            title={hasHistory ? 'Cooked before — delete would orphan that history' : undefined}
+            title={hasHistory ? 'Cooked before — deleting would orphan that history' : undefined}
           >
             Delete
           </button>
