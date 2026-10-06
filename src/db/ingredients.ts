@@ -97,6 +97,23 @@ export async function listCustomFoods(): Promise<Ingredient[]> {
   return rows.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * A saved food in the shape every picker hands on, so choosing one in Quick
+ * Add, the recipe builder or the fridge goes down exactly the path a USDA
+ * result does. Keeps the stored `sourceId`, so `upsertIngredient` finds this
+ * same row instead of copying it.
+ */
+export function customFoodAsAdapted(food: Ingredient): AdaptedFood {
+  return {
+    source: food.source,
+    sourceId: food.sourceId ?? `custom-${food.id ?? food.createdAt}`,
+    name: food.name,
+    nutritionPer100g: food.nutritionPer100g,
+    ...(food.portionGrams === undefined ? {} : { portionGrams: food.portionGrams }),
+    precise: true,
+  };
+}
+
 export interface CustomFoodDraft {
   /** Set when editing an existing one. */
   id?: number;

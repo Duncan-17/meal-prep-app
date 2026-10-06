@@ -10,6 +10,7 @@ import {
   perUnitNutrition,
   pickNutrients,
   scaleNutrients,
+  withDerivedSums,
 } from '@/domain/nutrients';
 import type { NutrientContribution } from '@/domain/types';
 
@@ -238,5 +239,58 @@ describe('nutritionForGrams', () => {
 
   it('handles a sub-100g weight', () => {
     expect(nutritionForGrams({ protein_g: 20 }, 50)).toEqual({ protein_g: 10 });
+  });
+});
+
+describe('withDerivedSums', () => {
+  const specs = { omega3_total_g: ['ala', 'epa', 'dha'] };
+
+  it('sums the parts that are present', () => {
+    const out = withDerivedSums(
+      { nutrients: { ala: 1.2, epa: 0.3 }, coverage: { ala: 1, epa: 1 }, totalGrams: 200 },
+      specs,
+    );
+    expect(out.nutrients.omega3_total_g).toBeCloseTo(1.5);
+    expect(out.coverage.omega3_total_g).toBe(1);
+  });
+
+  it('leaves the total ABSENT when no part has data — not zero', () => {
+    const out = withDerivedSums(
+      { nutrients: { protein_g: 30 }, coverage: { protein_g: 1 }, totalGrams: 200 },
+      specs,
+    );
+    expect('omega3_total_g' in out.nutrients).toBe(false);
+    expect('omega3_total_g' in out.coverage).toBe(false);
+  });
+
+  it('reports the best part coverage, a lower bound on grams with any data', () => {
+    // Walnuts reported ALA only; salmon reported all three.
+    const day = aggregate([
+      { nutrients: { ala: 2.5 }, grams: 30 },
+      { nutrients: { ala: 0.1, epa: 0.4, dha: 1.1 }, grams: 120 },
+    ]);
+    const out = withDerivedSums(day, specs);
+    expect(out.nutrients.omega3_total_g).toBeCloseTo(4.1);
+    expect(out.coverage.omega3_total_g).toBe(1);
+    expect(out.coverage.epa).toBeCloseTo(0.8);
+  });
+
+  it('recomputes from the parts, overwriting a stale total', () => {
+    const out = withDerivedSums(
+      {
+        nutrients: { ala: 1, omega3_total_g: 99 },
+        coverage: { ala: 0.5, omega3_total_g: 1 },
+        totalGrams: 100,
+      },
+      specs,
+    );
+    expect(out.nutrients.omega3_total_g).toBe(1);
+    expect(out.coverage.omega3_total_g).toBe(0.5);
+  });
+
+  it('does not mutate its input', () => {
+    const input = { nutrients: { ala: 1 }, coverage: { ala: 1 }, totalGrams: 10 };
+    withDerivedSums(input, specs);
+    expect(input.nutrients).toEqual({ ala: 1 });
   });
 });

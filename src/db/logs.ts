@@ -12,6 +12,7 @@
 
 import { db } from '@/db/schema';
 import { aggregate } from '@/domain/nutrients';
+import { withDerivedTotals } from '@/nutrition/registry';
 import { canConsume, remainingAfterRestore } from '@/domain/portions';
 import type { DayKey } from '@/domain/dates';
 import type {
@@ -189,15 +190,20 @@ export async function listLogsInRange(from: DayKey, to: DayKey): Promise<MealLog
   return rows.sort((a, b) => a.loggedAt - b.loggedAt);
 }
 
-/** Everything eaten on one day, with coverage carried up from each meal. */
+/**
+ * Everything eaten on one day, with coverage carried up from each meal, and
+ * derived totals (omega-3, omega-6) filled in for display.
+ */
 export async function dayTotals(date: DayKey): Promise<NutrientAggregate> {
   const logs = await listLogsForDay(date);
-  return aggregate(
-    logs.map((log) => ({
-      nutrients: log.nutrients,
-      grams: log.totalGrams,
-      coverage: log.coverage,
-    })),
+  return withDerivedTotals(
+    aggregate(
+      logs.map((log) => ({
+        nutrients: log.nutrients,
+        grams: log.totalGrams,
+        coverage: log.coverage,
+      })),
+    ),
   );
 }
 

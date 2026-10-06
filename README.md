@@ -4,7 +4,7 @@ A personal-use PWA for meal planning. Build reusable **recipes**, schedule batch
 calendar, track what you cooked as **fridge** stock, and log what you eat against an editable
 plan — with the full USDA nutrient panel behind it, not just calories.
 
-> **Status: live and in use.** All eight build phases complete, **439 tests** passing, deployed to
+> **Status: live and in use.** All eight build phases complete, **470 tests** passing, deployed to
 > Cloudflare as a Worker and installable on a phone. Now being refined against real use.
 
 - **[CLAUDE.md](CLAUDE.md)** — current status, conventions, and where to pick up. Start here.
@@ -14,7 +14,9 @@ plan — with the full USDA nutrient panel behind it, not just calories.
 ## What it does
 
 1. **Recipes** — build something you cook a batch of from USDA-sourced ingredients, with live
-   nutrition. Or define your own **foods** by hand for whatever the database has never heard of.
+   nutrition. Or define your own **foods** by hand for whatever the database has never heard of,
+   then eat them, stock them, or use them in a recipe. Search results say whether a food is raw,
+   cooked or dry, and whose it is.
 2. **Calendar** — schedule a cook on a month grid. Cooking shows as a bar, eating as a dot.
 3. **Mark cooked** — confirm what actually went in and what it actually made; nutrition is
    recomputed from that rather than from the plan.
@@ -22,6 +24,7 @@ plan — with the full USDA nutrient panel behind it, not just calories.
 5. **Diary** — log from the fridge or quick-add. Calories as a bar, macros as rings, the full
    panel below.
 6. **Plan** — every nutrient target, daily and weekly, seeded from FDA values and fully editable.
+   Omega-3 and omega-6 are totalled from their individual fatty acids.
 
 Two properties it holds onto throughout: **missing data is never zero** (every total carries a
 coverage figure saying how much of it was actually measured), and **history is never rewritten**

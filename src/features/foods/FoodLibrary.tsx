@@ -1,9 +1,11 @@
 /**
  * Your own foods — the ones USDA has never heard of.
  *
- * The point of the list is the **+ Fridge** action: you buy eight of the
- * yoghurt drink, tap it, say eight, and they are stock you can log from. That
- * is the whole reason to define a food once rather than re-typing it.
+ * Two actions per food: **Eat** logs one to today's Diary, and **+ Fridge**
+ * stocks however many you bought — eight of the yoghurt drink become stock you
+ * can log from. Either is the reason to define a food once rather than
+ * re-typing it. The same foods also appear under "My foods" in every food
+ * picker, so they can go into a recipe too.
  */
 
 import { useState } from 'react';
@@ -12,7 +14,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Sheet } from '@/ui/Sheet';
 import { Stepper } from '@/ui/Stepper';
 import { CustomFoodForm } from '@/features/foods/CustomFoodForm';
-import { deleteCustomFood, listCustomFoods, customFoodUsage } from '@/db/ingredients';
+import { QuickAddSheet } from '@/features/log/QuickAddSheet';
+import {
+  customFoodAsAdapted,
+  customFoodUsage,
+  deleteCustomFood,
+  listCustomFoods,
+} from '@/db/ingredients';
+import { todayKey } from '@/domain/dates';
 import { addFridgeItem } from '@/db/fridge';
 import { suggestUnusedSwatch } from '@/domain/color';
 import { componentColors } from '@/db/components';
@@ -25,6 +34,7 @@ export function FoodLibrary() {
   const [editing, setEditing] = useState<Ingredient | null>(null);
   const [creating, setCreating] = useState(false);
   const [stocking, setStocking] = useState<Ingredient | null>(null);
+  const [eating, setEating] = useState<Ingredient | null>(null);
 
   return (
     <>
@@ -57,6 +67,13 @@ export function FoodLibrary() {
                   <span className="card__name">{food.name}</span>
                   <span className="card__meta">{describe(food)}</span>
                 </span>
+                <button
+                  type="button"
+                  className="btn btn--primary stock__adjust"
+                  onClick={() => setEating(food)}
+                >
+                  Eat
+                </button>
                 <button
                   type="button"
                   className="btn stock__adjust"
@@ -104,6 +121,18 @@ export function FoodLibrary() {
       </Sheet>
 
       <StockSheet food={stocking} onClose={() => setStocking(null)} />
+
+      {/* Eaten today, straight from here — no trip to the Diary to find it. */}
+      {eating !== null && (
+        <QuickAddSheet
+          key={eating.id}
+          open
+          date={todayKey()}
+          slot={undefined}
+          initialFood={customFoodAsAdapted(eating)}
+          onClose={() => setEating(null)}
+        />
+      )}
     </>
   );
 }

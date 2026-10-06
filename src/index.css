@@ -307,6 +307,33 @@ body {
   font-weight: 600;
 }
 
+/* The details that tell one egg from another: secondary to the headline. */
+.foodcard__detail {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.foodcard__source {
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+
+/* Raw / cooked / dry — the difference that most changes the numbers. */
+.badge--prep {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-sunken));
+  color: var(--accent);
+}
+
+/* Inferred from calories rather than stated: a dashed edge says "probably". */
+.badge--guess {
+  border: 1px dashed currentColor;
+  padding: 1px 6px;
+}
+
+.segmented--tight {
+  margin: 0 0 10px;
+}
+
 .linkbtn {
   margin-top: 12px;
   padding: 0;

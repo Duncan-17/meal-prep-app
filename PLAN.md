@@ -205,6 +205,17 @@ adapting it produces zero nutrients where the search result had fifteen. Branded
 **merged**: portions from detail, nutrition from whichever actually knows more. A detail fetch
 must never make the data worse.
 
+**Choosing a search result.** FDC ranks short queries badly — "egg" led with a Snickers egg — and
+buries the difference between results in the tail of a comma list. So the client fetches 50,
+re-ranks them (a name that _is_ the query first, generic data before packaged), drops duplicates,
+and shows at most 15. Each card leads with the food, then a chip for how it is prepared. USDA's
+"raw" on a grain means **dry**, and the chip says so; a packaged staple with no stated state gets
+a dashed "Likely dry" or "Likely cooked" inferred from its calories per 100 g.
+
+**Derived totals.** Omega-3 and omega-6 are sums of individual fatty acids. They are computed
+whenever an aggregate is shown, never stored, so they apply to meals logged before they existed
+without rewriting a snapshot (§3d). Present when any part is; coverage is the best part's.
+
 **Unit resolution.** `resolveToGrams(qty, unit, ingredient)` tries, in order:
 
 1. Mass units → direct conversion
@@ -390,3 +401,6 @@ _using_ it, and they override the phase text where they disagree:
 | 2026-10-06 | "Mark cooked" became a real confirmation — adjust each ingredient, recompute nutrition from what actually went in |
 | 2026-10-06 | Recipes tab split in two, adding a **Foods** library for items you type in yourself                               |
 | 2026-10-06 | Multi-device sync re-confirmed **out of scope**; the JSON backup is the handoff                                   |
+| 2026-10-06 | Every food picker gained a **USDA / My foods** toggle; the Foods library gained **Eat**                           |
+| 2026-10-06 | **Omega-3 / omega-6 totals**, derived at read time from the individual fatty acids (§4)                           |
+| 2026-10-06 | Search results **re-ranked, capped at 15, and labelled** — raw / cooked / dry, brand, category (§4)               |

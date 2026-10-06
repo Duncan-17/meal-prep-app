@@ -158,7 +158,11 @@ export function CustomFoodForm({ existing, onSaved, onCancel }: Props) {
       {showAll &&
         NUTRIENT_GROUP_ORDER.map((group) => {
           const rest = NUTRIENTS.filter(
-            (definition) => definition.group === group && !HEADLINE.includes(definition.key),
+            // A derived total is computed from its parts, never typed in.
+            (definition) =>
+              definition.group === group &&
+              !HEADLINE.includes(definition.key) &&
+              definition.derivedFrom === undefined,
           );
           if (rest.length === 0) return null;
           return (

@@ -117,6 +117,42 @@ export function aggregate(contributions: readonly NutrientContribution[]): Nutri
 }
 
 /**
+ * Add totals computed from their parts — omega-3 from ALA, EPA, DPA and DHA.
+ *
+ * Computed at READ time and never stored, so a total reaches every meal logged
+ * before it existed without rewriting a single snapshot (PLAN.md §3d). Always
+ * recomputed from the parts, overwriting any value already under the key, so a
+ * total can never drift from what it claims to sum.
+ *
+ * A total is present when ANY of its parts is. FDC reports a fatty-acid
+ * profile as a set — a record that has ALA but no EPA is a plant, where EPA
+ * genuinely is negligible, not a record that forgot to measure it. A total
+ * with NO parts present stays absent: no data, not zero.
+ *
+ * Coverage is the best coverage among the parts. Each part's coverage is the
+ * share of grams that reported it, so the share reporting at least one part is
+ * at least the largest of them. That is a lower bound — honest rather than
+ * flattering.
+ */
+export function withDerivedSums(
+  totals: NutrientAggregate,
+  specs: Readonly<Record<string, readonly string[]>>,
+): NutrientAggregate {
+  const nutrients: NutrientMap = { ...totals.nutrients };
+  const coverage: Coverage = { ...totals.coverage };
+
+  for (const [key, parts] of Object.entries(specs)) {
+    const present = parts.filter((part) => part in totals.nutrients);
+    if (present.length === 0) continue;
+
+    nutrients[key] = present.reduce((sum, part) => sum + (totals.nutrients[part] ?? 0), 0);
+    coverage[key] = Math.max(...present.map((part) => totals.coverage[part] ?? 1));
+  }
+
+  return { nutrients, coverage, totalGrams: totals.totalGrams };
+}
+
+/**
  * Combine aggregates that are already computed — a week from its days, a day
  * from its meals.
  *

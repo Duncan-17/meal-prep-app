@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **439 tests** across 21 files.
+`tsc -b` clean across three projects, ESLint clean, **470 tests** across 22 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -50,6 +50,13 @@ Roughly in order, all in response to using the thing:
   "+ Fridge" action for "I bought eight of them".
 - **Renamed in the UI** — Components → Recipes, Log → Diary.
 - **Zoom locked**, tap delay removed, mobile calendar overlap fixed.
+- **Saved foods everywhere** — every food picker (Quick Add, recipe builder, Add to fridge) has a
+  **USDA database / My foods** toggle, and each food in the Foods library has an **Eat** button.
+  Before this a custom food could only be stocked, never eaten or put in a recipe.
+- **Omega-3 and omega-6 totals** — in Day Detail, the weekly bars, Trends' table and the Plan,
+  pinned and given default goals by a v4 Dexie upgrade.
+- **Search you can choose from** — results re-ranked (plain food first), capped at 15, and labelled:
+  headline + details, a raw / cooked / dry chip, brand and USDA category.
 
 ### Things a future session should not re-derive
 
@@ -101,6 +108,26 @@ Roughly in order, all in response to using the thing:
   without asking again.
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
   render a neutral dot on purpose; rewriting them would be rewriting history.
+- **Omega totals are DERIVED at read time, never stored.** `derivedFrom` in the registry,
+  `withDerivedSums` in `domain/nutrients.ts`, applied by `withDerivedTotals` in `dayTotals`,
+  `weekSeries`/`weekTotals` and the recipe summary. That is how they reach meals logged before they
+  existed without rewriting a snapshot. A total is present if ANY part is; coverage is the best
+  part's (a lower bound). Never let a derived key into a stored map or the custom-food form — a
+  stored total would be summed alongside recomputed ones and undercount.
+- **FDC splits fatty acids to different depths per dataset.** SR Legacy/Foundation report ALA as
+  851 and linoleic as 675; FNDDS only the undifferentiated 619 and 618. Hence `usdaFallbacks`: the
+  primary number always wins, the fallback fills in when it is absent.
+- **FDC's search ranking is bad for short queries, measured 2026-10-06.** "egg" led with a Snickers
+  egg; "rice" had no plain rice in the top 25 (seven Branded "RICE" first). The client asks for 50
+  and `rankFoods` (`domain/foodSearch.ts`) re-orders and caps at 15. The user asked for the cap —
+  "no scenario where I need 400+ egg options". Do not raise it; a better query beats a longer list.
+- **"Raw" on a grain means DRY.** `describeFood` labels raw rice/pasta/lentils "Dry · uncooked",
+  and for Branded staples with no stated state infers it from kcal/100 g (≥300 dry, ≤200 cooked),
+  shown with a dashed "Likely" chip so it never reads as stated.
+- **The Worker slims search responses** to the fields the adapter reads (347 kB → 82 kB for 25
+  results). Nutrients keep number/unit/value so a registry fix can still re-map them.
+- **The search cache is versioned** (`SEARCH_CACHE_VERSION` in `db/foods.ts`). Bump it whenever a
+  search starts returning something old cached entries lack, or the old page replays for a week.
 
 ## Where to pick up
 
@@ -117,12 +144,16 @@ the deployed Worker matches it.
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 
-1. **The Plan screen is an enormous scroll on mobile** — every nutrient gets its own slider. It
+1. **Search ranking is a heuristic.** Plain "rice" still surfaces fried rice above plain cooked
+   rice, because FDC never returned SR Legacy's "Rice, white, long-grain, cooked" in the top 50.
+   Typing "white rice cooked" works. If the user complains, the next step is a second query or
+   stronger data-type weighting, not a bigger page.
+2. **The Plan screen is an enormous scroll on mobile** — every nutrient gets its own slider. It
    wants the same collapse-by-group treatment the Day Detail panel has. Flagged to the user
    2026-10-06; they have not asked for it yet.
-2. **Barcode scanning** is still absent (PLAN.md §6). Needs the OFF contact string AND a ZXing
+3. **Barcode scanning** is still absent (PLAN.md §6). Needs the OFF contact string AND a ZXing
    fallback, since Safari has no `BarcodeDetector`.
-3. **The bundle is ~570 kB** before the lazy chart chunk. Fine over a fast connection, not
+4. **The bundle is ~570 kB** before the lazy chart chunk. Fine over a fast connection, not
    obviously fine on a phone.
 
 **Do not start any of these without asking.** The user drives what gets built; every good change
@@ -300,8 +331,8 @@ src/
                components, ingredients (incl. custom foods), plan, favorites,
                insight, backup, init, seed.dev
   domain/      PURE — no Dexie, no React, all tested. nutrients, coverage,
-               portions, components, dates, plan, color, backup, types
-  nutrition/   registry (75 nutrients), usda.adapter, units, targets
+               portions, components, dates, plan, color, backup, foodSearch, types
+  nutrition/   registry (81 nutrients, 2 derived), usda.adapter, units, targets
   features/
     calendar/  month grid, day panel, schedule + mark-cooked sheets
     components/ recipe library (two tabs), builder, detail, amounts, ingredient rows

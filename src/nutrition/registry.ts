@@ -20,6 +20,9 @@
  * appears. Confirm them opportunistically if a food ever reports them.
  */
 
+import { withDerivedSums } from '@/domain/nutrients';
+import type { NutrientAggregate } from '@/domain/types';
+
 export type NutrientGroup = 'macro' | 'vitamin' | 'mineral' | 'lipid' | 'amino_acid' | 'other';
 
 export type NutrientUnit = 'kcal' | 'g' | 'mg' | 'ug' | 'iu';
@@ -27,8 +30,25 @@ export type NutrientUnit = 'kcal' | 'g' | 'mg' | 'ug' | 'iu';
 export interface NutrientDef {
   /** Canonical key used in every NutrientMap. */
   key: string;
-  /** FoodData Central nutrient number. */
-  usdaNumber: string;
+  /**
+   * FoodData Central nutrient number. Absent only on a DERIVED nutrient, which
+   * no source reports directly — see `derivedFrom`.
+   */
+  usdaNumber?: string;
+  /**
+   * Numbers to fall back on when the primary is absent from a record. FDC's
+   * datasets disagree on how finely they split fatty acids: SR Legacy and
+   * Foundation report ALA as `851` (18:3 n-3), while Survey (FNDDS) reports
+   * only the undifferentiated `619` (18:3). Without a fallback, every FNDDS
+   * food would silently carry no ALA. The primary always wins when both exist.
+   */
+  usdaFallbacks?: readonly string[];
+  /**
+   * A total computed from other keys rather than stored. Never written into a
+   * NutrientMap — `withDerivedTotals` computes it at read time, so it reaches
+   * meals logged before it existed without rewriting their snapshots.
+   */
+  derivedFrom?: readonly string[];
   name: string;
   /** Canonical unit. Adapters convert into this; nothing downstream converts. */
   unit: NutrientUnit;
@@ -118,8 +138,25 @@ export const NUTRIENTS: readonly NutrientDef[] = [
     precision: 0,
   },
   {
+    key: 'omega3_total_g',
+    name: 'Omega-3 (total)',
+    unit: 'g',
+    group: 'lipid',
+    precision: 2,
+    derivedFrom: ['omega3_ala_g', 'omega3_epa_g', 'omega3_dpa_g', 'omega3_dha_g'],
+  },
+  {
+    key: 'omega6_total_g',
+    name: 'Omega-6 (total)',
+    unit: 'g',
+    group: 'lipid',
+    precision: 2,
+    derivedFrom: ['omega6_la_g', 'omega6_aa_g'],
+  },
+  {
     key: 'omega3_ala_g',
     usdaNumber: '851',
+    usdaFallbacks: ['619'],
     name: 'ALA (18:3 n-3)',
     unit: 'g',
     group: 'lipid',
@@ -150,9 +187,22 @@ export const NUTRIENTS: readonly NutrientDef[] = [
     precision: 3,
   },
   {
+    // `675` is linoleic acid proper (18:2 n-6 cis,cis). `618` is every 18:2
+    // lumped together, CLAs and trans included — close, and the only figure
+    // FNDDS reports, so it is the fallback rather than the primary.
     key: 'omega6_la_g',
-    usdaNumber: '618',
-    name: 'Linoleic acid (18:2)',
+    usdaNumber: '675',
+    usdaFallbacks: ['618'],
+    name: 'Linoleic acid (18:2 n-6)',
+    unit: 'g',
+    group: 'lipid',
+    precision: 3,
+  },
+  {
+    key: 'omega6_aa_g',
+    usdaNumber: '855',
+    usdaFallbacks: ['620'],
+    name: 'Arachidonic acid (20:4 n-6)',
     unit: 'g',
     group: 'lipid',
     precision: 3,
@@ -613,7 +663,21 @@ export const NUTRIENTS: readonly NutrientDef[] = [
 ];
 
 const BY_KEY = new Map(NUTRIENTS.map((n) => [n.key, n]));
-const BY_USDA = new Map(NUTRIENTS.map((n) => [n.usdaNumber, n]));
+const BY_USDA = new Map(
+  NUTRIENTS.flatMap((n) => (n.usdaNumber === undefined ? [] : [[n.usdaNumber, n] as const])),
+);
+const BY_USDA_FALLBACK = new Map(
+  NUTRIENTS.flatMap((n) => (n.usdaFallbacks ?? []).map((number) => [number, n] as const)),
+);
+
+/** Derived key → the keys it sums. */
+export const DERIVED_TOTALS: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
+  NUTRIENTS.flatMap((n) => (n.derivedFrom === undefined ? [] : [[n.key, n.derivedFrom]])),
+);
+
+export function isDerivedNutrient(key: string): boolean {
+  return key in DERIVED_TOTALS;
+}
 
 export function getNutrient(key: string): NutrientDef | undefined {
   return BY_KEY.get(key);
@@ -621,6 +685,11 @@ export function getNutrient(key: string): NutrientDef | undefined {
 
 export function getNutrientByUsdaNumber(usdaNumber: string): NutrientDef | undefined {
   return BY_USDA.get(usdaNumber);
+}
+
+/** The nutrient a number stands in for when that nutrient's primary is missing. */
+export function getNutrientByUsdaFallback(usdaNumber: string): NutrientDef | undefined {
+  return BY_USDA_FALLBACK.get(usdaNumber);
 }
 
 export function isKnownNutrient(key: string): boolean {
@@ -667,10 +736,21 @@ export const DEFAULT_PINNED_NUTRIENTS: readonly string[] = [
   'iron_mg',
   'calcium_mg',
   'magnesium_mg',
+  'omega3_total_g',
+  'omega6_total_g',
 ];
 
 /** Round for display using the registry's precision. */
 export function formatAmount(key: string, value: number): string {
   const def = BY_KEY.get(key);
   return value.toFixed(def?.precision ?? 1);
+}
+
+/**
+ * A day, week or recipe with its derived totals filled in — omega-3 and
+ * omega-6. Apply wherever an aggregate is about to be SHOWN, never before one
+ * is stored; see `withDerivedSums`.
+ */
+export function withDerivedTotals(totals: NutrientAggregate): NutrientAggregate {
+  return withDerivedSums(totals, DERIVED_TOTALS);
 }

@@ -74,6 +74,16 @@ const DEFAULTS: readonly Seed[] = [
   ['omega3_epa_g', 0.25, 'min'],
   ['omega3_dha_g', 0.25, 'min'],
   ['omega3_ala_g', 1.6, 'min'],
+
+  /**
+   * Totals, summed from the fatty acids above (see `derivedFrom` in the
+   * registry). There is no FDA Daily Value for either; these are the IOM
+   * Adequate Intakes for adult men — 1.6 g ALA, 17 g linoleic acid — which is
+   * where the bulk of each total comes from. Omega-6 is "about" rather than
+   * "at least": more is not obviously better.
+   */
+  ['omega3_total_g', 1.6, 'min'],
+  ['omega6_total_g', 17, 'target'],
 ];
 
 /** The FDA template, fresh. */

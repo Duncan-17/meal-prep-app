@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_PINNED_NUTRIENTS,
+  DERIVED_TOTALS,
   NUTRIENTS,
   NUTRIENT_GROUP_ORDER,
   formatAmount,
@@ -20,9 +21,32 @@ describe('registry integrity', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('has no duplicate USDA numbers', () => {
-    const numbers = NUTRIENTS.map((n) => n.usdaNumber);
+  it('has no duplicate USDA numbers, fallbacks included', () => {
+    // A fallback that collided with a primary would be read twice, as two
+    // different nutrients.
+    const numbers = NUTRIENTS.flatMap((n) => [
+      ...(n.usdaNumber === undefined ? [] : [n.usdaNumber]),
+      ...(n.usdaFallbacks ?? []),
+    ]);
     expect(new Set(numbers).size).toBe(numbers.length);
+  });
+
+  it('gives every nutrient either a USDA number or the parts it is derived from', () => {
+    for (const nutrient of NUTRIENTS) {
+      expect((nutrient.usdaNumber === undefined) !== (nutrient.derivedFrom === undefined)).toBe(
+        true,
+      );
+    }
+  });
+
+  it('derives totals only from measured nutrients in the same unit', () => {
+    for (const [key, parts] of Object.entries(DERIVED_TOTALS)) {
+      for (const part of parts) {
+        const def = getNutrient(part);
+        expect(def?.usdaNumber, `${key} ← ${part}`).toBeDefined();
+        expect(def?.unit).toBe(getNutrient(key)?.unit);
+      }
+    }
   });
 
   it('gives every nutrient a group in the display order', () => {
@@ -85,7 +109,8 @@ describe('default pins', () => {
   });
 
   it('matches the default list agreed in SETUP.md item 10', () => {
-    expect(DEFAULT_PINNED_NUTRIENTS).toHaveLength(10);
+    // Ten from SETUP.md item 10, plus omega-3 and omega-6 (2026-10-06).
+    expect(DEFAULT_PINNED_NUTRIENTS).toHaveLength(12);
     expect(DEFAULT_PINNED_NUTRIENTS[0]).toBe('energy_kcal');
   });
 });

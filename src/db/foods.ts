@@ -12,6 +12,15 @@ import type { AdaptedFood, FoodCacheEntry, FoodSource } from '@/domain/types';
 /** Cached searches older than this are re-fetched. Nutrition data is stable. */
 export const SEARCH_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Bump when a search starts returning something an older cached one lacks.
+ *
+ * 2 (2026-10-06): 50 candidates instead of 25, so ranking has something to
+ * choose from, and a USDA category on every food. Replaying a v1 entry would
+ * show the old, unlabelled, badly ranked page for up to a week.
+ */
+export const SEARCH_CACHE_VERSION = 2;
+
 export function foodKey(source: FoodSource, sourceId: string): string {
   return `${source}:${sourceId}`;
 }
@@ -55,6 +64,7 @@ export async function cacheSearch(query: string, foods: readonly AdaptedFood[]):
     query: normalizeQuery(query),
     keys: foods.map((food) => foodKey(food.source, food.sourceId)),
     fetchedAt: Date.now(),
+    version: SEARCH_CACHE_VERSION,
   });
 }
 
@@ -70,6 +80,7 @@ export async function getCachedSearch(
 ): Promise<AdaptedFood[] | null> {
   const entry = await db.searchCache.get(normalizeQuery(query));
   if (entry === undefined) return null;
+  if (entry.version !== SEARCH_CACHE_VERSION) return null;
   if (Date.now() - entry.fetchedAt > ttlMs) return null;
 
   const rows = await db.foodCache.bulkGet(entry.keys);

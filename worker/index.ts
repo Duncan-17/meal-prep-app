@@ -146,7 +146,7 @@ async function handleUsdaSearch(
     `https://cache.local/usda/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&dataType=${encodeURIComponent(dataTypes.join(','))}`,
   );
 
-  return fetchWithCache(upstream, cacheKey, waitUntil);
+  return fetchWithCache(upstream, cacheKey, waitUntil, slimSearchBody);
 }
 
 async function handleUsdaFood(
@@ -175,6 +175,7 @@ async function fetchWithCache(
   upstream: URL,
   cacheKey: Request,
   waitUntil: (promise: Promise<unknown>) => void,
+  transform: (body: string) => string = (body) => body,
 ): Promise<Response> {
   const cache = caches.default;
 
@@ -204,7 +205,7 @@ async function fetchWithCache(
     );
   }
 
-  const response = new Response(body, {
+  const response = new Response(transform(body), {
     status: 200,
     headers: {
       'content-type': 'application/json; charset=utf-8',
@@ -215,6 +216,60 @@ async function fetchWithCache(
 
   waitUntil(cache.put(cacheKey, response.clone()));
   return response;
+}
+
+/**
+ * Keep only what the app reads from a search response.
+ *
+ * FDC sends a great deal per food — ingredient lists, GTINs, highlight
+ * fragments, a dozen descriptor fields on every one of ~100 nutrients. Measured
+ * 2026-10-06: 25 results were 347 kB raw and 82 kB slimmed. That matters twice
+ * over on a phone, because the client also stores each food in IndexedDB.
+ *
+ * Nutrients keep number, unit and value — everything `adaptNutrients` needs to
+ * re-map a food later if the registry changes. Anything unparseable passes
+ * through untouched rather than failing the search.
+ */
+const SEARCH_FOOD_FIELDS = [
+  'fdcId',
+  'description',
+  'dataType',
+  'brandOwner',
+  'brandName',
+  'foodCategory',
+  'servingSize',
+  'servingSizeUnit',
+  'householdServingFullText',
+] as const;
+
+function slimSearchBody(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { foods?: unknown; totalHits?: unknown };
+    if (!Array.isArray(parsed.foods)) return body;
+
+    const foods = parsed.foods.map((raw: unknown) => {
+      const food = (raw ?? {}) as Record<string, unknown>;
+      const slim: Record<string, unknown> = {};
+      for (const field of SEARCH_FOOD_FIELDS) {
+        if (food[field] !== undefined) slim[field] = food[field];
+      }
+      if (Array.isArray(food.foodNutrients)) {
+        slim.foodNutrients = food.foodNutrients.map((entry: unknown) => {
+          const nutrient = (entry ?? {}) as Record<string, unknown>;
+          return {
+            nutrientNumber: nutrient.nutrientNumber,
+            unitName: nutrient.unitName,
+            value: nutrient.value,
+          };
+        });
+      }
+      return slim;
+    });
+
+    return JSON.stringify({ totalHits: parsed.totalHits, foods });
+  } catch {
+    return body;
+  }
 }
 
 /**

@@ -29,13 +29,22 @@ interface Props {
   date: DayKey;
   slot: MealSlot | undefined;
   onClose: () => void;
+  /**
+   * Skip straight to "how much" with this food already chosen — the Foods
+   * library's Eat button. Read once, on mount; give the sheet a `key` per food.
+   */
+  initialFood?: AdaptedFood;
 }
 
-export function QuickAddSheet({ open, date, slot, onClose }: Props) {
+export function QuickAddSheet({ open, date, slot, onClose, initialFood }: Props) {
   const favorites = useLiveQuery(() => listFavorites(), []);
-  const [chosen, setChosen] = useState<AdaptedFood | null>(null);
-  const [quantity, setQuantity] = useState(100);
-  const [unit, setUnit] = useState('g');
+  const [chosen, setChosen] = useState<AdaptedFood | null>(initialFood ?? null);
+  const [quantity, setQuantity] = useState(() =>
+    initialFood === undefined ? 100 : defaultPortion(initialFood).quantity,
+  );
+  const [unit, setUnit] = useState(() =>
+    initialFood === undefined ? 'g' : defaultPortion(initialFood).unit,
+  );
   const [alsoFavorite, setAlsoFavorite] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

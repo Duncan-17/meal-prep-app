@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db/schema';
 import {
   FoodInUseError,
+  customFoodAsAdapted,
   customFoodUsage,
   deleteCustomFood,
   listCustomFoods,
@@ -123,7 +124,12 @@ describe('listing', () => {
   });
 
   it('sorts alphabetically', async () => {
-    await saveCustomFood({ name: 'Zinc bar', servingGrams: 50, servingLabel: 'bar', nutritionPer100g: {} });
+    await saveCustomFood({
+      name: 'Zinc bar',
+      servingGrams: 50,
+      servingLabel: 'bar',
+      nutritionPer100g: {},
+    });
     await kefir();
     expect((await listCustomFoods()).map((f) => f.name[0])).toEqual(['Y', 'Z']);
   });
@@ -168,5 +174,28 @@ describe('the delete guard', () => {
   it('counts the recipes depending on it', async () => {
     const id = await kefirInARecipe();
     expect(await customFoodUsage(id)).toBe(1);
+  });
+});
+
+describe('picking a saved food through search', () => {
+  it('lands on the same row rather than copying it', async () => {
+    // The builder and Quick Add hand every picked food to upsertIngredient.
+    // A saved food must come back as itself, or each pick would clone it
+    // into the Foods library.
+    const id = await kefir();
+    const [saved] = await listCustomFoods();
+    const picked = customFoodAsAdapted(saved!);
+
+    expect(await upsertIngredient(picked)).toBe(id);
+    expect(await listCustomFoods()).toHaveLength(1);
+  });
+
+  it('keeps the serving, so the picker defaults to one bottle', async () => {
+    await kefir();
+    const [saved] = await listCustomFoods();
+    const picked = customFoodAsAdapted(saved!);
+
+    expect(picked.portionGrams?.bottle).toBe(250);
+    expect(resolveToGrams(1, 'bottle', picked).grams).toBe(250);
   });
 });

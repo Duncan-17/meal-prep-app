@@ -44,8 +44,9 @@ export class MealPrepDatabase extends Dexie {
   plan!: Table<Plan, string>;
   settings!: Table<AppSettings, string>;
 
-  constructor() {
-    super('meal-prep');
+  /** The name is a parameter only so a test can upgrade a throwaway database. */
+  constructor(name = 'meal-prep') {
+    super(name);
 
     this.version(1).stores({
       ingredients: '++id, name, source, [source+sourceId]',
@@ -103,8 +104,38 @@ export class MealPrepDatabase extends Dexie {
               target.key === undefined ? 'min' : (defaultTargetFor(target.key)?.direction ?? 'min');
           });
       });
+
+    // v4 (2026-10-06): omega-3 and omega-6 totals, asked for by name. No new
+    // index — this only gives an existing database the two default goals and
+    // pins them, so Trends and the weekly bars show them without a trip to
+    // Settings. A fresh install gets both from the defaults instead.
+    this.version(4)
+      .stores({})
+      .upgrade(async (transaction) => {
+        for (const key of OMEGA_TOTAL_KEYS) {
+          const targets = transaction.table('targets');
+          const seed = defaultTargetFor(key);
+          if (seed !== undefined && (await targets.get(key)) === undefined) {
+            await targets.put(seed);
+          }
+        }
+        await transaction
+          .table('settings')
+          .toCollection()
+          .modify((settings: { pinnedNutrients?: string[] }) => {
+            const pinned = settings.pinnedNutrients ?? [];
+            // Empty means "use the defaults", which already include both.
+            if (pinned.length === 0) return;
+            settings.pinnedNutrients = [
+              ...pinned,
+              ...OMEGA_TOTAL_KEYS.filter((key) => !pinned.includes(key)),
+            ];
+          });
+      });
   }
 }
+
+const OMEGA_TOTAL_KEYS = ['omega3_total_g', 'omega6_total_g'] as const;
 
 export const db = new MealPrepDatabase();
 

@@ -8,7 +8,12 @@
  */
 
 import { coverageFor, isFullyCovered } from '@/domain/coverage';
-import { DEFAULT_PINNED_NUTRIENTS, formatAmount, nutrientName } from '@/nutrition/registry';
+import {
+  DEFAULT_PINNED_NUTRIENTS,
+  formatAmount,
+  nutrientName,
+  withDerivedTotals,
+} from '@/nutrition/registry';
 import type { NutrientAggregate, PortionStyle } from '@/domain/types';
 
 interface Props {
@@ -18,7 +23,13 @@ interface Props {
   portionStyle: PortionStyle;
 }
 
-export function NutritionSummary({ aggregate, baseQuantity, baseUnit, portionStyle }: Props) {
+export function NutritionSummary({
+  aggregate: stored,
+  baseQuantity,
+  baseUnit,
+  portionStyle,
+}: Props) {
+  const aggregate = withDerivedTotals(stored);
   const known = DEFAULT_PINNED_NUTRIENTS.filter((key) => key in aggregate.nutrients);
 
   if (known.length === 0) {

@@ -9,6 +9,9 @@ import { adaptUsdaFood, adaptUsdaSearchResponse } from '@/nutrition/usda.adapter
 import { cacheFoods, cacheSearch, foodKey, getCachedFood, getCachedSearch } from '@/db/foods';
 import type { AdaptedFood } from '@/domain/types';
 
+/** Candidates fetched per search. The Worker caps this at 50 too. */
+export const SEARCH_PAGE_SIZE = 50;
+
 export interface SearchOutcome {
   foods: AdaptedFood[];
   /** Where the results came from, so the UI can say so honestly. */
@@ -74,7 +77,9 @@ export async function searchFoods(
     if (cached !== null) return { foods: cached, from: 'cache' };
   }
 
-  const url = `/api/usda/search?query=${encodeURIComponent(trimmed)}`;
+  // A wider page than is ever shown: FDC's own order is poor for short
+  // queries, so `rankFoods` needs candidates to choose from (domain/foodSearch).
+  const url = `/api/usda/search?query=${encodeURIComponent(trimmed)}&pageSize=${SEARCH_PAGE_SIZE}`;
   const response = await fetch(url, options.signal === undefined ? {} : { signal: options.signal });
 
   const body: unknown = await response.json().catch(() => null);
@@ -173,6 +178,13 @@ function mergeDetail(fromSearch: AdaptedFood, fromDetail: AdaptedFood): AdaptedF
 
   return {
     ...fromDetail,
+    // Labels the detail record lacks must not vanish because it was fetched.
+    ...(fromDetail.category === undefined && fromSearch.category !== undefined
+      ? { category: fromSearch.category }
+      : {}),
+    ...(fromDetail.brand === undefined && fromSearch.brand !== undefined
+      ? { brand: fromSearch.brand }
+      : {}),
     nutritionPer100g: useDetailNutrition
       ? fromDetail.nutritionPer100g
       : fromSearch.nutritionPer100g,

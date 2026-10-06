@@ -76,7 +76,9 @@ export function TrendsChart({ series, targets, keys }: Props) {
       </div>
 
       {showTable ? (
-        <TrendTable series={series} keys={plotted} />
+        // Every pinned nutrient with a goal, not just the charted four — the
+        // caption below promises the rest are here.
+        <TrendTable series={series} keys={[...plotted, ...folded]} />
       ) : (
         <>
           <div className="chart__plot">

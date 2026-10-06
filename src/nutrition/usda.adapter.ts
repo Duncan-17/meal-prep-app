@@ -16,7 +16,12 @@
  * a wrong number is worse than a gap the coverage machinery can report.
  */
 
-import { getNutrientByUsdaNumber, type NutrientUnit } from '@/nutrition/registry';
+import {
+  getNutrientByUsdaFallback,
+  getNutrientByUsdaNumber,
+  type NutrientDef,
+  type NutrientUnit,
+} from '@/nutrition/registry';
 import { normalizeUnit } from '@/nutrition/units';
 import type { AdaptedFood, NutrientMap } from '@/domain/types';
 
@@ -81,8 +86,18 @@ export function adaptUsdaFood(raw: unknown): AdaptedFood | null {
     nutritionPer100g: adaptNutrients(food.foodNutrients),
   };
 
-  const brand = asString(food.brandOwner) ?? asString(food.brandName);
+  // The brand people recognise is `brandName` (SNICKERS); `brandOwner` is the
+  // company (Mars Chocolate North America LLC). Prefer the one on the packet.
+  const brand = asString(food.brandName) ?? asString(food.brandOwner);
   if (brand !== null && brand.length > 0) adapted.brand = brand;
+
+  // A string on search, an object on detail, and a separate field on Branded
+  // detail records. Three shapes for one fact.
+  const category =
+    asString(food.foodCategory) ??
+    asString(asRecord(food.foodCategory)?.description) ??
+    asString(food.brandedFoodCategory);
+  if (category !== null && category.length > 0) adapted.category = category;
 
   // Two different shapes again. Foundation/SR Legacy/Survey use `foodPortions`;
   // Branded foods have NONE of those and carry `servingSize` instead. Reading
@@ -165,6 +180,7 @@ function adaptNutrients(raw: unknown): NutrientMap {
   if (!Array.isArray(raw)) return {};
 
   const out: NutrientMap = {};
+  const fallbacks: { def: NutrientDef; unit: string; amount: number }[] = [];
 
   for (const entry of raw) {
     const item = asRecord(entry);
@@ -180,14 +196,20 @@ function adaptNutrients(raw: unknown): NutrientMap {
       numberAsString(item.nutrientNumber);
     if (number === null) continue;
 
-    const def = getNutrientByUsdaNumber(number);
-    if (def === undefined) continue; // not a nutrient we track
-
     const unit = asString(nested?.unitName) ?? asString(item.unitName);
     if (unit === null) continue;
 
     const amount = asNumber(item.amount) ?? asNumber(item.value);
     if (amount === null) continue;
+
+    const def = getNutrientByUsdaNumber(number);
+    if (def === undefined) {
+      // Not a primary number — maybe a stand-in for one this record lacks.
+      // Held until every primary has been seen, so the primary always wins.
+      const standIn = getNutrientByUsdaFallback(number);
+      if (standIn !== undefined) fallbacks.push({ def: standIn, unit, amount });
+      continue;
+    }
 
     const converted = convertToCanonical(amount, unit, def.unit);
     if (converted === null) continue;
@@ -195,6 +217,12 @@ function adaptNutrients(raw: unknown): NutrientMap {
     // FDC can list a nutrient twice across derivations. First wins — the
     // datasets order best-quality first.
     if (!(def.key in out)) out[def.key] = converted;
+  }
+
+  for (const { def, unit, amount } of fallbacks) {
+    if (def.key in out) continue;
+    const converted = convertToCanonical(amount, unit, def.unit);
+    if (converted !== null) out[def.key] = converted;
   }
 
   return out;

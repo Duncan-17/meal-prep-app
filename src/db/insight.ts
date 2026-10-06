@@ -7,6 +7,7 @@
  */
 
 import { aggregate } from '@/domain/nutrients';
+import { withDerivedTotals } from '@/nutrition/registry';
 import { listLogsInRange } from '@/db/logs';
 import { listWeightsInRange } from '@/db/plan';
 import { weekDays, type DayKey } from '@/domain/dates';
@@ -45,12 +46,16 @@ export async function weekSeries(weekStart: DayKey): Promise<DaySeries[]> {
     return {
       date,
       logged: dayLogs.length > 0,
-      totals: aggregate(
-        dayLogs.map((log) => ({
-          nutrients: log.nutrients,
-          grams: log.totalGrams,
-          coverage: log.coverage,
-        })),
+      // Derived totals are recomputed from their parts, so summing days that
+      // already carry them and deriving again is consistent.
+      totals: withDerivedTotals(
+        aggregate(
+          dayLogs.map((log) => ({
+            nutrients: log.nutrients,
+            grams: log.totalGrams,
+            coverage: log.coverage,
+          })),
+        ),
       ),
     };
   });
@@ -59,12 +64,14 @@ export async function weekSeries(weekStart: DayKey): Promise<DaySeries[]> {
 /** The week totalled, for "how did the week measure up" against weekly goals. */
 export async function weekTotals(weekStart: DayKey): Promise<NutrientAggregate> {
   const series = await weekSeries(weekStart);
-  return aggregate(
-    series.map((day) => ({
-      nutrients: day.totals.nutrients,
-      grams: day.totals.totalGrams,
-      coverage: day.totals.coverage,
-    })),
+  return withDerivedTotals(
+    aggregate(
+      series.map((day) => ({
+        nutrients: day.totals.nutrients,
+        grams: day.totals.totalGrams,
+        coverage: day.totals.coverage,
+      })),
+    ),
   );
 }
 

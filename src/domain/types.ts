@@ -247,6 +247,8 @@ export interface AdaptedFood {
   /** FDC dataset ('Foundation', 'Branded'…) — shown as a provenance badge. */
   dataType?: string;
   brand?: string;
+  /** USDA's food category ("Dairy and Egg Products") — tells a bagel from an egg. */
+  category?: string;
   /** Canonical basis for every source, whatever units it reported. */
   nutritionPer100g: NutrientMap;
   /** Portion label → grams for ONE of it, feeding `resolveToGrams`. */
@@ -281,6 +283,11 @@ export interface SearchCacheEntry {
   /** `${source}:${sourceId}` keys into `foodCache`, in result order. */
   keys: string[];
   fetchedAt: number;
+  /**
+   * Which shape of search wrote this. An entry from an older shape is a miss,
+   * not a hit — see `SEARCH_CACHE_VERSION`. Absent on the earliest entries.
+   */
+  version?: number;
 }
 
 // `NutrientTarget`, `Plan`, `WeightGoal` and `WeightEntry` live in

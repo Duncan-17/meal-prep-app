@@ -30,6 +30,13 @@ Or edit them directly: **Diary → Plan**. Every target has a number field and a
 and a weekly figure, and a goal type (at least / about / at most). Editing one clears its
 "FDA default" badge.
 
+### Omega-3 and omega-6 goals
+
+Both were added with starting goals — **1.6 g omega-3** and **about 17 g omega-6**, the IOM
+adequate intakes for adult men (there is no FDA Daily Value for either). They carry the same
+"FDA default" badge as every untouched goal. Change them on the Plan screen if you have numbers
+of your own.
+
 ### An Open Food Facts contact address — ⏸️ deferred by choice (2026-09-10)
 
 OFF has no key and no signup, but asks callers to identify themselves in a `User-Agent` header.

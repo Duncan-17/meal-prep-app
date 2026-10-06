@@ -12,7 +12,9 @@ import 'fake-indexeddb/auto';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { db } from '@/db/schema';
+import Dexie from 'dexie';
+
+import { MealPrepDatabase, db } from '@/db/schema';
 import { ensureDefaults } from '@/db/init';
 import {
   ComponentInUseError,
@@ -305,6 +307,14 @@ describe('food cache', () => {
     expect(await getCachedSearch('chicken', -1)).toBeNull();
   });
 
+  it('treats a search cached by an older version as a miss', async () => {
+    // A v1 entry has 25 unranked candidates and no categories; replaying it
+    // would show the old page for up to a week.
+    await cacheFoods([chicken]);
+    await db.searchCache.put({ query: 'chicken', keys: ['usda:171477'], fetchedAt: Date.now() });
+    expect(await getCachedSearch('chicken')).toBeNull();
+  });
+
   it('returns null rather than a partial result when a food was evicted', async () => {
     await cacheFoods([chicken, rice]);
     await cacheSearch('two foods', [chicken, rice]);
@@ -330,7 +340,7 @@ describe('defaults', () => {
     await ensureDefaults();
     const targetCount = await db.targets.count();
     expect(targetCount).toBeGreaterThan(20);
-    expect((await db.settings.get('settings'))?.pinnedNutrients).toHaveLength(10);
+    expect((await db.settings.get('settings'))?.pinnedNutrients).toHaveLength(12);
 
     await ensureDefaults();
     expect(await db.targets.count()).toBe(targetCount);
@@ -395,5 +405,40 @@ describe('backup round-trip', () => {
     await upsertIngredient(chicken);
     await expect(importBackup('not json')).rejects.toThrow(/not valid JSON/);
     expect(await db.ingredients.count()).toBe(1);
+  });
+});
+
+describe('v4 upgrade: omega totals', () => {
+  /** A database as v3 left it, with the user's own pins and one edited goal. */
+  async function seedV3(name: string, pinned: string[]) {
+    const old = new Dexie(name);
+    old.version(3).stores({ targets: 'key', settings: 'id', weightEntries: 'date, loggedAt' });
+    await old.open();
+    await old.table('targets').put({ key: 'protein_g', amount: 180, direction: 'min' });
+    await old.table('settings').put({ id: 'settings', pinnedNutrients: pinned });
+    old.close();
+  }
+
+  it('adds both goals and pins without touching what the user chose', async () => {
+    await seedV3('upgrade-a', ['protein_g', 'iron_mg']);
+    const upgraded = new MealPrepDatabase('upgrade-a');
+
+    expect((await upgraded.settings.get('settings'))?.pinnedNutrients).toEqual([
+      'protein_g',
+      'iron_mg',
+      'omega3_total_g',
+      'omega6_total_g',
+    ]);
+    expect((await upgraded.targets.get('omega3_total_g'))?.amount).toBe(1.6);
+    expect((await upgraded.targets.get('omega6_total_g'))?.direction).toBe('target');
+    expect((await upgraded.targets.get('protein_g'))?.amount).toBe(180);
+    upgraded.close();
+  });
+
+  it('leaves an empty pin list empty, since empty means "the defaults"', async () => {
+    await seedV3('upgrade-b', []);
+    const upgraded = new MealPrepDatabase('upgrade-b');
+    expect((await upgraded.settings.get('settings'))?.pinnedNutrients).toEqual([]);
+    upgraded.close();
   });
 });

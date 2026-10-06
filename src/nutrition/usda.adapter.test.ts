@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import chickenSkinSearch from '@/nutrition/__fixtures__/usda-search-chicken-skin.json';
+import { withDerivedTotals } from '@/nutrition/registry';
 import {
   adaptUsdaFood,
   adaptUsdaSearchResponse,
@@ -234,5 +236,61 @@ describe('adaptUsdaSearchResponse', () => {
   it('returns an empty list for a malformed payload', () => {
     expect(adaptUsdaSearchResponse(null)).toEqual([]);
     expect(adaptUsdaSearchResponse({ foods: 'nope' })).toEqual([]);
+  });
+});
+
+/**
+ * FDC's datasets split fatty acids to different depths. SR Legacy and
+ * Foundation name ALA (851) and linoleic acid (675) precisely; Survey (FNDDS)
+ * reports only the undifferentiated 18:3 (619) and 18:2 (618). The fallbacks
+ * keep FNDDS foods from silently carrying no omega data at all.
+ */
+describe('fatty-acid fallbacks', () => {
+  it('reads the precise numbers from a real SR Legacy record', () => {
+    const food = adaptUsdaFood(chickenSkinSearch);
+    // 851 is 0.397, the undifferentiated 619 is 0.441 — the precise one wins.
+    expect(food?.nutritionPer100g.omega3_ala_g).toBeCloseTo(0.397);
+    expect(food?.nutritionPer100g.omega6_la_g).toBeCloseTo(8.16);
+    // No 855 in this record, so arachidonic acid comes from 620.
+    expect(food?.nutritionPer100g.omega6_aa_g).toBeCloseTo(0.133);
+  });
+
+  it('falls back to the undifferentiated numbers when that is all there is', () => {
+    const food = adaptUsdaFood({
+      fdcId: 1,
+      description: 'Egg omelet or scrambled egg, made with oil',
+      dataType: 'Survey (FNDDS)',
+      foodNutrients: [
+        { nutrientNumber: '618', unitName: 'G', value: 2.1 },
+        { nutrientNumber: '619', unitName: 'G', value: 0.3 },
+      ],
+    });
+    expect(food?.nutritionPer100g.omega6_la_g).toBe(2.1);
+    expect(food?.nutritionPer100g.omega3_ala_g).toBe(0.3);
+  });
+
+  it('prefers the primary even when the fallback is listed first', () => {
+    const food = adaptUsdaFood({
+      fdcId: 1,
+      description: 'x',
+      foodNutrients: [
+        { nutrientNumber: '619', unitName: 'G', value: 0.441 },
+        { nutrientNumber: '851', unitName: 'G', value: 0.397 },
+      ],
+    });
+    expect(food?.nutritionPer100g.omega3_ala_g).toBe(0.397);
+  });
+
+  it('totals omega-3 and omega-6 for display', () => {
+    const food = adaptUsdaFood(chickenSkinSearch);
+    const totals = withDerivedTotals({
+      nutrients: food?.nutritionPer100g ?? {},
+      coverage: {},
+      totalGrams: 100,
+    });
+    // ALA 0.397 + EPA 0.007 + DPA 0.014 + DHA 0.007
+    expect(totals.nutrients.omega3_total_g).toBeCloseTo(0.425);
+    // LA 8.16 + AA 0.133
+    expect(totals.nutrients.omega6_total_g).toBeCloseTo(8.293);
   });
 });
