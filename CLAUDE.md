@@ -126,6 +126,30 @@ Commit freely; never run a network git command. Check sync with
 
 ---
 
+## Checking the layout
+
+**Standing instruction from the user (2026-10-05): check visual changes at BOTH mobile and
+desktop widths**, not just whichever happens to be open.
+
+```powershell
+npm run dev                      # must be running first
+node scripts/screenshot.mjs      # all routes, 390px and 1280px
+node scripts/screenshot.mjs /calendar
+```
+
+Writes to `.screenshots/` (gitignored), seeds a little data per browser context so screens are
+not all empty states, and flags any route that scrolls horizontally. **Read the images** — the
+script catches overflow, not ugliness.
+
+Two gotchas: `fullPage` screenshots render `position: fixed` elements mid-page, so the tab bar
+appearing over content in an image is an artifact rather than a bug; and each browser context
+has its own IndexedDB, so seeding has to happen per context.
+
+This paid for itself immediately — the calendar cells were overlapping by **3.6px** at 390px wide
+and measuring it found the cause in one step, where reading the CSS had not.
+
+---
+
 ## Keeping the docs current
 
 **Standing instruction from the user (2026-09-17): update the markdown files as part of every

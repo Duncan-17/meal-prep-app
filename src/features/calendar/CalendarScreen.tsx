@@ -13,7 +13,7 @@
  * eat, and see no trace of having eaten anything.
  */
 
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useState, type CSSProperties } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { ScheduleSheet } from '@/features/calendar/ScheduleSheet';
@@ -190,8 +190,10 @@ function DayCell({
           <span
             key={batch.id}
             className={`plannedbar plannedbar--${batch.status}`}
-            style={{ background: batch.componentColor }}
-            title={`${batch.componentName} — ${batch.status}`}
+            // A custom property rather than `background`, so the cooked variant
+            // can render the same colour as an outline instead of a fill.
+            style={{ '--bar-color': batch.componentColor } as CSSProperties}
+            title={`${batch.componentName} — ${describeStatus(batch.status)}`}
           />
         ))}
       </span>
@@ -217,17 +219,31 @@ function DayCell({
   );
 }
 
+/**
+ * Says what the marks mean, because shape alone still has to be learned once.
+ * Solid = still to cook, hollow = already cooked — the actionable one is the
+ * one that pops.
+ */
 function Legend() {
   return (
     <p className="legend">
       <span className="legend__item">
-        <span className="plannedbar legend__bar" aria-hidden="true" /> cooking planned
+        <span className="plannedbar legend__bar" aria-hidden="true" /> to cook
       </span>
       <span className="legend__item">
-        <span className="eatendot legend__dot" aria-hidden="true" /> something eaten
+        <span className="plannedbar plannedbar--cooked legend__bar" aria-hidden="true" /> cooked
+      </span>
+      <span className="legend__item">
+        <span className="eatendot legend__dot" aria-hidden="true" /> eaten
       </span>
     </p>
   );
+}
+
+function describeStatus(status: Batch['status']): string {
+  if (status === 'planned') return 'still to cook';
+  if (status === 'cooked') return 'cooked';
+  return 'skipped';
 }
 
 function groupLogsByDay(logs: readonly MealLog[]): Map<DayKey, MealLog[]> {

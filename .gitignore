@@ -1,5 +1,8 @@
 node_modules/
 dist/
+
+# Visual-check output from scripts/screenshot.mjs — regenerate, never commit.
+.screenshots/
 dist-ssr/
 *.local
 

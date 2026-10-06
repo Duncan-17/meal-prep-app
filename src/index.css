@@ -1697,9 +1697,18 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  aspect-ratio: 1 / 1.12;
-  min-height: 62px;
-  padding: 4px 3px;
+  /*
+   * NO aspect-ratio here. It used to be `aspect-ratio: 1/1.12` alongside
+   * min-height, and the two fought: min-height won on height, then
+   * aspect-ratio back-computed the WIDTH from it (62 / 1.12 = 55.3px) and
+   * overrode the grid track, which was only 51.7px at 390px wide. Every cell
+   * spilled 3.6px into its neighbour. Measured, not guessed — see
+   * scripts/screenshot.mjs.
+   */
+  width: 100%;
+  min-width: 0;
+  min-height: 74px;
+  padding: 5px 3px;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: var(--surface);
@@ -1753,24 +1762,39 @@ body {
   flex-direction: column;
   gap: 2px;
   width: 100%;
-  min-height: 4px;
+  min-height: 7px;
 }
 
+/*
+ * Still-to-cook vs already-cooked used to differ only by opacity, which is
+ * invisible at 3px and carried the whole meaning. They now differ in SHAPE:
+ * solid means "you still have to cook this", hollow means "done". The
+ * actionable one is the one that pops.
+ */
 .plannedbar {
   display: block;
-  height: 3px;
+  height: 7px;
   width: 100%;
   border-radius: 999px;
-  background: var(--text-dim);
+  /* The Component colour arrives as --bar-color, set inline on the element. */
+  background: var(--bar-color, var(--text-dim));
 }
 
+/* Hollow — the colour survives as an outline, so you can still tell WHAT was cooked. */
+/*
+ * 7px tall with a 1.5px ring leaves 4px of visible hollow. At 5px/2px there
+ * was only 1px of centre and the two states were indistinguishable — which
+ * was the original complaint.
+ */
 .plannedbar--cooked {
-  /* Cooked is done, so it recedes; planned is the thing still to do. */
-  opacity: 0.4;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--bar-color, var(--text-dim));
 }
 
 .plannedbar--skipped {
-  opacity: 0.22;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--text-dim);
+  opacity: 0.45;
 }
 
 /* Eating is a FACT — a dot per item. */
@@ -1785,8 +1809,8 @@ body {
 }
 
 .eatendot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--accent);
 }
@@ -1819,8 +1843,14 @@ body {
 }
 
 .legend__bar {
-  width: 14px;
-  height: 3px;
+  width: 18px;
+  height: 7px;
+  flex: none;
+}
+
+.legend__bar--cooked {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--text-dim);
 }
 
 .legend__dot {
