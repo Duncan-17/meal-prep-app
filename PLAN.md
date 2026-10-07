@@ -413,3 +413,78 @@ _using_ it, and they override the phase text where they disagree:
 | 2026-10-06 | Every multi-food meter **split into segments by source**, each in its food's colour (§4)                          |
 | 2026-10-06 | Calendar gained a **Meals / Trends** toggle; today and the selected day now marked differently (§5)               |
 | 2026-10-06 | Tutorial text removed; the Diary's add button became **+ Log food** in the header                                 |
+| 2026-10-07 | The calendar's day panel gained **+ Log food**, logging to the selected day rather than linking to the Diary      |
+
+---
+
+## 10. Next: the Experiment tab — PLANNED, NOT BUILT
+
+> Requested by the user 2026-10-07, with an explicit instruction: **do not build yet, and do not
+> make design decisions they did not specify.** Everything under "What the user specified" is
+> theirs. Everything under "Open questions" is undecided — do not pick an answer by default.
+
+### What the user specified
+
+A new tab, **Experiment**, holding two features that work together:
+
+1. **Queue (proposed meals).** Queue up a set of recipes (not yet cooked) and foods, and see their
+   nutrition profile **cumulatively** — so a proposed week of meals can be judged _before_ any of it
+   is cooked or eaten. "Is this week's plan intelligent?"
+2. **Suggestions.** Recommend foods or meals based on what is **missing** from the diet.
+3. **They combine.** Suggestions can be run against a proposed set in the queue — "this plan is
+   short on magnesium; here is what would fix it."
+
+The user floated two ways to source suggestions, and has not chosen:
+
+- **A database built ahead of time**, shipped with the app.
+- **Live search of the USDA API** when the user asks.
+
+### Facts that bear on the choice (not decisions)
+
+- **FDC's search cannot filter or sort by nutrient.** It takes a text query, data types, page size
+  and a sort by name, id, data type or date. A live "find foods high in magnesium" is not one
+  request — it means searching candidate food names and ranking what comes back on the client.
+- **FDC throttles rapid requests** and reports it as a 400 (CLAUDE.md). Many searches per
+  suggestion run would be slow, and some would fail and be retried.
+- **Coverage already exists** (§3c). A nutrient can look "missing" because the foods eaten never
+  _reported_ it, not because the diet lacks it. A suggestions feature has to decide what to do
+  with low-coverage gaps.
+- **Everything the queue needs to compute already exists**: recipe snapshots, per-100 g food
+  data, `aggregate` with coverage, the segmented meters, `withDerivedTotals`, and weekly targets
+  (daily × 7 unless set separately).
+
+### Open questions — awaiting the user
+
+**The tab**
+
+- A fifth tab, or does Experiment replace or merge with something? Where in the order?
+- Is "Experiment" the final name?
+
+**Queue**
+
+- What can be queued: recipes, USDA foods, your own Foods, things already in the fridge?
+- How is a recipe's amount expressed — whole batches (with scale, like scheduling), or servings
+  you plan to eat?
+- Judged against what: weekly targets, a daily average (total ÷ days), or laid out per day?
+- One scratchpad, or several saved, named experiments ("high-protein week") — and compared side
+  by side?
+- Saved between visits and included in the backup, or temporary?
+- Should what is already logged or in the fridge this week count toward the total?
+- Can a queue become real — e.g. "schedule all of these" onto the Calendar — or is it purely
+  hypothetical?
+
+**Suggestions**
+
+- Prebuilt database, live USDA search, or both?
+- Suggest what: single foods, your own saved recipes and foods, or new meal ideas?
+- "Missing" over what window: today so far, this week, or the queued set?
+- Which nutrients count: every one with a goal, only pinned ones, only those under some threshold?
+- Low coverage: skip those nutrients, flag them, or treat them as gaps?
+- Limits (sodium, saturated fat, added sugar): must suggestions avoid pushing these over?
+- Should the remaining calorie budget constrain suggestions?
+- Ranking: nutrient per calorie, per serving, or how many gaps one food closes at once?
+- Exclusions: foods you dislike, allergies, dietary patterns?
+- What a suggestion shows: a food alone, or with an amount ("150 g salmon closes 80% of your
+  vitamin D gap")?
+- What you can do with one: add to the queue, log it, add to the fridge?
+- Experiment tab only, or also surfaced on the Diary?

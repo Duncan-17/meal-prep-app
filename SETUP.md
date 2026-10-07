@@ -30,6 +30,19 @@ Or edit them directly: **Diary → Plan**. Every target has a number field and a
 and a weekly figure, and a goal type (at least / about / at most). Editing one clears its
 "FDA default" badge.
 
+### Design answers for the Experiment tab
+
+The next feature is planned but deliberately not started. Every open question is listed in
+**PLAN.md §10** — what can be queued, how amounts work, where suggestions come from, what counts
+as "missing". Nothing gets built until you have answered them.
+
+### Which address you open after an update
+
+Your data lives in the browser, tied to the exact web address. If the app looks empty after an
+update, the likeliest reason is a _different_ address — a one-off preview link from GitHub or
+Cloudflare, rather than your usual bookmark. Tell me which link you open, and on which device, and
+it can be pinned down.
+
 ### Omega-3 and omega-6 goals
 
 Both were added with starting goals — **1.6 g omega-3** and **about 17 g omega-6**, the IOM

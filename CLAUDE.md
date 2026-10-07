@@ -66,6 +66,8 @@ Roughly in order, all in response to using the thing:
 - **Tutorial text removed** — the leftover Phase 6 box on Fridge, the descriptions under the
   Fridge / Recipes / Foods headings, the cook sheet's hint; empty states cut to one line. The
   Diary's add button is now **+ Log food** in the header, beside Plan.
+- **+ Log food on the calendar's day panel** — opens Quick Add in place and logs to the SELECTED
+  day. It replaced an "Add something" link to the Diary, which could only ever log to today.
 
 ### Things a future session should not re-derive
 
@@ -151,8 +153,22 @@ Roughly in order, all in response to using the thing:
 
 ## Where to pick up
 
-Nothing is half-finished and nothing is blocked. The working tree is clean, `main` is pushed, and
-the deployed Worker matches it.
+Nothing is half-finished. The working tree is clean, `main` is pushed, and the deployed Worker
+matches it.
+
+**Next feature: the Experiment tab — PLANNED, NOT BUILT** (PLAN.md §10). A queue of proposed
+recipes and foods with cumulative nutrition, plus suggestions for what the diet is missing. The
+user said explicitly: **do not build it yet, and make no design decisions they did not specify.**
+§10 lists what they specified and every open question. Wait for their answers.
+
+**Open investigation: "everything gets wiped every time an update is pushed"** (reported
+2026-10-07). Nothing in production code deletes data. The only `db.delete()` is the builder's
+"Reset local database" button, behind `import.meta.env.DEV`, so it never ships. IndexedDB belongs
+to an ORIGIN (scheme + host + port), so the likeliest cause is opening a different address after
+each deploy — e.g. a per-version preview URL from GitHub or the Cloudflare dashboard, rather than
+the one stable `workers.dev` address. Other candidates: Safari and a home-screen icon keeping
+separate storage on iOS, or private browsing. Unconfirmed until the user says which URL they open
+and on which device. Do not "fix" anything until that is known.
 
 **Open questions the user has not answered:**
 
@@ -161,6 +177,8 @@ the deployed Worker matches it.
 | Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile. |
 | Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
 | Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
+| Experiment tab design   | Asked 2026-10-07 — the full list is in PLAN.md §10. Nothing about the tab should be built or decided until they answer.                                      |
+| Data wiped on update    | Asked 2026-10-07 which URL and device they use after a deploy. See the investigation note above.                                                             |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 

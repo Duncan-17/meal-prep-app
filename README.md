@@ -56,6 +56,10 @@ Food search needs both; everything else works with just `npm run dev`.
 React 19 · TypeScript · Vite 7 · Dexie (IndexedDB) · React Router · Recharts · Workbox ·
 Cloudflare Worker with static assets
 
+**Next:** an **Experiment** tab — queue up proposed recipes and foods to see their combined
+nutrition before cooking anything, and get suggestions for what the diet is missing. Planned in
+[PLAN.md §10](PLAN.md); not built yet.
+
 Data is **local to each device** by design — there is no account and no sync. Move it between
 devices with the JSON backup on the Plan screen.
 
