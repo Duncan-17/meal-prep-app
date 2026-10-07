@@ -28,8 +28,8 @@ Single user, no auth, local-first.
 
 Multi-device sync / auth · sharing · expiration alerts · recipe photos.
 
-> **Reopened 2026-10-07** by the user, while planning the Experiment tab — see §10 "Storage".
-> Undecided; nothing changes until they answer.
+> **Overturned 2026-10-07.** The user chose a Cloudflare database holding everything, built before
+> the Experiment tab — see §10 "Storage". No security for now (single user); auth comes later.
 >
 > Re-confirmed 2026-10-06. The user hit this in practice — a phone shows nothing a laptop
 > entered — was offered sync, and chose to stay local. The handoff is the JSON backup:
@@ -465,22 +465,23 @@ Two features in one tab, working together:
   data, `aggregate` with coverage, the segmented meters, `withDerivedTotals`, and weekly targets
   (daily × 7 unless set separately).
 
+### Decided by the user (2026-10-07, second round)
+
+- **Amounts are what you buy; the period divides them.** 20 eggs over a week is 20 eggs'
+  nutrition spread across 7 days — the scratchpad does that arithmetic.
+- **Then you can move food between days by hand.** A scratchpad has its own simple run of days —
+  a layout ("Day 1, Day 2…"), **not tied to calendar dates**. Bought for a week, the food can be
+  dragged onto the days you would eat it: 10 eggs Monday, 2 Wednesday, 2 Thursday.
+- **Recipes split quickly into servings** so the chunks can be placed on different days.
+- **Drag and drop, and fast.** The whole point is drafting a period's food quickly and changing it
+  freely. Speed of rearranging is a requirement, not a polish item.
+- **Already-eaten food is not counted** — confirmed: a scratchpad counts only what is in it.
+- **Shopping list: later.** It will have sub-items — a recipe line expands into its ingredients
+  (eggs, bananas, chicken recipe → its ingredients, milk). Details to be worked out then.
+- **Scratchpads are fully separate from the Calendar** for now. No scheduling onto it, no
+  reuse/compare features yet.
+
 ### Open questions — awaiting the user
-
-**Scratchpads**
-
-- **Period and amounts.** For a food, is the amount what you would _buy_ (a dozen eggs, a gallon
-  of milk) with the period saying how long it must last? And does "day by day" mean the totals
-  averaged per day, or items actually placed on particular days?
-- **Question 7, confirmed?** It asked whether food already logged in the Diary, or already in the
-  fridge, should count toward a scratchpad's totals — e.g. planning the rest of a week that is
-  half eaten. The user answered "no" but asked "total of what?", so this needs a confirmation.
-- **Shopping list.** Is it the scratchpad as written (2 × chicken recipe, 12 eggs), or recipes
-  broken down into their ingredients and summed (1.2 kg chicken thigh, 600 g rice…)? Can items
-  be ticked off in the shop?
-- **Schedule onto the Calendar.** Pick a day per recipe, or spread across the period
-  automatically?
-- **Reuse.** Duplicate a past scratchpad as the start of a new week? Compare two side by side?
 
 **Suggestions** (none answered yet)
 
@@ -497,7 +498,25 @@ Two features in one tab, working together:
 - What you can do with one: add to a scratchpad, log it, add to the fridge?
 - Experiment tab only, or also surfaced on the Diary?
 
-### Storage — REOPENED 2026-10-07, undecided
+### Storage — DECIDED 2026-10-07: a Cloudflare database, before anything else
+
+The user's answers:
+
+- **A Cloudflare database**, in this project.
+- **Everything the app has now goes into it first** — diary, recipes, foods, fridge, plan, the
+  lot — **before any Experiment work starts.** The Experiment tab waits for this.
+- **No security for now.** The user is the only person using this address. Revisit later, when
+  the app may become multi-user with logins, accounts and per-user data.
+
+Still open, and blocking the build:
+
+- **Offline**: online-only, or a local copy that syncs (and what wins when two devices edit the
+  same thing).
+- **Existing data**: which device's data seeds the database — or merge, or start fresh.
+- **Creating the database**: wrangler on this machine is not logged in, so either the user runs
+  `wrangler login` once, or creates the database in the Cloudflare dashboard and passes on its id.
+
+The original questions, kept for the record:
 
 While answering, the user raised saving data off the device: "set up somewhere this data can all be
 saved … through some sort of Cloudflare feature or just add a set of DBs to this project." Their

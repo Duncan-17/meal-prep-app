@@ -116,9 +116,10 @@ Roughly in order, all in response to using the thing:
   IndexedDB, which is per-browser and per-device, so a phone never sees what a laptop entered.
   Moving data between devices is Plan → Export a backup → Restore from a file, which REPLACES
   rather than merges. The user was offered sync and chose to keep it local. Do not build sync
-  without asking again. **Reopened by the user 2026-10-07** — they raised saving data through a
-  Cloudflare feature or databases in this project. Undecided; the questions are in PLAN.md §10
-  "Storage". Still local until they answer.
+  without asking again. **Overturned by the user 2026-10-07**: all current data moves to a
+  Cloudflare database, before any Experiment work, with no security for now (single user; auth
+  later). Offline behaviour, which device seeds it, and how the database gets created are still
+  open — PLAN.md §10 "Storage".
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
   render a neutral dot on purpose; rewriting them would be rewriting history.
 - **Omega totals are DERIVED at read time, never stored.** `derivedFrom` in the registry,
@@ -161,9 +162,10 @@ matches it.
 **Next feature: the Experiment tab — PLANNED, NOT BUILT** (PLAN.md §10). A fifth tab of saved
 scratchpads — a proposed week's shopping of recipes and foods, with combined nutrition, savable as
 a shopping list — plus suggestions for what the diet is missing. The user said explicitly: **do not
-build it yet, and make no design decisions they did not specify.** Their answers so far are in
-§10's "Decided" table; the scratchpad details, all of Suggestions, and server storage are still
-open. Wait for answers.
+build it yet, and make no design decisions they did not specify.** Their answers are in §10's
+"Decided" sections: scratchpads are drag-and-drop drafts over their own run of days, separate from
+the Calendar. **Order of work, set by the user: move all existing data into a Cloudflare database
+FIRST, then the Experiment tab.** Suggestions are still entirely unanswered.
 
 **Open investigation: "everything gets wiped every time an update is pushed"** (reported
 2026-10-07). Nothing in production code deletes data. The only `db.delete()` is the builder's
@@ -181,8 +183,8 @@ and on which device. Do not "fix" anything until that is known.
 | Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile. |
 | Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
 | Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
-| Experiment tab design   | Partly answered 2026-10-07 (PLAN.md §10 "Decided"). Scratchpad details and all Suggestions questions still open. Build nothing until answered.               |
-| Server storage          | Raised by the user 2026-10-07 — reopens local-only. Questions in PLAN.md §10 "Storage": all data or just scratchpads, where, how it is gated, offline.       |
+| Experiment tab design   | Scratchpads answered 2026-10-07 (PLAN.md §10). All Suggestions questions still open. Build nothing of it until the database move is done.                    |
+| Server storage          | Decided 2026-10-07: Cloudflare DB, everything, no security yet. Open: offline/sync, which device seeds it, wrangler login vs dashboard. PLAN.md §10.         |
 | Data wiped on update    | Asked 2026-10-07 which URL and device they use after a deploy. See the investigation note above.                                                             |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
