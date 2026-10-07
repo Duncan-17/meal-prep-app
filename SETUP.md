@@ -32,9 +32,10 @@ and a weekly figure, and a goal type (at least / about / at most). Editing one c
 
 ### Design answers for the Experiment tab
 
-The next feature is planned but deliberately not started. Every open question is listed in
-**PLAN.md §10** — what can be queued, how amounts work, where suggestions come from, what counts
-as "missing". Nothing gets built until you have answered them.
+The next feature is planned but deliberately not started. Your answers so far are recorded in
+**PLAN.md §10**. Still open: a few scratchpad details, everything about suggestions, and whether —
+and how — data should be saved somewhere other than this browser. Nothing gets built until you
+have answered them.
 
 ### Which address you open after an update
 

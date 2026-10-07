@@ -28,6 +28,9 @@ Single user, no auth, local-first.
 
 Multi-device sync / auth · sharing · expiration alerts · recipe photos.
 
+> **Reopened 2026-10-07** by the user, while planning the Experiment tab — see §10 "Storage".
+> Undecided; nothing changes until they answer.
+>
 > Re-confirmed 2026-10-06. The user hit this in practice — a phone shows nothing a laptop
 > entered — was offered sync, and chose to stay local. The handoff is the JSON backup:
 > Plan → Export a backup, then Restore from a file on the other device. It replaces rather than
@@ -420,26 +423,36 @@ _using_ it, and they override the phase text where they disagree:
 ## 10. Next: the Experiment tab — PLANNED, NOT BUILT
 
 > Requested by the user 2026-10-07, with an explicit instruction: **do not build yet, and do not
-> make design decisions they did not specify.** Everything under "What the user specified" is
-> theirs. Everything under "Open questions" is undecided — do not pick an answer by default.
+> make design decisions they did not specify.** Everything under "Decided by the user" is theirs.
+> Everything under "Open questions" is undecided — do not pick an answer by default.
 
-### What the user specified
+### What it is for
 
-A new tab, **Experiment**, holding two features that work together:
+The user's framing: you are **experimenting with what you might buy from the store for a week**,
+and want to know the total nutrition profile of that haul _before_ buying or cooking any of it.
+Then, if it holds up, it becomes a shopping list and a cooking plan.
 
-1. **Queue (proposed meals).** Queue up a set of recipes (not yet cooked) and foods, and see their
-   nutrition profile **cumulatively** — so a proposed week of meals can be judged _before_ any of it
-   is cooked or eaten. "Is this week's plan intelligent?"
-2. **Suggestions.** Recommend foods or meals based on what is **missing** from the diet.
-3. **They combine.** Suggestions can be run against a proposed set in the queue — "this plan is
-   short on magnesium; here is what would fix it."
+Two features in one tab, working together:
 
-The user floated two ways to source suggestions, and has not chosen:
+1. **Scratchpads.** Queue up recipes and foods; see their combined nutrition.
+2. **Suggestions.** Recommend foods or meals for what the diet is missing — runnable against a
+   scratchpad ("this plan is short on magnesium; here is what would fix it").
 
-- **A database built ahead of time**, shipped with the app.
-- **Live search of the USDA API** when the user asks.
+### Decided by the user (2026-10-07)
 
-### Facts that bear on the choice (not decisions)
+| #   | Question           | Decision                                                                                                                |
+| --- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | Where it lives     | A **fifth tab**, called Experiment.                                                                                     |
+| 2   | What can be queued | **Anything**: USDA foods, your own Foods, and recipes.                                                                  |
+| 2b  | Scaling            | There must be a way to say what period the haul is for — "this is for a week".                                          |
+| 3   | A recipe's amount  | The **entire batch** you plan to cook — not servings.                                                                   |
+| 4   | Judged over        | **Selectable**: weekly, day by day, monthly, and so on.                                                                 |
+| 5   | How many           | **Multiple scratchpads**, each kept — effectively a reusable shopping list for later weeks.                             |
+| 6   | Persistence        | **Everything saved between sessions.**                                                                                  |
+| 7   | Already-eaten food | **Not counted** in a scratchpad's totals (pending the user confirming they read the question as intended — see below).  |
+| 8   | Making it real     | Wanted: a scratchpad can be **saved as a shopping list**, and the "schedule these onto the Calendar" idea was welcomed. |
+
+### Facts that bear on the remaining choices (not decisions)
 
 - **FDC's search cannot filter or sort by nutrient.** It takes a text query, data types, page size
   and a sort by name, id, data type or date. A live "find foods high in magnesium" is not one
@@ -447,44 +460,61 @@ The user floated two ways to source suggestions, and has not chosen:
 - **FDC throttles rapid requests** and reports it as a 400 (CLAUDE.md). Many searches per
   suggestion run would be slow, and some would fail and be retried.
 - **Coverage already exists** (§3c). A nutrient can look "missing" because the foods eaten never
-  _reported_ it, not because the diet lacks it. A suggestions feature has to decide what to do
-  with low-coverage gaps.
-- **Everything the queue needs to compute already exists**: recipe snapshots, per-100 g food
+  _reported_ it, not because the diet lacks it.
+- **Everything a scratchpad needs to compute already exists**: recipe snapshots, per-100 g food
   data, `aggregate` with coverage, the segmented meters, `withDerivedTotals`, and weekly targets
   (daily × 7 unless set separately).
 
 ### Open questions — awaiting the user
 
-**The tab**
+**Scratchpads**
 
-- A fifth tab, or does Experiment replace or merge with something? Where in the order?
-- Is "Experiment" the final name?
+- **Period and amounts.** For a food, is the amount what you would _buy_ (a dozen eggs, a gallon
+  of milk) with the period saying how long it must last? And does "day by day" mean the totals
+  averaged per day, or items actually placed on particular days?
+- **Question 7, confirmed?** It asked whether food already logged in the Diary, or already in the
+  fridge, should count toward a scratchpad's totals — e.g. planning the rest of a week that is
+  half eaten. The user answered "no" but asked "total of what?", so this needs a confirmation.
+- **Shopping list.** Is it the scratchpad as written (2 × chicken recipe, 12 eggs), or recipes
+  broken down into their ingredients and summed (1.2 kg chicken thigh, 600 g rice…)? Can items
+  be ticked off in the shop?
+- **Schedule onto the Calendar.** Pick a day per recipe, or spread across the period
+  automatically?
+- **Reuse.** Duplicate a past scratchpad as the start of a new week? Compare two side by side?
 
-**Queue**
-
-- What can be queued: recipes, USDA foods, your own Foods, things already in the fridge?
-- How is a recipe's amount expressed — whole batches (with scale, like scheduling), or servings
-  you plan to eat?
-- Judged against what: weekly targets, a daily average (total ÷ days), or laid out per day?
-- One scratchpad, or several saved, named experiments ("high-protein week") — and compared side
-  by side?
-- Saved between visits and included in the backup, or temporary?
-- Should what is already logged or in the fridge this week count toward the total?
-- Can a queue become real — e.g. "schedule all of these" onto the Calendar — or is it purely
-  hypothetical?
-
-**Suggestions**
+**Suggestions** (none answered yet)
 
 - Prebuilt database, live USDA search, or both?
 - Suggest what: single foods, your own saved recipes and foods, or new meal ideas?
-- "Missing" over what window: today so far, this week, or the queued set?
+- "Missing" over what window: today so far, this week, or the scratchpad?
 - Which nutrients count: every one with a goal, only pinned ones, only those under some threshold?
 - Low coverage: skip those nutrients, flag them, or treat them as gaps?
 - Limits (sodium, saturated fat, added sugar): must suggestions avoid pushing these over?
 - Should the remaining calorie budget constrain suggestions?
 - Ranking: nutrient per calorie, per serving, or how many gaps one food closes at once?
 - Exclusions: foods you dislike, allergies, dietary patterns?
-- What a suggestion shows: a food alone, or with an amount ("150 g salmon closes 80% of your
-  vitamin D gap")?
-- What you can do with one: add to the queue, log it, add to the fridge?
+- A food alone, or with an amount ("150 g salmon closes 80% of your vitamin D gap")?
+- What you can do with one: add to a scratchpad, log it, add to the fridge?
 - Experiment tab only, or also surfaced on the Diary?
+
+### Storage — REOPENED 2026-10-07, undecided
+
+While answering, the user raised saving data off the device: "set up somewhere this data can all be
+saved … through some sort of Cloudflare feature or just add a set of DBs to this project." Their
+other app uses a Google Sheet.
+
+This reopens §1's **local-only** decision (re-confirmed 2026-10-06). Nothing changes until the user
+answers:
+
+- **All data, or just scratchpads?** Moving everything (diary, recipes, fridge, plan) to a server
+  is multi-device sync, which also ends the phone-versus-laptop split and the backup handoff.
+  Moving only scratchpads and shopping lists is smaller.
+- **Where.** The user named a Cloudflare feature or databases in this project. Cloudflare's
+  options include D1 (SQL), KV (key–value) and Durable Objects, all reachable from the existing
+  Worker. A Google Sheet is the pattern from their other app. Not chosen.
+- **Who may read and write it.** The app has no login. A server database behind a public URL is
+  readable and writable by anyone who finds the URL, so it needs a gate — e.g. Cloudflare Access
+  (an email sign-in in front of the site), or a passphrase the app sends. Not chosen.
+- **Offline.** Today the app works with no signal. A server copy means either online-only, or a
+  local copy that syncs — which raises what happens when two devices edit the same thing.
+- **Existing data.** Upload what is already in this browser once, at the switch?
