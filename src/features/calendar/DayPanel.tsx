@@ -6,8 +6,9 @@
  * back at a day the record is what you came for.
  */
 
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
+import { QuickAddSheet } from '@/features/log/QuickAddSheet';
 import { batchYield, deleteBatch } from '@/db/batches';
 import { deleteMealLog } from '@/db/logs';
 import { formatAmount } from '@/nutrition/registry';
@@ -25,6 +26,7 @@ interface Props {
 export function DayPanel({ day, batches, logs, onSchedule, onCook }: Props) {
   const items = logs.flatMap((log) => log.items.map((item) => ({ item, log })));
   const dayCalories = logs.reduce((sum, log) => sum + (log.nutrients.energy_kcal ?? 0), 0);
+  const [logging, setLogging] = useState(false);
 
   return (
     <section className="section">
@@ -37,9 +39,7 @@ export function DayPanel({ day, batches, logs, onSchedule, onCook }: Props) {
 
       <h3 className="plangroup__title">Eaten</h3>
       {items.length === 0 ? (
-        <p className="screen__sub">
-          Nothing logged. <Link to="/log">Add something</Link>.
-        </p>
+        <p className="screen__sub">Nothing logged.</p>
       ) : (
         <ul className="cards">
           {items.map(({ item, log }, index) => (
@@ -75,6 +75,15 @@ export function DayPanel({ day, batches, logs, onSchedule, onCook }: Props) {
           ))}
         </ul>
       )}
+
+      {/* Logs to THIS day — the one tapped on the grid, not necessarily today. */}
+      <button
+        type="button"
+        className="btn btn--primary daypanel__action"
+        onClick={() => setLogging(true)}
+      >
+        + Log food
+      </button>
 
       <h3 className="plangroup__title">Cooking</h3>
       {batches.length === 0 ? (
@@ -121,6 +130,8 @@ export function DayPanel({ day, batches, logs, onSchedule, onCook }: Props) {
       <button type="button" className="btn btn--primary" onClick={onSchedule}>
         + Schedule a cook
       </button>
+
+      <QuickAddSheet open={logging} date={day} slot={undefined} onClose={() => setLogging(false)} />
     </section>
   );
 }

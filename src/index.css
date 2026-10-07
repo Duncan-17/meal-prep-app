@@ -1992,6 +1992,11 @@ body {
   height: 7px;
 }
 
+/* Separates "+ Log food" from the Cooking heading that follows it. */
+.daypanel__action {
+  margin-bottom: 20px;
+}
+
 .daypanel__total {
   color: var(--text-dim);
   font-size: 13px;
