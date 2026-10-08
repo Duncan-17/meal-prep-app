@@ -21,30 +21,18 @@ import { AddItemSheet } from '@/features/experiment/AddItemSheet';
 import { DayPlanner } from '@/features/experiment/DayPlanner';
 import { periodName } from '@/features/experiment/ExperimentScreen';
 import { TodaySummary } from '@/features/log/TodaySummary';
-import { DayDetail } from '@/features/log/DayDetail';
+import { AllNutrients } from '@/features/experiment/AllNutrients';
+import { ItemRow } from '@/features/experiment/ItemRow';
 import { Stepper } from '@/ui/Stepper';
 import { db } from '@/db/schema';
 import { deleteScratchpad, getScratchpad, saveScratchpad } from '@/db/scratchpads';
 import { listTargets } from '@/db/plan';
 import { contributionsFor } from '@/domain/contributions';
-import {
-  averageDay,
-  contributors,
-  placedTotal,
-  withDays,
-  withPortions,
-  type CostedItem,
-} from '@/domain/scratchpad';
-import {
-  defaultFoodPortions,
-  defaultRecipePortions,
-  itemTotal,
-  portionName,
-} from '@/nutrition/scratchpad';
-import { DERIVED_TOTALS, formatAmount } from '@/nutrition/registry';
+import { averageDay, contributors, withDays, type CostedItem } from '@/domain/scratchpad';
+import { itemTotal } from '@/nutrition/scratchpad';
+import { DERIVED_TOTALS } from '@/nutrition/registry';
 import { targetsByKey } from '@/nutrition/targets';
-import { unitOptionsFor } from '@/nutrition/units';
-import type { Component, Scratchpad, ScratchpadItem } from '@/domain/types';
+import type { Scratchpad, ScratchpadItem } from '@/domain/types';
 
 type View = 'average' | 'days';
 
@@ -174,7 +162,7 @@ export function ScratchpadScreen() {
               <ItemRow
                 key={item.uid}
                 item={item}
-                kcal={total.nutrients.energy_kcal}
+                total={total}
                 components={components}
                 onChange={(update) => changeItem(item.uid, update)}
                 onRemove={() =>
@@ -215,7 +203,7 @@ export function ScratchpadScreen() {
                 Everything here, spread evenly over {periodName(pad.days)}.
               </p>
               <TodaySummary totals={average} targets={byKey} segmentsFor={averageSegments} />
-              <DayDetail totals={average} targets={byKey} segmentsFor={averageSegments} />
+              <AllNutrients totals={average} targets={byKey} segmentsFor={averageSegments} />
             </>
           ) : (
             <DayPlanner
@@ -257,127 +245,5 @@ export function ScratchpadScreen() {
         onAdd={(item) => change({ ...pad, items: [...pad.items, item] })}
       />
     </div>
-  );
-}
-
-/**
- * One item and its amount. Changing the amount re-splits it into its natural
- * number of portions; anything placed beyond that comes back off the last days.
- */
-function ItemRow({
-  item,
-  kcal,
-  components,
-  onChange,
-  onRemove,
-}: {
-  item: ScratchpadItem;
-  kcal: number | undefined;
-  components: ReadonlyMap<number, Component>;
-  onChange: (update: (item: ScratchpadItem) => ScratchpadItem) => void;
-  onRemove: () => void;
-}) {
-  const recipe = item.kind === 'recipe' ? components.get(item.componentId) : undefined;
-  const name = portionName(item, components);
-  const placed = placedTotal(item);
-
-  return (
-    <li className="paditem">
-      <div className="paditem__head">
-        <span className="card__dot" style={{ background: item.color }} aria-hidden="true" />
-        <span className="paditem__name">
-          {item.label}
-          {item.kind === 'recipe' && recipe === undefined && (
-            <span className="badge badge--limit">recipe deleted</span>
-          )}
-        </span>
-        <button
-          type="button"
-          className="ingredient__remove"
-          onClick={onRemove}
-          aria-label={`Remove ${item.label}`}
-        >
-          ✕
-        </button>
-      </div>
-
-      <div className="paditem__controls">
-        {item.kind === 'food' ? (
-          <span className="paditem__amount">
-            <input
-              className="field__input paditem__qty"
-              type="number"
-              inputMode="decimal"
-              step="any"
-              min="0"
-              value={item.quantity}
-              aria-label={`How much ${item.label}`}
-              onChange={(event) => {
-                const quantity = Math.max(0, Number(event.target.value));
-                onChange((current) => {
-                  const next = { ...current, quantity } as typeof item;
-                  return withPortions(next, defaultFoodPortions(next));
-                });
-              }}
-            />
-            <select
-              className="field__input paditem__unit"
-              value={item.unit}
-              aria-label={`Unit for ${item.label}`}
-              onChange={(event) => {
-                const unit = event.target.value;
-                onChange((current) => {
-                  const next = { ...current, unit } as typeof item;
-                  return withPortions(next, defaultFoodPortions(next));
-                });
-              }}
-            >
-              {unitOptionsFor(item).map((unit) => (
-                <option key={unit} value={unit}>
-                  {unit}
-                </option>
-              ))}
-            </select>
-          </span>
-        ) : (
-          <span className="paditem__amount">
-            <Stepper
-              value={item.batches}
-              min={0.5}
-              step={0.5}
-              onChange={(batches) =>
-                onChange((current) => {
-                  const next = { ...current, batches } as typeof item;
-                  return withPortions(
-                    next,
-                    recipe === undefined
-                      ? Math.round((current.portions * batches) / item.batches)
-                      : defaultRecipePortions(recipe, batches),
-                  );
-                })
-              }
-              label={`Batches of ${item.label}`}
-            />
-            <span className="paditem__unitlabel">batch{item.batches === 1 ? '' : 'es'}</span>
-          </span>
-        )}
-
-        <span className="paditem__split">
-          <span className="paditem__unitlabel">split into</span>
-          <Stepper
-            value={item.portions}
-            min={1}
-            onChange={(portions) => onChange((current) => withPortions(current, portions))}
-            label={`Portions of ${item.label}`}
-          />
-        </span>
-      </div>
-
-      <p className="paditem__meta">
-        {item.portions} × {name}
-        {kcal === undefined ? '' : ` · ${formatAmount('energy_kcal', kcal)} kcal in all`}
-        {placed > 0 ? ` · ${placed} placed on days` : ''}
-      </p>
-    </li>
   );
 }

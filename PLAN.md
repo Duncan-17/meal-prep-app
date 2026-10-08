@@ -496,6 +496,12 @@ How the rest was filled in — implementation choices, flagged so they can be ch
   Day view shows each day's calories and three thin macro bars; tapping a day shows its full
   summary below.
 
+**First round of feedback (2026-10-08), applied the same day:** item rows are now one compact line
+(colour, name, amount · kcal · placed) that opens to the amount and split controls, with a second
+"Nutrition breakdown" tap for every nutrient per portion and in all; tray chips are bigger; touch
+drags start after 120 ms (was 180) and mouse drags after 4 px (was 6); a whole day card selects the
+day, not only its header; and both summaries have an "All nutrients" expander for the full panel.
+
 Verified 2026-10-08 in a real browser at 390 px and 1280 px: building a scratchpad through the UI,
 then mouse drags tray → day, day → day, day → tray, and −/+; the saved placements matched exactly.
 

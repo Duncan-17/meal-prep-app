@@ -187,8 +187,11 @@ Roughly in order, all in response to using the thing:
     record. The screen holds the latest edit locally until the database echoes it, so drops do
     not flicker back.
   - `scratchpads.items[].componentId` is the **seventh** id reference `rekeyLegacyIds` follows.
-  - Touch drags need a 180 ms press (so scrolling still works); chips use
-    `touch-action: manipulation`, NOT `none`, for the same reason.
+  - Touch drags need a 120 ms press (so scrolling still works); chips use
+    `touch-action: manipulation`, NOT `none`, for the same reason. The user found dragging
+    finicky at 180 ms with small chips — tray chips are now 40 px tall. Do not shrink them.
+  - Item rows are collapsed to one line by default (user's request); controls one tap down,
+    nutrient table one more. The whole day card selects a day.
 - **The search cache is versioned** (`SEARCH_CACHE_VERSION` in `db/foods.ts`). Bump it whenever a
   search starts returning something old cached entries lack, or the old page replays for a week.
 

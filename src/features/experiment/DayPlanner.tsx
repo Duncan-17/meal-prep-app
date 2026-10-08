@@ -6,9 +6,10 @@
  * no day. Drags go tray → day (place one), day → day (move one) and
  * day → tray (take one back).
  *
- * Touch needs a short press before a drag starts, or every scroll of the page
- * would pick something up. Mouse needs a few pixels of movement, so a click
- * on − or + is never mistaken for a drag. The keyboard sensor keeps it usable
+ * Touch needs a short press (120 ms) before a drag starts, or every scroll of
+ * the page would pick something up. Mouse needs a few pixels of movement, so
+ * a click on − or + is never mistaken for a drag. Tightened 2026-10-08 after
+ * the user found dragging finicky, alongside bigger chips in the tray. The keyboard sensor keeps it usable
  * without a pointer at all.
  */
 
@@ -28,6 +29,7 @@ import {
 } from '@dnd-kit/core';
 
 import { TodaySummary } from '@/features/log/TodaySummary';
+import { AllNutrients } from '@/features/experiment/AllNutrients';
 import { contributionsFor } from '@/domain/contributions';
 import {
   adjustDay,
@@ -60,8 +62,8 @@ const TRAY = 'tray';
 
 export function DayPlanner({ pad, costed, components, targets, onChange }: Props) {
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 10 } }),
     useSensor(KeyboardSensor),
   );
   const [dragging, setDragging] = useState<Origin | null>(null);
@@ -96,6 +98,8 @@ export function DayPlanner({ pad, costed, components, targets, onChange }: Props
     dragging === null ? undefined : pad.items.find((item) => item.uid === dragging.uid);
   const day = Math.min(selected, pad.days - 1);
   const dayTotals = dayTotal(costed, day);
+  const daySegments = (key: string) =>
+    contributionsFor(contributors(costed, pad.days, day), key, DERIVED_TOTALS);
 
   return (
     <DndContext
@@ -126,13 +130,10 @@ export function DayPlanner({ pad, costed, components, targets, onChange }: Props
         {Object.keys(dayTotals.nutrients).length === 0 ? (
           <p className="screen__sub">Nothing placed on this day yet.</p>
         ) : (
-          <TodaySummary
-            totals={dayTotals}
-            targets={targets}
-            segmentsFor={(key) =>
-              contributionsFor(contributors(costed, pad.days, day), key, DERIVED_TOTALS)
-            }
-          />
+          <>
+            <TodaySummary totals={dayTotals} targets={targets} segmentsFor={daySegments} />
+            <AllNutrients totals={dayTotals} targets={targets} segmentsFor={daySegments} />
+          </>
         )}
       </section>
 
@@ -205,11 +206,23 @@ function DayCard({
   const here = costed.filter(({ item }) => placedOn(item, day) > 0);
 
   return (
+    // The whole card selects the day — the header alone was too small a target.
+    // Its own buttons and chips stop the click so −/+ and drags do not also
+    // count as "select".
     <div
       ref={setNodeRef}
       className={`daycard${isOver ? ' daycard--over' : ''}${selected ? ' daycard--selected' : ''}`}
+      onClick={onSelect}
     >
-      <button type="button" className="daycard__head" onClick={onSelect}>
+      <button
+        type="button"
+        className="daycard__head"
+        onClick={(event) => {
+          event.stopPropagation();
+          onSelect();
+        }}
+        aria-pressed={selected}
+      >
         <span className="daycard__title">Day {day + 1}</span>
         <span className="daycard__kcal">
           {kcal === undefined ? '—' : formatAmount('energy_kcal', kcal)}
@@ -250,7 +263,7 @@ function DayCard({
                 count={placedOn(item, day)}
                 unit={portionName(item, components)}
               />
-              <span className="placed__steps">
+              <span className="placed__steps" onClick={(event) => event.stopPropagation()}>
                 <button
                   type="button"
                   className="placed__step"
