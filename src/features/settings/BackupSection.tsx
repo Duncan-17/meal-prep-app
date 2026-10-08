@@ -102,8 +102,7 @@ export function BackupSection() {
               : `Last backup ${daysSince} day${daysSince === 1 ? '' : 's'} ago`}
         </p>
         <p className="notice__body">
-          Everything lives in this browser only. Clearing site data, or losing the device, loses it
-          all — a backup is the only copy that survives that.
+          A file you keep yourself — a copy that survives anything, sync included.
         </p>
       </div>
 
@@ -144,7 +143,8 @@ export function BackupSection() {
           <p className="notice__title">Replace everything with this backup?</p>
           <p className="notice__body">{pending.summary}</p>
           <p className="notice__body">
-            This wipes what is here now. Export first if you are not sure.
+            This wipes what is here now — and, once it syncs, on your other devices too. Export
+            first if you are not sure.
           </p>
           <div className="builder__actions">
             <button type="button" className="btn" onClick={() => setPending(null)}>

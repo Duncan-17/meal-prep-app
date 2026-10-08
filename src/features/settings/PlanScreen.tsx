@@ -14,6 +14,7 @@ import { TargetRow } from '@/features/settings/TargetRow';
 import { WeightPlan } from '@/features/settings/WeightPlan';
 import { PinnedNutrients } from '@/features/settings/PinnedNutrients';
 import { BackupSection } from '@/features/settings/BackupSection';
+import { SyncSection } from '@/features/settings/SyncSection';
 import { listTargets, planCustomisation, resetAllTargets } from '@/db/plan';
 import {
   NUTRIENTS,
@@ -79,6 +80,7 @@ export function PlanScreen() {
 
       <PinnedNutrients />
 
+      <SyncSection />
       <BackupSection />
 
       <section className="section">

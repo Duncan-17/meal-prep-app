@@ -12,6 +12,7 @@
 import Dexie, { type Table } from 'dexie';
 
 import { defaultTargetFor } from '@/nutrition/targets';
+import { SYNC_TABLES, createIdGenerator, type SyncRecord } from '@/domain/sync';
 
 import type {
   AppSettings,
@@ -29,6 +30,33 @@ import type {
   WeightEntry,
 } from '@/domain/types';
 
+/** Last-synced fingerprint of one row — see `detectChanges`. */
+export interface SyncShadowRow {
+  /** `${table}:${id}` */
+  key: string;
+  print: string;
+}
+
+/** A change made on this device and not yet uploaded. */
+export interface SyncOutboxRow extends SyncRecord {
+  key: string;
+}
+
+export interface SyncMetaRow {
+  id: 'sync';
+  /** Highest server rev applied here. */
+  cursor: number;
+  /** Whether this device has done its first change scan — see `ownTimestamp`. */
+  firstPassDone: boolean;
+  lastSyncedAt?: number;
+}
+
+/**
+ * Ids for new rows in the auto-id tables. Shared by every instance in this
+ * page, so ids stay strictly increasing however many are created per ms.
+ */
+const newRecordId = createIdGenerator();
+
 export class MealPrepDatabase extends Dexie {
   ingredients!: Table<Ingredient, number>;
   components!: Table<Component, number>;
@@ -43,8 +71,11 @@ export class MealPrepDatabase extends Dexie {
   weightEntries!: Table<WeightEntry, string>;
   plan!: Table<Plan, string>;
   settings!: Table<AppSettings, string>;
+  syncShadow!: Table<SyncShadowRow, string>;
+  syncOutbox!: Table<SyncOutboxRow, string>;
+  syncMeta!: Table<SyncMetaRow, string>;
 
-  /** The name is a parameter only so a test can upgrade a throwaway database. */
+  /** The name is a parameter only so tests can use throwaway databases. */
   constructor(name = 'meal-prep') {
     super(name);
 
@@ -132,6 +163,27 @@ export class MealPrepDatabase extends Dexie {
             ];
           });
       });
+
+    // v5 (2026-10-07): sync bookkeeping. Local-only and never backed up —
+    // they describe THIS device's relationship with the database, which
+    // means nothing on another device. See db/sync.ts.
+    this.version(5).stores({
+      syncShadow: 'key',
+      syncOutbox: 'key',
+      syncMeta: 'id',
+    });
+
+    // Every new row in an auto-id table gets an id no other device will also
+    // hand out. IndexedDB's own counter starts at 1 on every device, which is
+    // harmless alone and a collision the moment two devices share a database.
+    // Assigned here, centrally, so not one of the many `add` calls across the
+    // app had to change — and none can forget. An explicit id is left alone.
+    for (const [name, spec] of Object.entries(SYNC_TABLES)) {
+      if (!spec.autoId) continue;
+      this.table(name).hook('creating', (_primKey, row: Record<string, unknown>) => {
+        if (row[spec.key] === undefined) row[spec.key] = newRecordId();
+      });
+    }
   }
 }
 

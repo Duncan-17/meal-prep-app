@@ -113,6 +113,7 @@ export default defineConfig({
 
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    // worker/ too: the sync server's rules are tested where they live.
+    include: ['src/**/*.test.ts', 'worker/**/*.test.ts'],
   },
 });

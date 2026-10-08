@@ -4,7 +4,7 @@ A personal-use PWA for meal planning. Build reusable **recipes**, schedule batch
 calendar, track what you cooked as **fridge** stock, and log what you eat against an editable
 plan — with the full USDA nutrient panel behind it, not just calories.
 
-> **Status: live and in use.** All eight build phases complete, **486 tests** passing, deployed to
+> **Status: live and in use.** All eight build phases complete, **521 tests** passing, deployed to
 > Cloudflare as a Worker and installable on a phone. Now being refined against real use.
 
 - **[CLAUDE.md](CLAUDE.md)** — current status, conventions, and where to pick up. Start here.
@@ -60,7 +60,9 @@ Cloudflare Worker with static assets
 nutrition before cooking anything, and get suggestions for what the diet is missing. Planned in
 [PLAN.md §10](PLAN.md); not built yet.
 
-Data is **local to each device** by design — there is no account and no sync. Move it between
-devices with the JSON backup on the Plan screen.
+Each device keeps a full local copy and works offline; changes **sync through a Cloudflare D1
+database** so the phone and laptop see the same data (built 2026-10-08, switched on once the
+database is connected). There is no login yet. The JSON backup on the Plan screen is still the
+copy you keep yourself.
 
 Source: <https://github.com/Duncan-17/meal-prep-app> (private)

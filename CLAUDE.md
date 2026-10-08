@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **486 tests** across 23 files.
+`tsc -b` clean across three projects, ESLint clean, **521 tests** across 26 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -68,6 +68,11 @@ Roughly in order, all in response to using the thing:
   Diary's add button is now **+ Log food** in the header, beside Plan.
 - **+ Log food on the calendar's day panel** — opens Quick Add in place and logs to the SELECTED
   day. It replaced an "Add something" link to the Diary, which could only ever log to today.
+- **Sync (2026-10-08)** — every device keeps its local copy and swaps changes with a Cloudflare D1
+  database; later edit wins; the phone's and laptop's existing data merge. Status and "Sync now"
+  on the Plan screen. **Built and tested, but the D1 binding is not in `wrangler.toml` yet** —
+  waiting for the user to create the database and send its id. Until then the live app is
+  local-only exactly as before, queueing changes.
 
 ### Things a future session should not re-derive
 
@@ -112,14 +117,22 @@ Roughly in order, all in response to using the thing:
   batches, fridge entries, meal logs — carries `componentId` / `componentName`, so renaming the
   model means a migration that rewrites history for no user-visible gain. Routes stay `/components`
   and `/log` for the same reason. Change labels freely; leave identifiers alone.
-- **Local-only is a decision, not an oversight** (confirmed by the user 2026-10-06). Data lives in
-  IndexedDB, which is per-browser and per-device, so a phone never sees what a laptop entered.
-  Moving data between devices is Plan → Export a backup → Restore from a file, which REPLACES
-  rather than merges. The user was offered sync and chose to keep it local. Do not build sync
-  without asking again. **Overturned by the user 2026-10-07**: all current data moves to a
-  Cloudflare database, before any Experiment work, with no security for now (single user; auth
-  later). Offline behaviour, which device seeds it, and how the database gets created are still
-  open — PLAN.md §10 "Storage".
+- **Sync replaced local-only (user's decision, 2026-10-07).** Design in PLAN.md §10 "Sync". The
+  parts a future session must not "simplify":
+  - **Ids come from a Dexie `creating` hook** in `schema.ts` (`creation-ms × 1000 + random`), so
+    two devices never mint the same id. Do not go back to IndexedDB's own counter, and do not
+    add an `add` path that bypasses Dexie. Anything below `LEGACY_ID_LIMIT` (2³²) is renumbered
+    before upload by `rekeyLegacyIds`, which follows SIX reference fields — add a seventh
+    reference anywhere and it must be added there, or merged data points at the wrong rows.
+  - **Changes are found by DIFFING fingerprints, not by hooking writes.** There are dozens of
+    write paths; a diff cannot miss one.
+  - **Ties lose.** The server keeps a write only if strictly newer, and a device's first upload
+    stamps rows with their own timestamp (0 if none). That is what stops a fresh device's default
+    goals overwriting real ones. Do not "fix" it to `>=`.
+  - **No auth, by the user's decision** — single user, one address. Anyone who finds the URL can
+    read and overwrite the data. Revisit when it goes multi-user, as the user plans.
+  - The sync bookkeeping tables (`syncShadow`, `syncOutbox`, `syncMeta`) are per-device and are
+    deliberately NOT in `TABLE_NAMES`: never backed up, never synced.
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
   render a neutral dot on purpose; rewriting them would be rewriting history.
 - **Omega totals are DERIVED at read time, never stored.** `derivedFrom` in the registry,
@@ -156,8 +169,20 @@ Roughly in order, all in response to using the thing:
 
 ## Where to pick up
 
-Nothing is half-finished. The working tree is clean, `main` is pushed, and the deployed Worker
-matches it.
+**Half-finished on purpose: sync is built but not switched on.** Everything is committed and
+tested; the one missing piece is the `[[d1_databases]]` binding in `wrangler.toml`, which needs
+the database id. The user is creating the D1 database in the Cloudflare dashboard (their choice)
+and will send the id. Then add:
+
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "<the name they chose>"
+database_id = "<their id>"
+```
+
+and nothing else — the table creates itself on first use. Do NOT commit a placeholder id: a
+push deploys it, and an invalid binding fails the Cloudflare build.
 
 **Next feature: the Experiment tab — PLANNED, NOT BUILT** (PLAN.md §10). A fifth tab of saved
 scratchpads — a proposed week's shopping of recipes and foods, with combined nutrition, savable as
@@ -165,7 +190,8 @@ a shopping list — plus suggestions for what the diet is missing. The user said
 build it yet, and make no design decisions they did not specify.** Their answers are in §10's
 "Decided" sections: scratchpads are drag-and-drop drafts over their own run of days, separate from
 the Calendar. **Order of work, set by the user: move all existing data into a Cloudflare database
-FIRST, then the Experiment tab.** Suggestions are still entirely unanswered.
+FIRST, then the Experiment tab.** The first half is built (above); the Experiment tab is next once
+sync is live. Suggestions are still entirely unanswered.
 
 **Open investigation: "everything gets wiped every time an update is pushed"** (reported
 2026-10-07). Nothing in production code deletes data. The only `db.delete()` is the builder's
@@ -184,7 +210,7 @@ and on which device. Do not "fix" anything until that is known.
 | Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
 | Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
 | Experiment tab design   | Scratchpads answered 2026-10-07 (PLAN.md §10). All Suggestions questions still open. Build nothing of it until the database move is done.                    |
-| Server storage          | Decided 2026-10-07: Cloudflare DB, everything, no security yet. Open: offline/sync, which device seeds it, wrangler login vs dashboard. PLAN.md §10.         |
+| Server storage          | Built 2026-10-08. Waiting on the D1 database id from the user — see the top of this section.                                                                 |
 | Data wiped on update    | Asked 2026-10-07 which URL and device they use after a deploy. See the investigation note above.                                                             |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
@@ -251,6 +277,9 @@ because the config was Pages-shaped with no entry point.
   `run_worker_first = ["/api/*"]` stops that fallback swallowing API calls. This replaced
   `public/_redirects`, which wrangler had been rejecting as an infinite loop and never applying.
 - The dashboard's deploy command `npx wrangler deploy` is now the correct one.
+- **Sync's D1 database is bound as `DB`** in `wrangler.toml` (once the id arrives — see "Where to
+  pick up"). The binding must live in `wrangler.toml`, not only in the dashboard: `wrangler
+deploy` replaces the Worker's bindings with the file's on every push.
 - `USDA_API_KEY` is a **Secret** in the Worker's Settings → Variables and Secrets. Workers apply
   secrets immediately — no rebuild — and `wrangler deploy` does not wipe them.
 - `.node-version` pins Node 22; Vite 7 needs ≥ 20.19.
@@ -378,9 +407,10 @@ picker) and the calendar mark.
 src/
   db/          Dexie schema + every write path. schema, batches, fridge, logs,
                components, ingredients (incl. custom foods), plan, favorites,
-               insight, backup, init, seed.dev
+               insight, backup, init, seed.dev, sync (the sync engine)
   domain/      PURE — no Dexie, no React, all tested. nutrients, coverage,
-               portions, components, dates, plan, color, backup, foodSearch, types
+               portions, components, dates, plan, color, backup, foodSearch,
+               contributions, sync, types
   nutrition/   registry (81 nutrients, 2 derived), usda.adapter, units, targets
   features/
     calendar/  month grid, day panel, schedule + mark-cooked sheets
@@ -388,14 +418,15 @@ src/
     foods/     USDA search + the user's own Foods library and form
     fridge/    stock list, adjust, add-direct
     log/       the Diary: today summary (rings), day detail, log sheets
-    settings/  the Plan screen — targets, weight, pinned nutrients, backup
+    settings/  the Plan screen — targets, weight, pinned nutrients, sync, backup
     insight/   Recharts trends + weight chart (lazy-loaded)
   ui/          TabBar, Sheet, Stepper, PercentPicker, ColorPicker, MacroRing,
                TargetBar, InstallPrompt, vizPalette
   routes/      router + AppShell
 worker/
-  index.ts     The Cloudflare Worker: /api proxy for USDA, plus the ASSETS
-               binding that serves dist/. Holds the API key server-side.
+  index.ts     The Cloudflare Worker: /api proxy for USDA, /api/sync over D1,
+               plus the ASSETS binding that serves dist/. Holds the API key.
+  syncLogic.ts The server's sync rules, storage-agnostic and tested.
 scripts/
   screenshot.mjs   visual checks at both viewports (see above)
   seed-browser.mjs browser-side seed shared by visual scripts

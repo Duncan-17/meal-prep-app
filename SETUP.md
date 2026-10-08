@@ -37,6 +37,10 @@ The next feature is planned but deliberately not started. Your answers so far ar
 and how — data should be saved somewhere other than this browser. Nothing gets built until you
 have answered them.
 
+### Sync: create the database and send its id
+
+Steps are under **Switching on sync** below.
+
 ### Which address you open after an update
 
 Your data lives in the browser, tied to the exact web address. If the app looks empty after an
@@ -96,23 +100,29 @@ Worker secret. USDA deactivates keys it finds published, so assume a leaked one 
 
 ---
 
-## Moving your data between devices
+## Switching on sync — your steps, in this order
 
-Everything lives in **this browser, on this device**. Your phone and your laptop keep entirely
-separate databases — that is deliberate (PLAN.md §1, re-confirmed 2026-10-06), not a bug.
+Sync is built. It goes live once the Cloudflare database exists and the app knows its id.
 
-To move it:
+1. **Export a backup on each device first** — phone and laptop: **Diary → Plan → Export a
+   backup**. The first time each device opens the new version, it renumbers its records so the
+   two devices' data can merge. That is tested, but a backup costs nothing.
+2. **Push** the current commits from GitHub Desktop. Safe on its own: with no database connected
+   the app behaves exactly as before, and the Plan screen says "Sync is not set up yet".
+3. **Create the database** in the Cloudflare dashboard: **Storage & Databases → D1 SQL Database →
+   Create**. Any name (e.g. `meal-prep`); leave the location on automatic.
+4. **Send me the Database ID** shown on its page. It is not a secret. I add it to the project and
+   commit; you push again.
+5. **Open the app on the laptop, then the phone.** Each uploads its data and downloads the other's.
+   Anything you had entered on both will appear twice — delete the spare copies.
 
-1. On the device that has the data: **Diary → Plan → Export a backup**. A JSON file lands in
-   your downloads.
-2. Get the file onto the other device however suits — AirDrop, email, a cloud folder.
-3. There: **Plan → Restore from a file**, pick it, confirm.
+After that, edits on one device show up on the other within about 30 seconds while both are open.
+**Plan → Sync** shows the state, with a **Sync now** button.
 
-⚠️ **Restore replaces, it does not merge.** Whatever is on the receiving device is wiped. If both
-devices have things you want, export the receiving one first.
+⚠️ **Restore from a file now replaces data everywhere.** Once it syncs, the other devices follow.
 
-The same export is your only backup against clearing site data, or iOS evicting storage from a
-site you have not opened in about seven weeks. The Plan screen nags when it has been a fortnight.
+⚠️ **No password yet**, by your choice: anyone who found the exact address could read or change
+the data. Fine while it is just you; worth fixing before sharing the address.
 
 ---
 

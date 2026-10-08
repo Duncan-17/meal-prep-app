@@ -22,7 +22,21 @@
  *
  * Shares no code with `src/` — this runs on workerd, not in a browser, and is
  * typechecked separately by tsconfig.worker.json.
+ *
+ * Since 2026-10-07 it also hosts `/api/sync`, which swaps the user's data with
+ * a D1 database (PLAN.md §10 "Storage"). The rules live in `syncLogic.ts`;
+ * this file only adapts them to D1. No authentication, by the user's decision
+ * — single user, one address; revisit when it becomes multi-user.
  */
+
+import {
+  SyncRequestError,
+  parsePush,
+  pull,
+  type IncomingRecord,
+  type StoredRecord,
+  type SyncStore,
+} from './syncLogic';
 
 interface Env {
   /** Cloudflare secret in production; `.dev.vars` locally. Never sent to the client. */
@@ -31,6 +45,11 @@ interface Env {
   OFF_USER_AGENT?: string;
   /** The static site in `dist/`, bound by wrangler.toml. */
   ASSETS: Fetcher;
+  /**
+   * The sync database. Optional on purpose: until the binding is in
+   * wrangler.toml, `/api/sync` answers 503 and the app simply stays local.
+   */
+  DB?: D1Database;
 }
 
 const FDC_BASE = 'https://api.nal.usda.gov/fdc/v1';
@@ -55,11 +74,16 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
+    const route = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
+
+    if (route === 'sync') {
+      return handleSync(request, url, env);
+    }
+
     if (request.method !== 'GET') {
       return json({ error: 'Only GET is supported.' }, 405);
     }
 
-    const route = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
     const waitUntil = (promise: Promise<unknown>) => ctx.waitUntil(promise);
 
     try {
@@ -70,6 +94,7 @@ export default {
           ok: true,
           usdaKeyConfigured: Boolean(env.USDA_API_KEY),
           offContactConfigured: Boolean(env.OFF_USER_AGENT),
+          syncConfigured: Boolean(env.DB),
         });
       }
 
@@ -102,6 +127,144 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env>;
+
+// ── Sync ────────────────────────────────────────────────────────────────────
+
+async function handleSync(request: Request, url: URL, env: Env): Promise<Response> {
+  if (env.DB === undefined) {
+    return json(
+      {
+        error: 'Sync is not configured.',
+        detail: 'No D1 database is bound as DB in wrangler.toml, so data stays on each device.',
+      },
+      503,
+    );
+  }
+
+  const store = await d1Store(env.DB);
+
+  try {
+    if (request.method === 'GET') {
+      const since = Number.parseInt(url.searchParams.get('since') ?? '0', 10);
+      return json(await pull(store, Number.isFinite(since) && since > 0 ? since : 0));
+    }
+
+    if (request.method === 'POST') {
+      const changes = parsePush(await request.json().catch(() => null));
+      const written = await store.upsertNewer(changes);
+      return json({ received: changes.length, written });
+    }
+
+    return json({ error: 'Sync takes GET or POST.' }, 405);
+  } catch (error) {
+    if (error instanceof SyncRequestError) return json({ error: error.message }, 400);
+    return json({ error: 'Sync failed.', detail: String(error).slice(0, 300) }, 500);
+  }
+}
+
+/**
+ * The table is created on first use rather than by a migration step, so a
+ * fresh database works the moment it is bound — no command to remember to
+ * run against production. `IF NOT EXISTS` makes the check idempotent, and it
+ * runs once per Worker instance, not per request.
+ */
+let schemaReady: Promise<unknown> | null = null;
+
+function ensureSchema(db: D1Database): Promise<unknown> {
+  schemaReady ??= db
+    .batch([
+      db.prepare(
+        `CREATE TABLE IF NOT EXISTS records (
+           tbl TEXT NOT NULL,
+           id TEXT NOT NULL,
+           data TEXT,
+           updated_at INTEGER NOT NULL,
+           deleted INTEGER NOT NULL DEFAULT 0,
+           rev INTEGER NOT NULL,
+           PRIMARY KEY (tbl, id)
+         )`,
+      ),
+      db.prepare('CREATE INDEX IF NOT EXISTS records_rev ON records (rev)'),
+    ])
+    .catch((error: unknown) => {
+      schemaReady = null; // let the next request try again
+      throw error;
+    });
+  return schemaReady;
+}
+
+/** D1 statements per batch call — comfortably inside D1's limits. */
+const D1_CHUNK = 50;
+
+/*
+ * One statement does the whole "strictly newer wins" rule: insert, or on a
+ * clash update only WHERE the incoming change is newer. The rev subquery runs
+ * per statement, and a D1 batch runs its statements in order inside one
+ * transaction, so revs come out strictly increasing.
+ */
+const UPSERT_NEWER = `
+  INSERT INTO records (tbl, id, data, updated_at, deleted, rev)
+  VALUES (?1, ?2, ?3, ?4, ?5, (SELECT COALESCE(MAX(rev), 0) + 1 FROM records))
+  ON CONFLICT (tbl, id) DO UPDATE SET
+    data = excluded.data,
+    updated_at = excluded.updated_at,
+    deleted = excluded.deleted,
+    rev = excluded.rev
+  WHERE excluded.updated_at > records.updated_at`;
+
+async function d1Store(db: D1Database): Promise<SyncStore> {
+  await ensureSchema(db);
+
+  return {
+    async upsertNewer(records: readonly IncomingRecord[]): Promise<number> {
+      let written = 0;
+      for (let start = 0; start < records.length; start += D1_CHUNK) {
+        const chunk = records.slice(start, start + D1_CHUNK);
+        const results = await db.batch(
+          chunk.map((record) =>
+            db
+              .prepare(UPSERT_NEWER)
+              .bind(
+                record.tbl,
+                record.id,
+                record.deleted ? null : JSON.stringify(record.data),
+                record.updatedAt,
+                record.deleted ? 1 : 0,
+              ),
+          ),
+        );
+        for (const result of results) written += result.meta.changes ?? 0;
+      }
+      return written;
+    },
+
+    async changesSince(since: number, limit: number): Promise<StoredRecord[]> {
+      const { results } = await db
+        .prepare(
+          'SELECT tbl, id, data, updated_at, deleted, rev FROM records WHERE rev > ?1 ORDER BY rev LIMIT ?2',
+        )
+        .bind(since, limit)
+        .all<{
+          tbl: string;
+          id: string;
+          data: string | null;
+          updated_at: number;
+          deleted: number;
+          rev: number;
+        }>();
+      return results.map((row) => ({
+        tbl: row.tbl,
+        id: row.id,
+        data: row.data,
+        updatedAt: row.updated_at,
+        deleted: row.deleted === 1,
+        rev: row.rev,
+      }));
+    },
+  };
+}
+
+// ── USDA ────────────────────────────────────────────────────────────────────
 
 async function handleUsdaSearch(
   url: URL,

@@ -26,7 +26,7 @@ Single user, no auth, local-first.
 
 ### Out of scope for v1
 
-Multi-device sync / auth · sharing · expiration alerts · recipe photos.
+~~Multi-device sync~~ (built 2026-10-08, §10) · auth · sharing · expiration alerts · recipe photos.
 
 > **Overturned 2026-10-07.** The user chose a Cloudflare database holding everything, built before
 > the Experiment tab — see §10 "Storage". No security for now (single user); auth comes later.
@@ -52,7 +52,8 @@ React 19 + TypeScript + Vite 7
 ├── Recharts                          [Phase 7]   ← nutrient trends
 ├── dnd-kit                           [Phase 3]   ← ingredient reorder only
 ├── date-fns                                      ← week math, timezone-safe
-└── Cloudflare Worker + static assets              ← host + API proxy, one deploy
+├── Cloudflare D1                     [2026-10]   ← sync database (§10 "Storage")
+└── Cloudflare Worker + static assets              ← host + API proxy + sync, one deploy
 ```
 
 **`useLiveQuery` is the core pattern.** Every screen reads Dexie reactively; a write anywhere
@@ -160,7 +161,8 @@ touches nutrition totals.
 
 `ingredients` · `components` · `batches` · `fridgeEntries` · `stockAdjustments` · `mealLogs` ·
 `quickAddFavorites` · `foodCache` · `searchCache` · `targets` · `settings` · `weightEntries` ·
-`plan`
+`plan` — plus, since v5, three local-only sync bookkeeping tables: `syncShadow` · `syncOutbox` ·
+`syncMeta`, never backed up or synced themselves.
 
 ---
 
@@ -417,6 +419,7 @@ _using_ it, and they override the phase text where they disagree:
 | 2026-10-06 | Calendar gained a **Meals / Trends** toggle; today and the selected day now marked differently (§5)               |
 | 2026-10-06 | Tutorial text removed; the Diary's add button became **+ Log food** in the header                                 |
 | 2026-10-07 | The calendar's day panel gained **+ Log food**, logging to the selected day rather than linking to the Diary      |
+| 2026-10-08 | **Sync built**: every device keeps a local copy and swaps changes with a Cloudflare D1 database (§10 "Storage")   |
 
 ---
 
@@ -508,13 +511,44 @@ The user's answers:
 - **No security for now.** The user is the only person using this address. Revisit later, when
   the app may become multi-user with logins, accounts and per-user data.
 
-Still open, and blocking the build:
+Second round (2026-10-07), via a multiple-choice prompt:
 
-- **Offline**: online-only, or a local copy that syncs (and what wins when two devices edit the
-  same thing).
-- **Existing data**: which device's data seeds the database — or merge, or start fresh.
-- **Creating the database**: wrangler on this machine is not logged in, so either the user runs
-  `wrangler login` once, or creates the database in the Cloudflare dashboard and passes on its id.
+- **Offline: a local copy that syncs.** The app keeps working with no signal exactly as before;
+  changes swap with the database when there is a connection. **The later edit wins** when two
+  devices change the same thing.
+- **Existing data: merge both devices.** Phone and laptop data both go in. Anything entered on
+  both appears twice and needs tidying by hand — the user was told this when choosing.
+- **Creating the database: the user does it in the Cloudflare dashboard** and passes on its id.
+
+### Sync — BUILT 2026-10-08, waiting on the database id
+
+How it works (code: `src/domain/sync.ts` pure rules, `src/db/sync.ts` the engine,
+`worker/syncLogic.ts` server rules, `worker/index.ts` the D1 adapter):
+
+- **One generic table on the server.** Every row of every synced table is a record keyed by
+  (table, id): the row as JSON, when it changed, whether it is a tombstone, and a `rev` that only
+  goes up. A device asks for "everything after rev N". The table creates itself on first use — no
+  migration command to run against production.
+- **Ids that cannot collide.** IndexedDB's own counter gives 1, 2, 3… on every device. New rows
+  now get `creation-ms × 1000 + random 0–999`, assigned centrally by a Dexie `creating` hook so no
+  write path changed. Existing rows are renumbered once per device before their first upload,
+  with every reference followed — six fields, including the two inside arrays. Restoring an old
+  backup reintroduces small ids, and they are renumbered the same way.
+- **Changes are found by diffing, not by hooking writes.** Each row's fingerprint is compared with
+  the last-synced one; differences go into an outbox stamped with when they were noticed. This
+  runs offline too, so "when" is close to when the edit happened.
+- **Later edit wins, on both sides.** The server keeps a write only if strictly newer; the device
+  skips a download if it holds a newer un-uploaded edit of the same row.
+- **First upload uses each row's own timestamp**, and 0 for rows with none — so a fresh phone's
+  untouched default goals lose to goals already edited on the laptop.
+- **Restore still replaces** — and now that propagates: the deletions sync to every device. The
+  restore confirmation says so.
+- **No database bound = local-only, as before.** `/api/sync` answers 503, the Plan screen says
+  "Sync is not set up yet", and changes queue in the outbox until it is.
+
+Verified 2026-10-08 against the real Worker with a local D1, two browser sessions as two devices:
+12 meals and 4 batches with old-style ids renumbered and uploaded from one; the other, starting
+empty, received them all; a goal edited on the second reached the first.
 
 The original questions, kept for the record:
 
