@@ -469,6 +469,17 @@ Two features in one tab, working together:
   data, `aggregate` with coverage, the segmented meters, `withDerivedTotals`, and weekly targets
   (daily × 7 unless set separately).
 
+### Decided by the user (2026-10-08): two views of one scratchpad
+
+The user's own description, which settles what "judged over a week or a month" means:
+
+1. **Average view.** Build a set of foods and meals, set the amounts, then choose a period — a
+   week, a month, or any number of days. The scratchpad divides the total nutrition by that many
+   days: "if I ate this every day, what would my average day look like?"
+2. **Day-by-day view.** The scratchpad's own simple calendar (Day 1, Day 2… — not real dates), as
+   many days as the period. Instead of an even division, **drag** the food onto the days you would
+   eat it and see **each day's** nutrition. Drag and drop, simple and easy.
+
 ### Decided by the user (2026-10-07, second round)
 
 - **Amounts are what you buy; the period divides them.** 20 eggs over a week is 20 eggs'
