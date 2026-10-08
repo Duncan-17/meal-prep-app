@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **522 tests** across 26 files.
+`tsc -b` clean across three projects, ESLint clean, **541 tests** across 28 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -70,7 +70,12 @@ Roughly in order, all in response to using the thing:
   day. It replaced an "Add something" link to the Diary, which could only ever log to today.
 - **Sync (2026-10-08)** — every device keeps its local copy and swaps changes with a Cloudflare D1
   database; later edit wins; the phone's and laptop's existing data merge. Status and "Sync now"
-  on the Plan screen. D1 binding added 2026-10-08; live from the push after that.
+  on the Plan screen. D1 binding added 2026-10-08; live, and confirmed by the user on both devices.
+- **Experiment tab — scratchpads (2026-10-08)** — a fifth tab of saved scratchpads: queue USDA
+  foods, your own Foods and recipes (whole batches), set amounts, pick a period, and see either
+  the **Average day** or **Day by day** — food dragged from a "Not placed" tray onto a dateless run
+  of days. Suggestions (the other half of the tab) are not built: none of their questions are
+  answered yet.
 
 ### Things a future session should not re-derive
 
@@ -172,6 +177,18 @@ Roughly in order, all in response to using the thing:
 - **"Met" on the calendar border is `progressFor`'s** (`dayGoalState` in `domain/plan.ts`):
   calories and carbs/fat within ±10%, protein at or above. A day 28% over calories is NOT met. An
   unlogged day gets no border at all — a gap, not a failure.
+- **Scratchpad rules, all the user's (2026-10-08) — do not "improve" them without asking:**
+  - **One drag places ONE portion**; −/+ on a day adjusts. Portions not placed wait in the tray
+    and count toward NO day. The Average view counts everything, placed or not.
+  - **Foods are snapshotted, recipes are live by reference.** A food is a fact about a product; a
+    recipe is what you would cook next, so editing it should update the plan. A deleted recipe
+    shows "recipe deleted" and contributes nothing.
+  - A scratchpad is **saved whole on every change** (one row, items inside). Sync carries it as one
+    record. The screen holds the latest edit locally until the database echoes it, so drops do
+    not flicker back.
+  - `scratchpads.items[].componentId` is the **seventh** id reference `rekeyLegacyIds` follows.
+  - Touch drags need a 180 ms press (so scrolling still works); chips use
+    `touch-action: manipulation`, NOT `none`, for the same reason.
 - **The search cache is versioned** (`SEARCH_CACHE_VERSION` in `db/foods.ts`). Bump it whenever a
   search starts returning something old cached entries lack, or the old page replays for a week.
 
@@ -183,14 +200,15 @@ one device and saw them on the other, including after closing and reopening. The
 `https://meal-prep-app.dncanzano.workers.dev` — `/api/sync?stats=1` there is a read-only check of
 what the database holds.
 
-**Next feature: the Experiment tab — PLANNED, NOT BUILT** (PLAN.md §10). A fifth tab of saved
-scratchpads — a proposed week's shopping of recipes and foods, with combined nutrition, savable as
-a shopping list — plus suggestions for what the diet is missing. The user said explicitly: **do not
-build it yet, and make no design decisions they did not specify.** Their answers are in §10's
-"Decided" sections: scratchpads are drag-and-drop drafts over their own run of days, separate from
-the Calendar. **Order of work, set by the user: move all existing data into a Cloudflare database
-FIRST, then the Experiment tab.** The first half is done (above); the Experiment tab is next once
-the user confirms sync works on both devices. Suggestions are still entirely unanswered.
+**Experiment tab: scratchpads BUILT (2026-10-08), suggestions NOT.** The user's answers are in
+PLAN.md §10 "Decided". What is still open, and must be asked rather than decided:
+
+- **Suggestions** — every question in §10 is unanswered (data source, what counts as missing,
+  ranking, exclusions, where they appear).
+- **Shopping list** — "later", with sub-items (a recipe line expands into its ingredients).
+- **Reuse / compare** scratchpads, and any link to the real Calendar — explicitly "not now".
+
+The user's standing instruction for new features: make no design decision they did not specify.
 
 **Closed: "everything gets wiped every time an update is pushed"** (reported 2026-10-07). Never
 pinned to a cause — no production code deletes data, so it was most likely a change of address
@@ -204,7 +222,7 @@ device that starts empty downloads everything. Reopen only if it recurs with syn
 | Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile. |
 | Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
 | Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
-| Experiment tab design   | Scratchpads answered 2026-10-07 (PLAN.md §10). All Suggestions questions still open. Build nothing of it until the database move is done.                    |
+| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                         |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 
@@ -400,11 +418,12 @@ picker) and the calendar mark.
 src/
   db/          Dexie schema + every write path. schema, batches, fridge, logs,
                components, ingredients (incl. custom foods), plan, favorites,
-               insight, backup, init, seed.dev, sync (the sync engine)
+               insight, backup, init, seed.dev, sync (the sync engine), scratchpads
   domain/      PURE — no Dexie, no React, all tested. nutrients, coverage,
                portions, components, dates, plan, color, backup, foodSearch,
-               contributions, sync, types
-  nutrition/   registry (81 nutrients, 2 derived), usda.adapter, units, targets
+               contributions, sync, scratchpad, types
+  nutrition/   registry (81 nutrients, 2 derived), usda.adapter, units, targets,
+               scratchpad (what an item contains; how it splits)
   features/
     calendar/  month grid, day panel, schedule + mark-cooked sheets
     components/ recipe library (two tabs), builder, detail, amounts, ingredient rows
@@ -413,6 +432,8 @@ src/
     log/       the Diary: today summary (rings), day detail, log sheets
     settings/  the Plan screen — targets, weight, pinned nutrients, sync, backup
     insight/   Recharts trends + weight chart (lazy-loaded)
+    experiment/ the Experiment tab: scratchpad list, scratchpad screen, add sheet,
+               day planner (dnd-kit drag and drop)
   ui/          TabBar, Sheet, Stepper, PercentPicker, ColorPicker, MacroRing,
                TargetBar, InstallPrompt, vizPalette
   routes/      router + AppShell

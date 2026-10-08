@@ -107,6 +107,22 @@ describe('rekeyLegacyIds', () => {
     expect('fridgeEntryId' in (meal.items[1] ?? {})).toBe(false);
   });
 
+  it("follows a scratchpad's recipe references too", () => {
+    n = 0;
+    const { data: out } = rekeyLegacyIds(
+      {
+        components: [{ id: 1, name: 'Pasta' }],
+        scratchpads: [{ id: 1, items: [{ kind: 'recipe', componentId: 1 }, { kind: 'food' }] }],
+      },
+      newId,
+    );
+    const pasta = (out.components?.[0] as { id: number }).id;
+    const pad = out.scratchpads?.[0] as { id: number; items: { componentId?: number }[] };
+    expect(pad.id).toBeGreaterThan(LEGACY_ID_LIMIT);
+    expect(pad.items[0]?.componentId).toBe(pasta);
+    expect('componentId' in (pad.items[1] ?? {})).toBe(false);
+  });
+
   it('keeps legacy rows in their original order', () => {
     n = 0;
     const { data: out } = rekeyLegacyIds({ mealLogs: [{ id: 3 }, { id: 1 }, { id: 2 }] }, newId);

@@ -25,6 +25,7 @@ import type {
   NutrientTarget,
   Plan,
   QuickAddFavorite,
+  Scratchpad,
   SearchCacheEntry,
   StockAdjustment,
   WeightEntry,
@@ -74,6 +75,7 @@ export class MealPrepDatabase extends Dexie {
   syncShadow!: Table<SyncShadowRow, string>;
   syncOutbox!: Table<SyncOutboxRow, string>;
   syncMeta!: Table<SyncMetaRow, string>;
+  scratchpads!: Table<Scratchpad, number>;
 
   /** The name is a parameter only so tests can use throwaway databases. */
   constructor(name = 'meal-prep') {
@@ -173,6 +175,12 @@ export class MealPrepDatabase extends Dexie {
       syncMeta: 'id',
     });
 
+    // v6 (2026-10-08): the Experiment tab's scratchpads. Synced and backed up
+    // like any other user data — the user asked for everything saved.
+    this.version(6).stores({
+      scratchpads: '++id, updatedAt',
+    });
+
     // Every new row in an auto-id table gets an id no other device will also
     // hand out. IndexedDB's own counter starts at 1 on every device, which is
     // harmless alone and a collision the moment two devices share a database.
@@ -206,6 +214,7 @@ export const TABLE_NAMES = [
   'settings',
   'weightEntries',
   'plan',
+  'scratchpads',
 ] as const;
 
 /**

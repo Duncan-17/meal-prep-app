@@ -7,6 +7,8 @@ import { ComponentDetail } from '@/features/components/ComponentDetail';
 import { FridgeScreen } from '@/features/fridge/FridgeScreen';
 import { LogScreen } from '@/features/log/LogScreen';
 import { PlanScreen } from '@/features/settings/PlanScreen';
+import { ExperimentScreen } from '@/features/experiment/ExperimentScreen';
+import { ScratchpadScreen } from '@/features/experiment/ScratchpadScreen';
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +25,8 @@ export const router = createBrowserRouter([
       { path: 'fridge', element: <FridgeScreen /> },
       { path: 'log', element: <LogScreen /> },
       { path: 'plan', element: <PlanScreen /> },
+      { path: 'experiment', element: <ExperimentScreen /> },
+      { path: 'experiment/:id', element: <ScratchpadScreen /> },
     ],
   },
 ]);

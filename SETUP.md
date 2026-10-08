@@ -30,12 +30,11 @@ Or edit them directly: **Diary → Plan**. Every target has a number field and a
 and a weekly figure, and a goal type (at least / about / at most). Editing one clears its
 "FDA default" badge.
 
-### Design answers for the Experiment tab
+### Design answers for suggestions
 
-The next feature is planned but deliberately not started. Your answers so far are recorded in
-**PLAN.md §10**. Still open: a few scratchpad details, everything about suggestions, and whether —
-and how — data should be saved somewhere other than this browser. Nothing gets built until you
-have answered them.
+Scratchpads are built. Suggestions — the other half of the Experiment tab — are not: every
+question about them is listed in **PLAN.md §10** (where suggestions come from, what counts as
+"missing", how they are ranked, what to exclude). Nothing gets built until you answer.
 
 ### Omega-3 and omega-6 goals
 

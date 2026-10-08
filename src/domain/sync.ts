@@ -38,6 +38,7 @@ export const SYNC_TABLES: Readonly<Record<string, SyncTableSpec>> = {
   settings: { key: 'id', autoId: false },
   weightEntries: { key: 'date', autoId: false },
   plan: { key: 'id', autoId: false },
+  scratchpads: { key: 'id', autoId: true },
 };
 
 export const SYNC_TABLE_NAMES = Object.keys(SYNC_TABLES);
@@ -123,10 +124,10 @@ const REFERENCES: Readonly<Record<string, ReadonlyArray<[field: string, target: 
 /**
  * Give every legacy id a collision-proof one, rewriting every reference to it.
  *
- * Six fields point at other rows: the four in REFERENCES, plus the two that
- * live inside arrays — a recipe's `ingredients[].ingredientId` and a meal's
- * `items[].fridgeEntryId`. Miss one and a meal points at a fridge entry that
- * no longer exists under that id.
+ * Seven fields point at other rows: the four in REFERENCES, plus the three
+ * that live inside arrays — a recipe's `ingredients[].ingredientId`, a meal's
+ * `items[].fridgeEntryId`, and a scratchpad's `items[].componentId`. Miss one
+ * and a meal points at a fridge entry that no longer exists under that id.
  *
  * A reference to an id that is not in the data (a deleted recipe a batch still
  * names) is left alone: there is nothing to point it at, and inventing a
@@ -176,6 +177,14 @@ export function rekeyLegacyIds(
           ...entry,
           ingredientId: follow('ingredients', entry.ingredientId),
         }));
+      }
+
+      if (tbl === 'scratchpads' && Array.isArray(row.items)) {
+        row.items = row.items.map((item: Record<string, unknown>) =>
+          'componentId' in item
+            ? { ...item, componentId: follow('components', item.componentId) }
+            : item,
+        );
       }
 
       if (tbl === 'mealLogs' && Array.isArray(row.items)) {

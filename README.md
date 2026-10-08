@@ -4,7 +4,7 @@ A personal-use PWA for meal planning. Build reusable **recipes**, schedule batch
 calendar, track what you cooked as **fridge** stock, and log what you eat against an editable
 plan — with the full USDA nutrient panel behind it, not just calories.
 
-> **Status: live and in use.** All eight build phases complete, **522 tests** passing, deployed to
+> **Status: live and in use.** All eight build phases complete, **541 tests** passing, deployed to
 > Cloudflare as a Worker and installable on a phone. Now being refined against real use.
 
 - **[CLAUDE.md](CLAUDE.md)** — current status, conventions, and where to pick up. Start here.
@@ -26,6 +26,8 @@ plan — with the full USDA nutrient panel behind it, not just calories.
    panel below — every bar split by the foods it came from.
 6. **Plan** — every nutrient target, daily and weekly, seeded from FDA values and fully editable.
    Omega-3 and omega-6 are totalled from their individual fatty acids.
+7. **Experiment** — draft a week (or any period) of food you might buy and cook in a scratchpad.
+   See the average day, or drag the food onto particular days and see each one.
 
 Two properties it holds onto throughout: **missing data is never zero** (every total carries a
 coverage figure saying how much of it was actually measured), and **history is never rewritten**
@@ -56,9 +58,8 @@ Food search needs both; everything else works with just `npm run dev`.
 React 19 · TypeScript · Vite 7 · Dexie (IndexedDB) · React Router · Recharts · Workbox ·
 Cloudflare Worker with static assets
 
-**Next:** an **Experiment** tab — queue up proposed recipes and foods to see their combined
-nutrition before cooking anything, and get suggestions for what the diet is missing. Planned in
-[PLAN.md §10](PLAN.md); not built yet.
+**Next:** suggestions in the Experiment tab — what to eat for what the diet is missing. Planned in
+[PLAN.md §10](PLAN.md); waiting on design answers.
 
 Each device keeps a full local copy and works offline; changes **sync through a Cloudflare D1
 database** so the phone and laptop see the same data. There is no login yet. The JSON backup on the Plan screen is still the

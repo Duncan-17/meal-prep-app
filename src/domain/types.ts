@@ -290,6 +290,69 @@ export interface SearchCacheEntry {
   version?: number;
 }
 
+// ── Experiment: scratchpads ─────────────────────────────────────────────────
+
+/**
+ * Where an item's portions sit: day index (0-based, as a string so the map
+ * survives JSON) → how many. Portions on no day are "not placed" — they wait
+ * in the tray and count toward no day (user's choice, 2026-10-08).
+ */
+export type Placements = Record<string, number>;
+
+interface ScratchpadItemBase {
+  /** Stable within its scratchpad; survives reordering and drag-and-drop. */
+  uid: string;
+  label: string;
+  color: string;
+  /**
+   * How many pieces the amount is split into for placing on days — 20 for
+   * twenty eggs, 6 for a six-serving recipe. One drag places one.
+   */
+  portions: number;
+  placed: Placements;
+}
+
+/**
+ * A food you might buy. Nutrition is SNAPSHOTTED: a food is a fact about a
+ * product, and the scratchpad must not change because a USDA record was
+ * re-fetched or a saved food was deleted.
+ */
+export interface ScratchpadFood extends ScratchpadItemBase {
+  kind: 'food';
+  source: FoodSource;
+  sourceId: string;
+  nutritionPer100g: NutrientMap;
+  portionGrams?: Record<string, number>;
+  /** What you would buy: 20 each, 1 gallon, 500 g. */
+  quantity: number;
+  unit: string;
+}
+
+/**
+ * A recipe you might cook — whole batches (user's decision). LIVE by
+ * reference: edit the recipe and the plan follows, since the plan is about
+ * what you would cook next. `label` and `color` are kept for when the recipe
+ * has since been deleted.
+ */
+export interface ScratchpadRecipe extends ScratchpadItemBase {
+  kind: 'recipe';
+  componentId: number;
+  batches: number;
+}
+
+export type ScratchpadItem = ScratchpadFood | ScratchpadRecipe;
+
+/** A draft of a period's food: a reusable shopping-list-to-be (PLAN.md §10). */
+export interface Scratchpad {
+  id?: number;
+  name: string;
+  /** The period: 7 for a week, 30 for a month, any number of days. */
+  days: number;
+  items: ScratchpadItem[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 // `NutrientTarget`, `Plan`, `WeightGoal` and `WeightEntry` live in
 // `@/domain/plan` — they carry goal direction and weekly logic that belongs
 // beside the functions reading them. Re-exported so `@/domain/types` stays the

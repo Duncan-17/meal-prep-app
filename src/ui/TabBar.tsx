@@ -54,6 +54,20 @@ const TABS: Tab[] = [
       </svg>
     ),
   },
+  {
+    // A flask: trying things out before committing to them.
+    to: '/experiment',
+    label: 'Experiment',
+    icon: (
+      <svg className="tabbar__icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M9.5 3h5M10 3v6l-5.2 9.1A2 2 0 0 0 6.5 21h11a2 2 0 0 0 1.7-2.9L14 9V3"
+          {...stroke}
+        />
+        <path d="M7.4 14.5h9.2" {...stroke} />
+      </svg>
+    ),
+  },
 ];
 
 export function TabBar() {

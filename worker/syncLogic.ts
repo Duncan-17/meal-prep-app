@@ -66,6 +66,7 @@ const ALLOWED_TABLES = new Set([
   'settings',
   'weightEntries',
   'plan',
+  'scratchpads',
 ]);
 
 export class SyncRequestError extends Error {}

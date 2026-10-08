@@ -161,7 +161,7 @@ touches nutrition totals.
 
 `ingredients` · `components` · `batches` · `fridgeEntries` · `stockAdjustments` · `mealLogs` ·
 `quickAddFavorites` · `foodCache` · `searchCache` · `targets` · `settings` · `weightEntries` ·
-`plan` — plus, since v5, three local-only sync bookkeeping tables: `syncShadow` · `syncOutbox` ·
+`plan` · `scratchpads` (v6) — plus, since v5, three local-only sync bookkeeping tables: `syncShadow` · `syncOutbox` ·
 `syncMeta`, never backed up or synced themselves.
 
 ---
@@ -240,7 +240,7 @@ Returns a confidence flag that feeds coverage.
 
 ## 5. Screens
 
-Bottom tab bar, four tabs — **Calendar · Recipes · Fridge · Diary** — plus a floating "+" on
+Bottom tab bar, five tabs — **Calendar · Recipes · Fridge · Diary · Experiment** — plus a floating "+" on
 Calendar and Fridge for quick logging.
 
 | Screen              | Content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -251,6 +251,7 @@ Calendar and Fridge for quick logging.
 | **Recipe Builder**  | Name, colour, category, portion style, unit, base yield, ingredient list with search + reorder, a separate **Amount of each** section, live nutrition summary.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **Fridge**          | Discrete: `4 of 6 servings left`. Bulk: progress bar + `62% left · ≈1.9kg`. Actions: Log, Adjust, Discard remaining.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | **Diary**           | _Today_ — calories as a bar, the three macros as rings that fill toward their goal. _From Fridge_ — steppers for discrete, percent picker (of remaining) for bulk with live gram/kcal preview. _Quick Add_ — search, manual entry, favourites. Full nutrient panel below the day's content.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Experiment**      | Saved scratchpads (2026-10-08). Each: foods and recipes with amounts, a period, an **Average day** view and a **Day by day** view with drag and drop. Suggestions to come.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | **Settings**        | Nutrient targets editor, pinned-nutrient management, JSON export/import.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ---
@@ -421,10 +422,11 @@ _using_ it, and they override the phase text where they disagree:
 | 2026-10-07 | The calendar's day panel gained **+ Log food**, logging to the selected day rather than linking to the Diary      |
 | 2026-10-08 | **Sync built**: every device keeps a local copy and swaps changes with a Cloudflare D1 database (§10 "Storage")   |
 | 2026-10-08 | The D1 database is bound in `wrangler.toml`; sync goes live with the next push                                    |
+| 2026-10-08 | **Experiment tab**: scratchpads with an Average day view and a drag-and-drop Day by day view (§10)                |
 
 ---
 
-## 10. Next: the Experiment tab — PLANNED, NOT BUILT
+## 10. The Experiment tab — scratchpads BUILT 2026-10-08; suggestions not yet
 
 > Requested by the user 2026-10-07, with an explicit instruction: **do not build yet, and do not
 > make design decisions they did not specify.** Everything under "Decided by the user" is theirs.
@@ -468,6 +470,34 @@ Two features in one tab, working together:
 - **Everything a scratchpad needs to compute already exists**: recipe snapshots, per-100 g food
   data, `aggregate` with coverage, the segmented meters, `withDerivedTotals`, and weekly targets
   (daily × 7 unless set separately).
+
+### Scratchpads — BUILT 2026-10-08
+
+Route `/experiment` (list) and `/experiment/:id`; a fifth tab. Code: `domain/scratchpad.ts`
+(placing, moving, splitting, averaging — pure), `nutrition/scratchpad.ts` (what an item contains,
+default portions), `db/scratchpads.ts`, `features/experiment/`. Stored in a synced, backed-up
+`scratchpads` table (Dexie v6), one row per scratchpad with its items inside.
+
+The user's last answers (2026-10-08, multiple choice): **build scratchpads now, suggestions
+later**; **one drag places one portion, then −/+ to adjust**; **food not placed waits in a tray and
+counts toward no day.**
+
+How the rest was filled in — implementation choices, flagged so they can be changed:
+
+- A food comes in at one of its own portions (as the Quick Add picker does) and its amount is set
+  in the list. **Portions default** to one per unit for counted food (20 eggs → 20), the food's own
+  serving for weighed food (a gallon of milk → 16 cups), else 100 g pieces; a recipe to its
+  servings, or ~250 g pieces if bulk. "Split into" changes it.
+- Changing a food's amount re-splits it to the natural count; changing a recipe's batches scales
+  its servings. Placements beyond the new count come off the **last** days first.
+- Shortening the period sends food on dropped days **back to the tray** rather than deleting it.
+- Foods are snapshotted; recipes are live by reference (see CLAUDE.md for why).
+- Average view reuses the Diary's calorie bar, macro rings and full panel, all split by item.
+  Day view shows each day's calories and three thin macro bars; tapping a day shows its full
+  summary below.
+
+Verified 2026-10-08 in a real browser at 390 px and 1280 px: building a scratchpad through the UI,
+then mouse drags tray → day, day → day, day → tray, and −/+; the saved placements matched exactly.
 
 ### Decided by the user (2026-10-08): two views of one scratchpad
 

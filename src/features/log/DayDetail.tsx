@@ -59,7 +59,7 @@ export function DayDetail({ totals, targets, segmentsFor }: Props) {
       </div>
 
       <p className="screen__sub">
-        {known} nutrient{known === 1 ? '' : 's'} measured today.
+        {known} nutrient{known === 1 ? '' : 's'} with data.
       </p>
 
       {NUTRIENT_GROUP_ORDER.map((group) => {
