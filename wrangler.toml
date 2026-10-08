@@ -26,3 +26,12 @@ not_found_handling = "single-page-application"
 # fallback above would answer /api/* with index.html — the exact failure mode
 # the service worker's navigateFallbackDenylist guards against on the client.
 run_worker_first = ["/api/*"]
+
+# Sync database (PLAN.md §10 "Sync"). Bound as DB; worker/index.ts creates
+# its one table on first use, so there is no migration step to run. This
+# binding must stay HERE: `wrangler deploy` replaces the Worker's bindings with
+# this file's on every push, so one added only in the dashboard would vanish.
+[[d1_databases]]
+binding = "DB"
+database_name = "meal-prep"
+database_id = "8f47bc0b-07cd-4eb0-ac0d-cbb727cf4666"

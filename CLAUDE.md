@@ -70,9 +70,7 @@ Roughly in order, all in response to using the thing:
   day. It replaced an "Add something" link to the Diary, which could only ever log to today.
 - **Sync (2026-10-08)** — every device keeps its local copy and swaps changes with a Cloudflare D1
   database; later edit wins; the phone's and laptop's existing data merge. Status and "Sync now"
-  on the Plan screen. **Built and tested, but the D1 binding is not in `wrangler.toml` yet** —
-  waiting for the user to create the database and send its id. Until then the live app is
-  local-only exactly as before, queueing changes.
+  on the Plan screen. D1 binding added 2026-10-08; live from the push after that.
 
 ### Things a future session should not re-derive
 
@@ -169,20 +167,11 @@ Roughly in order, all in response to using the thing:
 
 ## Where to pick up
 
-**Half-finished on purpose: sync is built but not switched on.** Everything is committed and
-tested; the one missing piece is the `[[d1_databases]]` binding in `wrangler.toml`, which needs
-the database id. The user is creating the D1 database in the Cloudflare dashboard (their choice)
-and will send the id. Then add:
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "<the name they chose>"
-database_id = "<their id>"
-```
-
-and nothing else — the table creates itself on first use. Do NOT commit a placeholder id: a
-push deploys it, and an invalid binding fails the Cloudflare build.
+**Sync is switched on (2026-10-08).** The D1 database (`meal-prep`, id `8f47bc0b-…`) is bound as
+`DB` in `wrangler.toml`; `wrangler deploy --dry-run` lists it. It goes live with the user's next
+push. Then the user opens the laptop, then the phone, so both devices merge — their steps are in
+SETUP.md. If something goes wrong after that first merge, the user exported backups on both
+devices first (SETUP.md step 1).
 
 **Next feature: the Experiment tab — PLANNED, NOT BUILT** (PLAN.md §10). A fifth tab of saved
 scratchpads — a proposed week's shopping of recipes and foods, with combined nutrition, savable as
@@ -190,8 +179,8 @@ a shopping list — plus suggestions for what the diet is missing. The user said
 build it yet, and make no design decisions they did not specify.** Their answers are in §10's
 "Decided" sections: scratchpads are drag-and-drop drafts over their own run of days, separate from
 the Calendar. **Order of work, set by the user: move all existing data into a Cloudflare database
-FIRST, then the Experiment tab.** The first half is built (above); the Experiment tab is next once
-sync is live. Suggestions are still entirely unanswered.
+FIRST, then the Experiment tab.** The first half is done (above); the Experiment tab is next once
+the user confirms sync works on both devices. Suggestions are still entirely unanswered.
 
 **Open investigation: "everything gets wiped every time an update is pushed"** (reported
 2026-10-07). Nothing in production code deletes data. The only `db.delete()` is the builder's
@@ -210,7 +199,7 @@ and on which device. Do not "fix" anything until that is known.
 | Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
 | Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
 | Experiment tab design   | Scratchpads answered 2026-10-07 (PLAN.md §10). All Suggestions questions still open. Build nothing of it until the database move is done.                    |
-| Server storage          | Built 2026-10-08. Waiting on the D1 database id from the user — see the top of this section.                                                                 |
+| Server storage          | Built and bound 2026-10-08. Awaiting the user's confirmation that both devices merged correctly.                                                             |
 | Data wiped on update    | Asked 2026-10-07 which URL and device they use after a deploy. See the investigation note above.                                                             |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
@@ -277,8 +266,8 @@ because the config was Pages-shaped with no entry point.
   `run_worker_first = ["/api/*"]` stops that fallback swallowing API calls. This replaced
   `public/_redirects`, which wrangler had been rejecting as an infinite loop and never applying.
 - The dashboard's deploy command `npx wrangler deploy` is now the correct one.
-- **Sync's D1 database is bound as `DB`** in `wrangler.toml` (once the id arrives — see "Where to
-  pick up"). The binding must live in `wrangler.toml`, not only in the dashboard: `wrangler
+- **Sync's D1 database is bound as `DB`** in `wrangler.toml` — database `meal-prep`, id
+  `8f47bc0b-07cd-4eb0-ac0d-cbb727cf4666` (not a secret). The binding must live in `wrangler.toml`, not only in the dashboard: `wrangler
 deploy` replaces the Worker's bindings with the file's on every push.
 - `USDA_API_KEY` is a **Secret** in the Worker's Settings → Variables and Secrets. Workers apply
   secrets immediately — no rebuild — and `wrangler deploy` does not wipe them.

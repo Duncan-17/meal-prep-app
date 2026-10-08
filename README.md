@@ -61,8 +61,7 @@ nutrition before cooking anything, and get suggestions for what the diet is miss
 [PLAN.md §10](PLAN.md); not built yet.
 
 Each device keeps a full local copy and works offline; changes **sync through a Cloudflare D1
-database** so the phone and laptop see the same data (built 2026-10-08, switched on once the
-database is connected). There is no login yet. The JSON backup on the Plan screen is still the
+database** so the phone and laptop see the same data. There is no login yet. The JSON backup on the Plan screen is still the
 copy you keep yourself.
 
 Source: <https://github.com/Duncan-17/meal-prep-app> (private)

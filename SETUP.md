@@ -37,10 +37,6 @@ The next feature is planned but deliberately not started. Your answers so far ar
 and how — data should be saved somewhere other than this browser. Nothing gets built until you
 have answered them.
 
-### Sync: create the database and send its id
-
-Steps are under **Switching on sync** below.
-
 ### Which address you open after an update
 
 Your data lives in the browser, tied to the exact web address. If the app looks empty after an
@@ -102,17 +98,14 @@ Worker secret. USDA deactivates keys it finds published, so assume a leaked one 
 
 ## Switching on sync — your steps, in this order
 
-Sync is built. It goes live once the Cloudflare database exists and the app knows its id.
+Sync is built and the database is connected. What is left:
 
 1. **Export a backup on each device first** — phone and laptop: **Diary → Plan → Export a
    backup**. The first time each device opens the new version, it renumbers its records so the
    two devices' data can merge. That is tested, but a backup costs nothing.
-2. **Push** the current commits from GitHub Desktop. Safe on its own: with no database connected
-   the app behaves exactly as before, and the Plan screen says "Sync is not set up yet".
-3. **Create the database** in the Cloudflare dashboard: **Storage & Databases → D1 SQL Database →
-   Create**. Any name (e.g. `meal-prep`); leave the location on automatic.
-4. **Send me the Database ID** shown on its page. It is not a secret. I add it to the project and
-   commit; you push again.
+2. ✅ ~~Push the sync code~~ — done.
+3. ✅ ~~Create the database~~ — done (`meal-prep`), and its id is in the project.
+4. **Push again** from GitHub Desktop. This is the push that switches sync on.
 5. **Open the app on the laptop, then the phone.** Each uploads its data and downloads the other's.
    Anything you had entered on both will appear twice — delete the spare copies.
 

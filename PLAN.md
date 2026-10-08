@@ -420,6 +420,7 @@ _using_ it, and they override the phase text where they disagree:
 | 2026-10-06 | Tutorial text removed; the Diary's add button became **+ Log food** in the header                                 |
 | 2026-10-07 | The calendar's day panel gained **+ Log food**, logging to the selected day rather than linking to the Diary      |
 | 2026-10-08 | **Sync built**: every device keeps a local copy and swaps changes with a Cloudflare D1 database (§10 "Storage")   |
+| 2026-10-08 | The D1 database is bound in `wrangler.toml`; sync goes live with the next push                                    |
 
 ---
 
@@ -520,7 +521,7 @@ Second round (2026-10-07), via a multiple-choice prompt:
   both appears twice and needs tidying by hand — the user was told this when choosing.
 - **Creating the database: the user does it in the Cloudflare dashboard** and passes on its id.
 
-### Sync — BUILT 2026-10-08, waiting on the database id
+### Sync — BUILT AND BOUND 2026-10-08
 
 How it works (code: `src/domain/sync.ts` pure rules, `src/db/sync.ts` the engine,
 `worker/syncLogic.ts` server rules, `worker/index.ts` the D1 adapter):
