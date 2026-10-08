@@ -124,9 +124,21 @@ export function TrendsChart({ series, targets, keys }: Props) {
                     strokeWidth={2}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    // >= 8px markers with a surface ring, per the mark spec.
-                    dot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
-                    activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--surface)' }}
+                    // >= 8px markers with a surface ring, per the mark spec — FILLED
+                    // in the series colour. Recharts fills dots white by default, which
+                    // left every point blank until hovered (user, 2026-10-08).
+                    dot={{
+                      r: 4,
+                      strokeWidth: 2,
+                      stroke: 'var(--surface)',
+                      fill: seriesColor(index, dark),
+                    }}
+                    activeDot={{
+                      r: 5,
+                      strokeWidth: 2,
+                      stroke: 'var(--surface)',
+                      fill: seriesColor(index, dark),
+                    }}
                     connectNulls={false}
                     isAnimationActive={false}
                   />

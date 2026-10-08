@@ -108,6 +108,41 @@ export function withDays(pad: Scratchpad, days: number): Scratchpad {
   };
 }
 
+// ── Colours ─────────────────────────────────────────────────────────────────
+
+/**
+ * The colour each item is drawn in.
+ *
+ * Recipes use their CURRENT colour from the Recipes tab — recipes are live by
+ * reference, and the user picked that colour. Foods have no colour of their
+ * own; the one they were given from their name can collide (a real one did:
+ * a recipe and a yoghurt drink both came out orchid, 2026-10-08), so a food
+ * whose colour is already taken in this scratchpad gets the first free
+ * swatch instead. Pure and deterministic, so the same scratchpad always draws
+ * the same way.
+ */
+export function distinctColors(
+  items: readonly ScratchpadItem[],
+  recipeColor: (componentId: number) => string | undefined,
+  palette: readonly string[],
+): ScratchpadItem[] {
+  const recolored = items.map((item) =>
+    item.kind === 'recipe' ? { ...item, color: recipeColor(item.componentId) ?? item.color } : item,
+  );
+  const used = new Set(
+    recolored.filter((item) => item.kind === 'recipe').map((item) => item.color.toLowerCase()),
+  );
+  return recolored.map((item) => {
+    if (item.kind === 'recipe') return item;
+    let color = item.color;
+    if (used.has(color.toLowerCase())) {
+      color = palette.find((swatch) => !used.has(swatch.toLowerCase())) ?? color;
+    }
+    used.add(color.toLowerCase());
+    return color === item.color ? item : { ...item, color };
+  });
+}
+
 // ── Nutrition ───────────────────────────────────────────────────────────────
 
 /** An item with the nutrition of its WHOLE amount, worked out by the caller. */

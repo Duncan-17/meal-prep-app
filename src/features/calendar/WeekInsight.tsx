@@ -62,6 +62,9 @@ export default function WeekInsight({ weekStart }: { weekStart: DayKey }) {
             : `${logged} of 7 days logged. Totals below are against your weekly goals.`}
         </p>
 
+        {/* The day-by-day chart first, then the week's totals (user, 2026-10-08). */}
+        <TrendsChart series={series} targets={byKey} keys={pinned} />
+
         {logged > 0 &&
           pinned
             .filter((key) => key in totals.nutrients)
@@ -81,11 +84,6 @@ export default function WeekInsight({ weekStart }: { weekStart: DayKey }) {
                 />
               );
             })}
-      </section>
-
-      <section className="section">
-        <h2 className="section__title">Daily trend</h2>
-        <TrendsChart series={series} targets={byKey} keys={pinned} />
       </section>
 
       <section className="section">

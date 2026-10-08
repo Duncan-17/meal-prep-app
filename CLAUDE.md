@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **541 tests** across 28 files.
+`tsc -b` clean across three projects, ESLint clean, **545 tests** across 28 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -192,6 +192,14 @@ Roughly in order, all in response to using the thing:
     finicky at 180 ms with small chips — tray chips are now 40 px tall. Do not shrink them.
   - Item rows are collapsed to one line by default (user's request); controls one tap down,
     nutrient table one more. The whole day card selects a day.
+  - **Colours:** recipes draw in their CURRENT Recipes-tab colour; a food never shares a colour
+    with another item in the same scratchpad (`distinctColors`). A real clash prompted this — a
+    recipe and a yoghurt drink both came out orchid from `swatchForName`.
+- **No link-style buttons anywhere** (user, 2026-10-08). `.linkbtn` is now drawn as a secondary
+  button, and `<summary>` toggles likewise; never style an action as underlined accent text.
+- **Chart points are filled in their series colour.** Recharts fills dots white by default, which
+  left the Trends and Weight charts blank until hovered. The Trends chart sits directly under the
+  "This week" blurb, above the weekly bars.
 - **The search cache is versioned** (`SEARCH_CACHE_VERSION` in `db/foods.ts`). Bump it whenever a
   search starts returning something old cached entries lack, or the old page replays for a week.
 
@@ -257,6 +265,14 @@ so far came from them using it and saying what was wrong.
 - **Do not run `npm run build` while `npm run dev:api` is running.** Wrangler watches
   `dist/` and Windows file locks deadlock `vite build` — it hangs rather than failing. Stop
   wrangler first. (Hit during Phase 2; cost ten minutes of confusion.)
+- **Stopping local servers on Windows needs the whole process tree.** Killing whatever holds
+  port 8788 is not enough: wrangler's parent `node` process restarts `workerd` at once, and
+  neither `taskkill` from Git Bash nor the agent's task-stop reliably reaches the tree. On
+  2026-10-08 seven stale `wrangler dev` copies had piled up on :8788 and hung every request. What
+  works, in PowerShell:
+  `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | ? { $_.CommandLine -like '*meal-prep-app*wrangler*dev*' -or $_.CommandLine -like '*meal-prep-app*vite*' } | % { Stop-Process -Id $_.ProcessId -Force }`
+  then `Get-Process workerd | Stop-Process -Force`. Check with
+  `Get-NetTCPConnection -State Listen -LocalPort 8788,5173`.
 - **Do not move this project back under `C:\Users\dncan\OneDrive\`.** It was moved out
   deliberately: the user's Desktop is redirected into OneDrive, and syncing `node_modules`
   file-by-file caused the move. A Desktop shortcut points here.

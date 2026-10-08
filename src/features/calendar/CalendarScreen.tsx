@@ -127,7 +127,7 @@ export function CalendarScreen() {
       {!isSameMonth(month, todayKey()) && (
         <button
           type="button"
-          className="linkbtn"
+          className="linkbtn monthback"
           onClick={() => setMonth(startOfMonth(todayKey()))}
         >
           Back to this month

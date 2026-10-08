@@ -12,7 +12,7 @@ import { FoodSearch } from '@/features/foods/FoodSearch';
 import { fetchFoodDetail } from '@/features/foods/api';
 import { listComponents } from '@/db/components';
 import { newItemUid } from '@/db/scratchpads';
-import { swatchForName } from '@/domain/color';
+import { suggestUnusedSwatch, swatchForName } from '@/domain/color';
 import { newFoodItem, newRecipeItem } from '@/nutrition/scratchpad';
 import { formatAmount } from '@/nutrition/registry';
 import type { AdaptedFood, ScratchpadItem } from '@/domain/types';
@@ -23,9 +23,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onAdd: (item: ScratchpadItem) => void;
+  /** Colours already in the scratchpad, so a new food does not repeat one. */
+  usedColors: readonly string[];
 }
 
-export function AddItemSheet({ open, onClose, onAdd }: Props) {
+export function AddItemSheet({ open, onClose, onAdd, usedColors }: Props) {
   const [tab, setTab] = useState<Tab>('foods');
   const [loading, setLoading] = useState(false);
   const recipes = useLiveQuery(() => listComponents(), []);
@@ -35,7 +37,9 @@ export function AddItemSheet({ open, onClose, onAdd }: Props) {
     try {
       // Detail carries the serving sizes search lacks — see features/foods/api.
       const { food } = await fetchFoodDetail(picked);
-      onAdd(newFoodItem(food, newItemUid(), swatchForName(food.name)));
+      const named = swatchForName(food.name);
+      const color = usedColors.includes(named) ? suggestUnusedSwatch(usedColors) : named;
+      onAdd(newFoodItem(food, newItemUid(), color));
       onClose();
     } finally {
       setLoading(false);

@@ -5,6 +5,7 @@ import {
   averageDay,
   contributors,
   dayTotal,
+  distinctColors,
   moveOne,
   placeOne,
   placedOn,
@@ -122,5 +123,44 @@ describe('nutrition views', () => {
       nutrients: { energy_kcal: 140 },
     });
     expect(contributors([eggsCosted(item)], 7)[0]?.nutrients.energy_kcal).toBeCloseTo(200);
+  });
+});
+
+describe('distinctColors', () => {
+  const palette = ['#c0392b', '#e8912e', '#ad55cc', '#4184cc'];
+  const recipe = {
+    kind: 'recipe' as const,
+    uid: 'r',
+    componentId: 7,
+    label: 'pasta',
+    color: '#000000',
+    batches: 1,
+    portions: 6,
+    placed: {},
+  };
+
+  it('draws a recipe in its CURRENT colour from the Recipes tab', () => {
+    const [shown] = distinctColors([recipe], () => '#ad55cc', palette);
+    expect(shown?.color).toBe('#ad55cc');
+  });
+
+  it('moves a food off a colour a recipe already uses — the real orchid clash', () => {
+    const drink = { ...eggs, uid: 'd', label: 'Oikos yogurt drink', color: '#ad55cc' };
+    const [, food] = distinctColors([recipe, drink], () => '#ad55cc', palette);
+    expect(food?.color).toBe('#c0392b');
+  });
+
+  it('keeps two foods apart too, and leaves non-clashing colours alone', () => {
+    const a = { ...eggs, uid: 'a', color: '#4184cc' };
+    const b = { ...eggs, uid: 'b', color: '#4184cc' };
+    const c = { ...eggs, uid: 'c', color: '#e8912e' };
+    const shown = distinctColors([a, b, c], () => undefined, palette);
+    expect(shown.map((item) => item.color)).toEqual(['#4184cc', '#c0392b', '#e8912e']);
+    expect(shown[0]).toBe(a);
+  });
+
+  it('falls back to the stored colour when a recipe has been deleted', () => {
+    const [shown] = distinctColors([{ ...recipe, color: '#4184cc' }], () => undefined, palette);
+    expect(shown?.color).toBe('#4184cc');
   });
 });

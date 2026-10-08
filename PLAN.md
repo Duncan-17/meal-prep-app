@@ -423,6 +423,7 @@ _using_ it, and they override the phase text where they disagree:
 | 2026-10-08 | **Sync built**: every device keeps a local copy and swaps changes with a Cloudflare D1 database (§10 "Storage")   |
 | 2026-10-08 | The D1 database is bound in `wrangler.toml`; sync goes live with the next push                                    |
 | 2026-10-08 | **Experiment tab**: scratchpads with an Average day view and a drag-and-drop Day by day view (§10)                |
+| 2026-10-08 | Every link-style action restyled as a button; chart points filled in colour; Trends chart above the weekly bars   |
 
 ---
 

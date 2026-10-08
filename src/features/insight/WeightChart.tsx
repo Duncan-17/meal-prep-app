@@ -98,8 +98,14 @@ export function WeightChart({ entries, unit, goalKg }: Props) {
               stroke={seriesColor(0, dark)}
               strokeWidth={2}
               strokeLinecap="round"
-              dot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
-              activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--surface)' }}
+              // Filled — Recharts' default white fill hid every point until hovered.
+              dot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)', fill: seriesColor(0, dark) }}
+              activeDot={{
+                r: 5,
+                strokeWidth: 2,
+                stroke: 'var(--surface)',
+                fill: seriesColor(0, dark),
+              }}
               isAnimationActive={false}
             />
           </LineChart>

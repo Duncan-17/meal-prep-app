@@ -28,7 +28,14 @@ import { db } from '@/db/schema';
 import { deleteScratchpad, getScratchpad, saveScratchpad } from '@/db/scratchpads';
 import { listTargets } from '@/db/plan';
 import { contributionsFor } from '@/domain/contributions';
-import { averageDay, contributors, withDays, type CostedItem } from '@/domain/scratchpad';
+import {
+  averageDay,
+  contributors,
+  distinctColors,
+  withDays,
+  type CostedItem,
+} from '@/domain/scratchpad';
+import { SUGGESTED_SWATCHES } from '@/domain/color';
 import { itemTotal } from '@/nutrition/scratchpad';
 import { DERIVED_TOTALS } from '@/nutrition/registry';
 import { targetsByKey } from '@/nutrition/targets';
@@ -66,7 +73,23 @@ export function ScratchpadScreen() {
     }
   }, [stored, draft]);
 
-  const pad = draft ?? stored;
+  const saved = draft ?? stored;
+  // Drawn with live recipe colours and no two items sharing one. Edits save
+  // this version, so a clash, once shown fixed, is fixed in the data too.
+  const pad = useMemo(
+    () =>
+      saved === undefined || components === undefined
+        ? saved
+        : {
+            ...saved,
+            items: distinctColors(
+              saved.items,
+              (id) => components.get(id)?.color,
+              SUGGESTED_SWATCHES,
+            ),
+          },
+    [saved, components],
+  );
 
   const costed: CostedItem[] = useMemo(
     () =>
@@ -83,7 +106,9 @@ export function ScratchpadScreen() {
     return (
       <div className="screen">
         <p className="screen__sub">That scratchpad no longer exists.</p>
-        <Link to="/experiment">Back to Experiment</Link>
+        <Link className="btn" to="/experiment">
+          Back to Experiment
+        </Link>
       </div>
     );
   }
@@ -243,6 +268,7 @@ export function ScratchpadScreen() {
         open={adding}
         onClose={() => setAdding(false)}
         onAdd={(item) => change({ ...pad, items: [...pad.items, item] })}
+        usedColors={pad.items.map((item) => item.color)}
       />
     </div>
   );
