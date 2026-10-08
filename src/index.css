@@ -872,6 +872,36 @@ body {
   margin-top: 3px;
 }
 
+/* ── Sync details (diagnostics on the Plan screen) ─────────────────── */
+
+.syncdetails {
+  margin-top: 14px;
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+
+.syncdetails summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.syncdetails__list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 10px 0;
+}
+
+.syncdetails__list dt {
+  font-weight: 600;
+}
+
+.syncdetails__list dd {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
 /* ── Nutrition summary ─────────────────────────────────────────────── */
 
 .summary {

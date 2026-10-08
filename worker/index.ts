@@ -35,6 +35,7 @@ import {
   pull,
   type IncomingRecord,
   type StoredRecord,
+  type SyncStats,
   type SyncStore,
 } from './syncLogic';
 
@@ -132,7 +133,7 @@ export default {
 
 async function handleSync(request: Request, url: URL, env: Env): Promise<Response> {
   if (env.DB === undefined) {
-    return json(
+    return syncJson(
       {
         error: 'Sync is not configured.',
         detail: 'No D1 database is bound as DB in wrangler.toml, so data stays on each device.',
@@ -144,21 +145,25 @@ async function handleSync(request: Request, url: URL, env: Env): Promise<Respons
   const store = await d1Store(env.DB);
 
   try {
+    if (request.method === 'GET' && url.searchParams.has('stats')) {
+      return syncJson(await store.stats());
+    }
+
     if (request.method === 'GET') {
       const since = Number.parseInt(url.searchParams.get('since') ?? '0', 10);
-      return json(await pull(store, Number.isFinite(since) && since > 0 ? since : 0));
+      return syncJson(await pull(store, Number.isFinite(since) && since > 0 ? since : 0));
     }
 
     if (request.method === 'POST') {
       const changes = parsePush(await request.json().catch(() => null));
       const written = await store.upsertNewer(changes);
-      return json({ received: changes.length, written });
+      return syncJson({ received: changes.length, written });
     }
 
-    return json({ error: 'Sync takes GET or POST.' }, 405);
+    return syncJson({ error: 'Sync takes GET or POST.' }, 405);
   } catch (error) {
-    if (error instanceof SyncRequestError) return json({ error: error.message }, 400);
-    return json({ error: 'Sync failed.', detail: String(error).slice(0, 300) }, 500);
+    if (error instanceof SyncRequestError) return syncJson({ error: error.message }, 400);
+    return syncJson({ error: 'Sync failed.', detail: String(error).slice(0, 300) }, 500);
   }
 }
 
@@ -236,6 +241,15 @@ async function d1Store(db: D1Database): Promise<SyncStore> {
         for (const result of results) written += result.meta.changes ?? 0;
       }
       return written;
+    },
+
+    async stats(): Promise<SyncStats> {
+      const row = await db
+        .prepare(
+          'SELECT COUNT(*) AS records, COALESCE(SUM(deleted), 0) AS deleted, COALESCE(MAX(rev), 0) AS latestRev FROM records',
+        )
+        .first<SyncStats>();
+      return row ?? { records: 0, deleted: 0, latestRev: 0 };
     },
 
     async changesSince(since: number, limit: number): Promise<StoredRecord[]> {
@@ -520,9 +534,22 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function json(body: unknown, status = 200): Response {
+function json(body: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
+    headers: { 'content-type': 'application/json; charset=utf-8', ...extraHeaders },
   });
+}
+
+/**
+ * Every sync reply is marked never-cache. A pull URL repeats exactly
+ * (`?since=0` until something arrives), and a browser that kept the first,
+ * empty answer would report "synced" forever while never seeing new data.
+ * Suspected on mobile Safari 2026-10-08 — the phone could load the data by
+ * visiting the URL directly, yet the app on it never received any.
+ */
+const NO_STORE = { 'cache-control': 'no-store' };
+
+function syncJson(body: unknown, status = 200): Response {
+  return json(body, status, NO_STORE);
 }

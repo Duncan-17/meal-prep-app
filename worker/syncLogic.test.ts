@@ -73,4 +73,10 @@ describe('the store rules', () => {
     expect(second.records).toHaveLength(3);
     expect(second.more).toBe(false);
   });
+
+  it('reports what it holds, for the Sync details panel', async () => {
+    const store = new MemorySyncStore();
+    await store.upsertNewer([change({ id: 'a' }), change({ id: 'b', deleted: true, data: null })]);
+    expect(await store.stats()).toEqual({ records: 2, deleted: 1, latestRev: 2 });
+  });
 });

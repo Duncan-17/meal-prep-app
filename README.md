@@ -4,7 +4,7 @@ A personal-use PWA for meal planning. Build reusable **recipes**, schedule batch
 calendar, track what you cooked as **fridge** stock, and log what you eat against an editable
 plan — with the full USDA nutrient panel behind it, not just calories.
 
-> **Status: live and in use.** All eight build phases complete, **521 tests** passing, deployed to
+> **Status: live and in use.** All eight build phases complete, **522 tests** passing, deployed to
 > Cloudflare as a Worker and installable on a phone. Now being refined against real use.
 
 - **[CLAUDE.md](CLAUDE.md)** — current status, conventions, and where to pick up. Start here.

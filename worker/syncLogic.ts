@@ -34,7 +34,16 @@ export interface IncomingRecord {
   deleted: boolean;
 }
 
+/** A summary for the "Sync details" panel — what the database holds. */
+export interface SyncStats {
+  records: number;
+  deleted: number;
+  /** Highest rev written. A device whose cursor is past this is confused. */
+  latestRev: number;
+}
+
 export interface SyncStore {
+  stats(): Promise<SyncStats>;
   /** Write each record if strictly newer than what is stored; return how many were written. */
   upsertNewer(records: readonly IncomingRecord[]): Promise<number>;
   /** Records with rev > `since`, oldest first, at most `limit`. */
@@ -140,6 +149,15 @@ export class MemorySyncStore implements SyncStore {
       written += 1;
     }
     return written;
+  }
+
+  async stats(): Promise<SyncStats> {
+    const rows = [...this.rows.values()];
+    return {
+      records: rows.length,
+      deleted: rows.filter((row) => row.deleted).length,
+      latestRev: this.rev,
+    };
   }
 
   async changesSince(since: number, limit: number): Promise<StoredRecord[]> {

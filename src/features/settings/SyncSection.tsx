@@ -6,9 +6,19 @@
  * on the device and go up when there is a connection.
  */
 
-import { useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 
-import { getSyncStatus, subscribeSyncStatus, syncNow, type SyncStatus } from '@/db/sync';
+import { db } from '@/db/schema';
+import {
+  fetchServerStats,
+  getSyncStatus,
+  redownloadEverything,
+  subscribeSyncStatus,
+  syncNow,
+  type ServerStats,
+  type SyncStatus,
+} from '@/db/sync';
 
 export function SyncSection() {
   const status = useSyncExternalStore(subscribeSyncStatus, getSyncStatus);
@@ -34,7 +44,84 @@ export function SyncSection() {
       >
         {status.state === 'syncing' ? 'Syncing…' : 'Sync now'}
       </button>
+
+      <SyncDetails busy={status.state === 'syncing'} />
     </section>
+  );
+}
+
+/**
+ * What this device holds and how far it has downloaded, beside what the
+ * database holds. Added 2026-10-08 when a phone said "synced" yet had none of
+ * the laptop's data: comparing these numbers says which side is wrong, and
+ * "Re-download everything" repairs the device side.
+ */
+function SyncDetails({ busy }: { busy: boolean }) {
+  const local = useLiveQuery(async () => {
+    const [recipes, foods, fridge, meals, meta, pending] = await Promise.all([
+      db.components.count(),
+      db.ingredients.where('source').equals('manual').count(),
+      db.fridgeEntries.filter((entry) => entry.remaining > 0).count(),
+      db.mealLogs.count(),
+      db.syncMeta.get('sync'),
+      db.syncOutbox.count(),
+    ]);
+    return { recipes, foods, fridge, meals, cursor: meta?.cursor ?? 0, pending };
+  }, []);
+  const [server, setServer] = useState<ServerStats | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  async function checkServer() {
+    setServerError(null);
+    try {
+      setServer(await fetchServerStats());
+    } catch (caught) {
+      setServerError(caught instanceof Error ? caught.message : String(caught));
+    }
+  }
+
+  return (
+    <details
+      className="syncdetails"
+      onToggle={(event) => event.currentTarget.open && void checkServer()}
+    >
+      <summary>Sync details</summary>
+      <dl className="syncdetails__list">
+        <dt>This address</dt>
+        <dd>{window.location.host}</dd>
+        <dt>On this device</dt>
+        <dd>
+          {local === undefined
+            ? '…'
+            : `${local.recipes} recipes · ${local.foods} foods · ${local.fridge} in the fridge · ${local.meals} meals`}
+        </dd>
+        <dt>Downloaded up to</dt>
+        <dd>{local === undefined ? '…' : `change #${local.cursor}`}</dd>
+        <dt>Waiting to upload</dt>
+        <dd>{local === undefined ? '…' : local.pending}</dd>
+        <dt>In the database</dt>
+        <dd>
+          {serverError !== null
+            ? serverError
+            : server === null
+              ? '…'
+              : `${server.records - server.deleted} records · latest change #${server.latestRev}`}
+        </dd>
+      </dl>
+      <div className="builder__actions">
+        <button type="button" className="btn" onClick={() => void checkServer()}>
+          Check again
+        </button>
+        <button
+          type="button"
+          className="btn"
+          disabled={busy}
+          onClick={() => void redownloadEverything().then(checkServer)}
+        >
+          Re-download everything
+        </button>
+      </div>
+    </details>
   );
 }
 

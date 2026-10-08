@@ -83,7 +83,8 @@ export const httpTransport: SyncTransport = {
 async function request(url: string, init?: RequestInit): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(url, init);
+    // Never answered from a cache: see NO_STORE in worker/index.ts.
+    response = await fetch(url, { ...init, cache: 'no-store' });
   } catch {
     throw new SyncOfflineError();
   }
@@ -94,6 +95,17 @@ async function request(url: string, init?: RequestInit): Promise<unknown> {
     throw new Error(typeof message === 'string' ? message : `Sync failed (${response.status}).`);
   }
   return body;
+}
+
+/** What the database holds — for the "Sync details" panel. */
+export interface ServerStats {
+  records: number;
+  deleted: number;
+  latestRev: number;
+}
+
+export async function fetchServerStats(): Promise<ServerStats> {
+  return (await request('/api/sync?stats=1')) as ServerStats;
 }
 
 // ── Engine ──────────────────────────────────────────────────────────────────
@@ -327,6 +339,26 @@ const UNCONFIGURED_EVERY_MS = 5 * 60_000;
 const EDIT_DEBOUNCE_MS = 1_200;
 
 let engine: SyncEngine | null = null;
+
+/**
+ * Forget how far this device has downloaded, and fetch everything again.
+ *
+ * Safe: a download never overwrites a newer un-uploaded local edit, and
+ * re-applying a row this device already has changes nothing. The repair for
+ * a device that says "synced" yet is missing what the database holds.
+ */
+export async function redownloadEverything(): Promise<void> {
+  await appDb.transaction('rw', appDb.syncMeta, async () => {
+    const meta = await appDb.syncMeta.get('sync');
+    await appDb.syncMeta.put({
+      id: 'sync',
+      firstPassDone: meta?.firstPassDone ?? false,
+      cursor: 0,
+      ...(meta?.lastSyncedAt === undefined ? {} : { lastSyncedAt: meta.lastSyncedAt }),
+    });
+  });
+  await syncNow();
+}
 
 /** Run a full cycle now — the "Sync now" button, and every trigger below. */
 export async function syncNow(): Promise<void> {

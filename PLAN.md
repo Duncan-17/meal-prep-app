@@ -547,6 +547,12 @@ How it works (code: `src/domain/sync.ts` pure rules, `src/db/sync.ts` the engine
 - **No database bound = local-only, as before.** `/api/sync` answers 503, the Plan screen says
   "Sync is not set up yet", and changes queue in the outbox until it is.
 
+**First live run, 2026-10-08.** The laptop uploaded correctly (48 records, read back from the live
+database), but the phone reported "Synced" with none of it, even though it could load the data by
+opening the sync URL directly. Most likely a cached empty pull reply: a pull URL repeats exactly
+until there is something new. Fixed by marking every sync reply never-cache on both ends, plus a
+"Sync details" panel (counts on each side, download position) and "Re-download everything".
+
 Verified 2026-10-08 against the real Worker with a local D1, two browser sessions as two devices:
 12 meals and 4 batches with old-style ids renumbered and uploaded from one; the other, starting
 empty, received them all; a goal edited on the second reached the first.

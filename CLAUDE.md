@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **521 tests** across 26 files.
+`tsc -b` clean across three projects, ESLint clean, **522 tests** across 26 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -131,6 +131,16 @@ Roughly in order, all in response to using the thing:
     read and overwrite the data. Revisit when it goes multi-user, as the user plans.
   - The sync bookkeeping tables (`syncShadow`, `syncOutbox`, `syncMeta`) are per-device and are
     deliberately NOT in `TABLE_NAMES`: never backed up, never synced.
+  - **Every sync reply is `Cache-Control: no-store`, and the client fetches with
+    `cache: 'no-store'`.** First live run (2026-10-08): the laptop uploaded fine, but the phone
+    said "Synced" while having none of it — though opening `/api/sync?since=0` directly in the
+    phone's browser showed the data. A pull URL repeats exactly (`?since=40` every 30 s until
+    something new arrives), so a browser that kept the first empty reply never sees anything
+    again. Do not remove either half.
+  - **Plan → Sync → "Sync details"** shows this device's address, local counts, download cursor and
+    the database's own count (`/api/sync?stats=1`). "Re-download everything" resets the cursor to
+    0 — safe, since a download never overwrites a newer local edit. Ask the user to read it out
+    before guessing at a sync problem.
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
   render a neutral dot on purpose; rewriting them would be rewriting history.
 - **Omega totals are DERIVED at read time, never stored.** `derivedFrom` in the registry,
