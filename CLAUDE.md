@@ -177,11 +177,11 @@ Roughly in order, all in response to using the thing:
 
 ## Where to pick up
 
-**Sync is switched on (2026-10-08).** The D1 database (`meal-prep`, id `8f47bc0b-…`) is bound as
-`DB` in `wrangler.toml`; `wrangler deploy --dry-run` lists it. It goes live with the user's next
-push. Then the user opens the laptop, then the phone, so both devices merge — their steps are in
-SETUP.md. If something goes wrong after that first merge, the user exported backups on both
-devices first (SETUP.md step 1).
+**Sync is live and confirmed working (2026-10-08).** The user tested adding and removing things on
+one device and saw them on the other, including after closing and reopening. The D1 database is
+`meal-prep` (id `8f47bc0b-…`), bound as `DB` in `wrangler.toml`. The live address is
+`https://meal-prep-app.dncanzano.workers.dev` — `/api/sync?stats=1` there is a read-only check of
+what the database holds.
 
 **Next feature: the Experiment tab — PLANNED, NOT BUILT** (PLAN.md §10). A fifth tab of saved
 scratchpads — a proposed week's shopping of recipes and foods, with combined nutrition, savable as
@@ -192,14 +192,10 @@ the Calendar. **Order of work, set by the user: move all existing data into a Cl
 FIRST, then the Experiment tab.** The first half is done (above); the Experiment tab is next once
 the user confirms sync works on both devices. Suggestions are still entirely unanswered.
 
-**Open investigation: "everything gets wiped every time an update is pushed"** (reported
-2026-10-07). Nothing in production code deletes data. The only `db.delete()` is the builder's
-"Reset local database" button, behind `import.meta.env.DEV`, so it never ships. IndexedDB belongs
-to an ORIGIN (scheme + host + port), so the likeliest cause is opening a different address after
-each deploy — e.g. a per-version preview URL from GitHub or the Cloudflare dashboard, rather than
-the one stable `workers.dev` address. Other candidates: Safari and a home-screen icon keeping
-separate storage on iOS, or private browsing. Unconfirmed until the user says which URL they open
-and on which device. Do not "fix" anything until that is known.
+**Closed: "everything gets wiped every time an update is pushed"** (reported 2026-10-07). Never
+pinned to a cause — no production code deletes data, so it was most likely a change of address
+(each address has its own browser storage). Superseded by sync: data now lives in D1 too, so a
+device that starts empty downloads everything. Reopen only if it recurs with sync on.
 
 **Open questions the user has not answered:**
 
@@ -209,8 +205,6 @@ and on which device. Do not "fix" anything until that is known.
 | Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
 | Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
 | Experiment tab design   | Scratchpads answered 2026-10-07 (PLAN.md §10). All Suggestions questions still open. Build nothing of it until the database move is done.                    |
-| Server storage          | Built and bound 2026-10-08. Awaiting the user's confirmation that both devices merged correctly.                                                             |
-| Data wiped on update    | Asked 2026-10-07 which URL and device they use after a deploy. See the investigation note above.                                                             |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 

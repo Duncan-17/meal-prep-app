@@ -37,13 +37,6 @@ The next feature is planned but deliberately not started. Your answers so far ar
 and how — data should be saved somewhere other than this browser. Nothing gets built until you
 have answered them.
 
-### Which address you open after an update
-
-Your data lives in the browser, tied to the exact web address. If the app looks empty after an
-update, the likeliest reason is a _different_ address — a one-off preview link from GitHub or
-Cloudflare, rather than your usual bookmark. Tell me which link you open, and on which device, and
-it can be pinned down.
-
 ### Omega-3 and omega-6 goals
 
 Both were added with starting goals — **1.6 g omega-3** and **about 17 g omega-6**, the IOM
@@ -96,7 +89,9 @@ Worker secret. USDA deactivates keys it finds published, so assume a leaked one 
 
 ---
 
-## Switching on sync — your steps, in this order
+## Sync — ✅ live and confirmed (2026-10-08)
+
+The steps you followed to switch it on, kept for the record:
 
 Sync is built and the database is connected. What is left:
 

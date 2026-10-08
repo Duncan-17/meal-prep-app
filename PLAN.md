@@ -521,7 +521,7 @@ Second round (2026-10-07), via a multiple-choice prompt:
   both appears twice and needs tidying by hand — the user was told this when choosing.
 - **Creating the database: the user does it in the Cloudflare dashboard** and passes on its id.
 
-### Sync — BUILT AND BOUND 2026-10-08
+### Sync — LIVE, confirmed by the user 2026-10-08
 
 How it works (code: `src/domain/sync.ts` pure rules, `src/db/sync.ts` the engine,
 `worker/syncLogic.ts` server rules, `worker/index.ts` the D1 adapter):
