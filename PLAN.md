@@ -1,5 +1,7 @@
 # Meal Prep App — Design & Build Plan
 
+> **About this document:** this is the working design log I kept with Claude Code while building the app. Where it says "the user," that's me (Duncan) and the decisions I made.
+
 > Working reference for the build. Derived from the Functionality & Design Spec (Draft v1).
 > Status: **All eight phases complete and deployed (2026-09-17). In feedback-and-refinement.**
 

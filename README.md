@@ -1,15 +1,18 @@
 # Meal Prep
 
-A personal-use PWA for meal planning. Build reusable **recipes**, schedule batch-cooking on a
-calendar, track what you cooked as **fridge** stock, and log what you eat against an editable
-plan — with the full USDA nutrient panel behind it, not just calories.
+A meal-planning web app I designed for my own batch cooking. You build recipes from USDA food data, schedule cooks on a calendar, track leftovers as fridge stock, and log what you eat against a full nutrient plan, not just calories.
 
-> **Status: live and in use.** All eight build phases complete, **545 tests** passing, deployed to
-> Cloudflare as a Worker and installable on a phone. Now being refined against real use.
+**Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare. 545 automated tests passing.
 
-- **[CLAUDE.md](CLAUDE.md)** — current status, conventions, and where to pick up. Start here.
-- **[PLAN.md](PLAN.md)** — architecture, data model, the decisions and why
-- **[SETUP.md](SETUP.md)** — accounts and keys, and the two things still waiting on the user
+<p align="center">
+  <img src="docs/screenshots/diary.png" width="260" alt="Diary screen with calorie bar and macro rings">
+  <img src="docs/screenshots/calendar.png" width="260" alt="Calendar with planned cooks and meals eaten">
+  <img src="docs/screenshots/trends.png" width="260" alt="Trends view with daily macros and weekly totals">
+</p>
+
+## Why I built it
+
+I meal prep in batches, and the apps I tried treated every meal as a one-off entry. None of them handled "I cooked six servings on Sunday and I'm eating them through Thursday," and most only tracked calories and macros. I wanted one place to plan a cook, see what's left in the fridge, and see whether I'm actually hitting my micronutrient targets over a week.
 
 ## What it does
 
@@ -29,9 +32,25 @@ plan — with the full USDA nutrient panel behind it, not just calories.
 7. **Experiment** — draft a week (or any period) of food you might buy and cook in a scratchpad.
    See the average day, or drag the food onto particular days and see each one.
 
-Two properties it holds onto throughout: **missing data is never zero** (every total carries a
-coverage figure saying how much of it was actually measured), and **history is never rewritten**
-(editing a recipe does not change what you already ate).
+
+## How I built it
+
+I wrote the product spec and made the design and data decisions; I built it with **Claude Code as my pair programmer**, which wrote most of the implementation while I directed the work, reviewed it, and tested every feature against real daily use. The design log I kept during the build is in [PLAN.md](PLAN.md).
+
+Decisions I'm most proud of:
+
+- **Missing data is never treated as zero.** USDA entries are often incomplete, so every total carries a coverage figure saying how much of it was actually measured, instead of quietly under-counting.
+- **History is never rewritten.** Logged meals store a snapshot, so editing a recipe later doesn't change what I already ate.
+- **One math path for counts and weights.** "2 servings" and "40% of the pot" go through the same calculation, which removed a whole class of bugs.
+- **Local-first, then sync.** Every device keeps a full offline copy (IndexedDB) and syncs through a Cloudflare D1 database, so it works in a grocery store with no signal.
+- **The API key never reaches the browser.** USDA lookups go through a Cloudflare Worker proxy that holds the key as a secret.
+
+What I learned: how to scope a real project into phases, how to write specs precise enough that an AI tool builds the right thing, and how to verify AI-written code with tests and real use rather than trusting it.
+
+## Roadmap
+
+- **User login and authenticated sync**, so the app can safely be shared (next up)
+- Suggestions in the Experiment tab: what to eat for what the week is missing
 
 ## Running it
 
@@ -58,11 +77,8 @@ Food search needs both; everything else works with just `npm run dev`.
 React 19 · TypeScript · Vite 7 · Dexie (IndexedDB) · React Router · Recharts · Workbox ·
 Cloudflare Worker with static assets
 
-**Next:** suggestions in the Experiment tab — what to eat for what the diet is missing. Planned in
-[PLAN.md §10](PLAN.md); waiting on design answers.
+## Docs
 
-Each device keeps a full local copy and works offline; changes **sync through a Cloudflare D1
-database** so the phone and laptop see the same data. There is no login yet. The JSON backup on the Plan screen is still the
-copy you keep yourself.
-
-Source: <https://github.com/Duncan-17/meal-prep-app> (private)
+- [PLAN.md](PLAN.md): architecture, data model, and the design decisions and why
+- [SETUP.md](SETUP.md): accounts, keys, and deployment setup
+- [CLAUDE.md](CLAUDE.md): working notes for Claude Code sessions (conventions and current status)
