@@ -32,6 +32,7 @@ Single user, no auth, local-first.
 
 > **Overturned 2026-10-07.** The user chose a Cloudflare database holding everything, built before
 > the Experiment tab — see §10 "Storage". No security for now (single user); auth comes later.
+> **Auth, hardening and end-to-end encryption are proposed in §11 (2026-11-04), not yet decided.**
 >
 > Re-confirmed 2026-10-06. The user hit this in practice — a phone shows nothing a laptop
 > entered — was offered sync, and chose to stay local. The handoff is the JSON backup:
@@ -628,3 +629,108 @@ answers:
 - **Offline.** Today the app works with no signal. A server copy means either online-only, or a
   local copy that syncs — which raises what happens when two devices edit the same thing.
 - **Existing data.** Upload what is already in this browser once, at the switch?
+
+---
+
+## 11. Going public: accounts, hardening, end-to-end encryption — PROPOSED 2026-11-04, nothing decided
+
+The user wants the repository public on GitHub for recruiters, and wants the app multi-user with
+security work worth showing (they are a CS cybersecurity major). **Nothing here is built and no
+design choice in it is made.** The open questions at the end are the user's to answer.
+
+### Why it cannot simply be made public today
+
+- **The live URL is the only protection.** `/api/sync` has no auth (§10, by the user's choice
+  while single-user). The URL appears in CLAUDE.md in 12 commits, so publishing the history
+  publishes it: anyone could `GET /api/sync?since=0` for the whole diary, or POST to overwrite it.
+  Removing the line now does not remove it from history.
+- **The food search is an open proxy** for the USDA key: anyone with the URL spends its quota.
+- **History has no secrets** (checked all 55 commits 2026-11-04): `.dev.vars` was never committed;
+  the USDA key appears only as a variable name.
+
+So the order is: keep the repo private until accounts ship, **or** put Cloudflare Access (email
+one-time code, no code changes) in front of the Worker as a stopgap. User has not chosen.
+
+### Order of work
+
+1. **Accounts and per-user isolation** — login, server-side sessions, `user_id` on every D1 row,
+   tests that try cross-user reads and writes (IDOR) and expect them to fail.
+2. **Hardening** — security headers (strict CSP, HSTS, frame-ancestors), rate limits on login and
+   USDA search, schema validation and size caps on sync uploads, Origin check on POSTs, CI with
+   `npm audit` / Dependabot / CodeQL / secret scanning, `THREAT_MODEL.md` and `SECURITY.md`.
+3. **End-to-end encryption** (below). Needs accounts first: wrapped keys belong to a user.
+
+### End-to-end encryption — design sketch
+
+**Why it fits.** The server already treats each record's `data` as opaque: it stores `tbl`, `id`,
+`data`, `updated_at`, `deleted`, `rev` and only compares `updated_at` to pick a winner. Encrypting
+`data` in the browser before upload leaves `worker/syncLogic.ts` essentially unchanged.
+
+**Keys — one data key, wrapped several ways.**
+
+- At sign-up the browser generates a random AES-256 **data key (DEK)**. It encrypts every record.
+- The DEK is never uploaded bare. It is **wrapped** (encrypted) by one or more key-encryption keys,
+  and only the wrapped copies are stored on the server:
+  - **Passphrase** → stretched by PBKDF2-SHA256 (WebCrypto, built in) or Argon2id (WASM library).
+  - **Passkey** → the WebAuthn PRF extension yields a per-credential secret. Not every
+    authenticator supports PRF, so it cannot be the only wrap.
+  - **Recovery code** → random, shown once at sign-up.
+- A new device signs in, fetches the wrapped DEK, unwraps it locally.
+- Changing the passphrase re-wraps the DEK; no record is re-encrypted.
+
+**Records.**
+
+- AES-256-GCM, fresh random 96-bit IV per encryption.
+- **Associated data = `tbl | id | updatedAt | deleted`.** Binds each ciphertext to its slot, so a
+  malicious server cannot swap ciphertexts between records or replay an old one under a new
+  timestamp — decryption fails instead. This is the part not to "simplify" away.
+
+**On the device.** The unwrapped DEK is stored as a **non-extractable `CryptoKey`** in IndexedDB:
+usable by the page, never readable as bytes, so an XSS bug can misuse it while the page is open
+but cannot exfiltrate it. Sign-out deletes it. Sync shows a "locked" state until unlocked.
+
+**Code that would change.**
+
+| Where                              | Change                                                                      |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `src/domain/crypto.ts` (new, pure) | encrypt / decrypt, AAD construction, wrap / unwrap. Fully unit-tested       |
+| `src/db/sync.ts`                   | encrypt on push, decrypt on pull, locked state                              |
+| `worker/`                          | store and serve wrapped keys per user; cap blob sizes                       |
+| UI                                 | set passphrase, show recovery code, unlock on new device, change passphrase |
+| Migration                          | re-upload existing plaintext rows encrypted, then delete the plaintext      |
+
+**What it does not protect — goes in the threat model.**
+
+- **Metadata.** The server still sees table names, `updated_at`, sizes and ids — and ids embed the
+  creation time in ms (the Dexie `creating` hook). That reveals when and how often meals are
+  logged, not what. Padding / coarser timestamps could reduce it; at minimum, documented.
+- **The server ships the JavaScript.** A compromised server could serve code that steals the key.
+  CSP, Subresource Integrity and an open repo reduce but cannot remove this — the standing limit
+  of web E2EE.
+- **Old plaintext.** D1 Time Travel keeps ~30 days of history, so pre-migration plaintext persists
+  that long.
+- **A compromised device.**
+
+**What it costs.**
+
+- Lose the passphrase, every passkey and the recovery code → synced data is unrecoverable (copies
+  already on devices survive). Must be said plainly in the UI.
+- No server-side computation over the data (e.g. server-generated suggestions). Browser-side is fine.
+- Sharing between users later needs public-key crypto (ECDH wrapping a per-item key).
+
+**Proof.** Unit tests: round trip; one flipped byte fails; swapped ciphertexts fail (AAD); wrong
+passphrase fails; re-wrap keeps data readable. Integration: sync a uniquely named food, then
+search the raw D1 rows for that name and expect zero hits.
+
+### Open questions — awaiting the user
+
+| Question                    | Options raised                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| Until accounts ship         | Repo stays private, or Cloudflare Access in front now                            |
+| Login method(s)             | Passkeys · Sign in with GitHub/Google (OIDC + PKCE) · email + password · hosted  |
+| Sign-up                     | Open, or invite-only                                                             |
+| Demo account for recruiters | Seeded sample data reset nightly — yes / no                                      |
+| E2EE                        | Yes / later / no                                                                 |
+| E2EE unlock                 | Passphrase only · passkey + passphrase fallback · either, plus a recovery code   |
+| Key stretching              | PBKDF2 (built in) or Argon2id (stronger against guessing, extra library)         |
+| Recovery escrow             | None (true zero-knowledge, loss is permanent) or some escrow (weakens the claim) |

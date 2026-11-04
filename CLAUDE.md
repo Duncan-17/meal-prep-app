@@ -228,12 +228,13 @@ device that starts empty downloads everything. Reopen only if it recurs with syn
 
 **Open questions the user has not answered:**
 
-| Question                | Why it is open                                                                                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile. |
-| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                            |
-| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                        |
-| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                         |
+| Question                | Why it is open                                                                                                                                                                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile.                                                                                                                                                       |
+| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                                                                                                                                                                                  |
+| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                                                                                                                                                                              |
+| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                                                                                                                                                                               |
+| Going public + security | User wants the repo public for recruiters, plus accounts, hardening and end-to-end encryption. Design sketch and every open question in PLAN.md §11 (2026-11-04). **Do not make the repo public or build any of it before the user answers** — the live URL is in this file's history and `/api/sync` has no auth. |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 
