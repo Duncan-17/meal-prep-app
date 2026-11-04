@@ -632,11 +632,11 @@ answers:
 
 ---
 
-## 11. Going public: accounts, hardening, end-to-end encryption — PROPOSED 2026-11-04, nothing decided
+## 11. Going public: accounts, hardening, end-to-end encryption — DECIDED 2026-11-04, not built
 
 The user wants the repository public on GitHub for recruiters, and wants the app multi-user with
-security work worth showing (they are a CS cybersecurity major). **Nothing here is built and no
-design choice in it is made.** The open questions at the end are the user's to answer.
+security work worth showing (they are a CS cybersecurity major). **Nothing here is built yet.**
+The user's answers are under "Decided"; the sketch below predates them where they differ.
 
 ### Why it cannot simply be made public today
 
@@ -649,7 +649,26 @@ design choice in it is made.** The open questions at the end are the user's to a
   the USDA key appears only as a variable name.
 
 So the order is: keep the repo private until accounts ship, **or** put Cloudflare Access (email
-one-time code, no code changes) in front of the Worker as a stopgap. User has not chosen.
+one-time code, no code changes) in front of the Worker as a stopgap.
+
+### Decided by the user (2026-11-04)
+
+- **The repo stays private until accounts ship.** No stopgap — "very temporary", not a concern.
+- **Login: a simple login, with an admin password reset done by the user.** Few or no other
+  users are expected. Passkeys / OAuth / hosted auth are not wanted.
+- **Consequence for E2EE:** an admin reset that keeps a user's data working means the server can
+  always reach that data — the opposite of end-to-end encryption. Resolved below.
+
+Second round (2026-11-04), via a multiple-choice prompt:
+
+- **E2EE: yes, with a recovery code.** An admin reset restores LOGIN only. The user then unlocks
+  their data with the recovery code shown once at sign-up; with no code, their synced data is
+  unreadable and they start fresh (copies already on their devices survive). The server never
+  holds anything that decrypts data.
+- **Open sign-up.** Anyone can create an account — so sign-up and login need rate limiting.
+- **Admin actions are command line only.** A script run from the user's machine through wrangler
+  against D1. No admin endpoint or screen exists on the web at all.
+- **Demo account: later.**
 
 ### Order of work
 
@@ -722,15 +741,18 @@ but cannot exfiltrate it. Sign-out deletes it. Sync shows a "locked" state until
 passphrase fails; re-wrap keeps data readable. Integration: sync a uniquely named food, then
 search the raw D1 rows for that name and expect zero hits.
 
-### Open questions — awaiting the user
+Third round (2026-11-04):
 
-| Question                    | Options raised                                                                   |
-| --------------------------- | -------------------------------------------------------------------------------- |
-| Until accounts ship         | Repo stays private, or Cloudflare Access in front now                            |
-| Login method(s)             | Passkeys · Sign in with GitHub/Google (OIDC + PKCE) · email + password · hosted  |
-| Sign-up                     | Open, or invite-only                                                             |
-| Demo account for recruiters | Seeded sample data reset nightly — yes / no                                      |
-| E2EE                        | Yes / later / no                                                                 |
-| E2EE unlock                 | Passphrase only · passkey + passphrase fallback · either, plus a recovery code   |
-| Key stretching              | PBKDF2 (built in) or Argon2id (stronger against guessing, extra library)         |
-| Recovery escrow             | None (true zero-knowledge, loss is permanent) or some escrow (weakens the claim) |
+- **Log in with a username.** No email is collected: nothing ever sends one, since resets are the
+  admin CLI.
+- **One password does both.** The browser derives two independent values from it (Bitwarden's
+  pattern): a login proof sent to the server, which hashes it again before storing, and a
+  key-encryption key that never leaves the device and wraps the data key. After an admin reset
+  the recovery code unwraps the data key once and it is re-wrapped under the new password.
+- **Argon2id** for stretching the password — a small WASM library in the client. Not PBKDF2.
+
+### Still open
+
+- **Demo account** — deferred by the user ("later").
+- Smaller details not yet put to the user: session length, minimum password length, rate-limit
+  thresholds, what the recovery-code screen says. To be proposed before building, not assumed.
