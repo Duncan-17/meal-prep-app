@@ -24,6 +24,9 @@ afterEach(async () => {
   opened = [];
 });
 
+/** Every device in these tests is signed in to the same account. */
+const USER = 'test-user';
+
 function serverWithLink() {
   const store = new MemorySyncStore();
   const link = { online: true };
@@ -31,11 +34,11 @@ function serverWithLink() {
     async push(changes) {
       if (!link.online) throw new SyncOfflineError();
       // Round-trip through JSON exactly as the wire would.
-      await store.upsertNewer(parsePush(JSON.parse(JSON.stringify({ changes }))));
+      await store.upsertNewer(USER, parsePush(JSON.parse(JSON.stringify({ changes }))));
     },
     async pull(since) {
       if (!link.online) throw new SyncOfflineError();
-      return JSON.parse(JSON.stringify(await pull(store, since)));
+      return JSON.parse(JSON.stringify(await pull(store, USER, since)));
     },
   };
   return { store, link, transport };

@@ -12,6 +12,25 @@ What follows is a record of how it was set up, plus the two things still genuine
 
 ---
 
+## 🔴 Accounts — what to do when you push (built 2026-11-04)
+
+Pushing deploys sign-in. The moment it is live, the app shows a sign-in screen on every device,
+and your existing data is waiting in the database, owned by nobody until you claim it. In order:
+
+1. **Once, on this computer: `npx wrangler login`.** The admin script works through your
+   Cloudflare login. (Deploys come from GitHub, so this terminal may never have logged in.)
+2. **On the laptop:** open the app → **New account** → choose a username and password.
+   It will say **"This device already has data"** → **Keep it**.
+3. **Straight away, in a terminal here:**
+   `node scripts/admin.mjs --remote claim-legacy <your-username>`
+   That hands everything synced before accounts to your account.
+4. **On the phone:** **Sign in** with the same username and password → **Keep it**.
+5. Check: `node scripts/admin.mjs --remote list` shows your account with its records, and the
+   line about records belonging to nobody is gone.
+
+**If you forget your password:** `node scripts/admin.mjs --remote reset-password <username>`
+prints a temporary one. Sign in with it, then Plan → Account → Change password.
+
 ## 🟡 Still waiting on you (neither blocks anything)
 
 ### Your real 2500-calorie targets
@@ -119,6 +138,7 @@ Everything that ever blocked work is done. Three rows remain, none of them block
 
 | Item                       | Status                                               |
 | -------------------------- | ---------------------------------------------------- |
+| Accounts                   | 🔴 built — do the five steps above after pushing     |
 | Your real 2500-cal targets | ⬜ FDA defaults in use — editable on the Plan screen |
 | Install on your phone      | ⬜ open the Worker URL → Add to Home Screen          |
 | Open Food Facts contact    | ⏸️ deferred by choice — gates barcode scanning only  |

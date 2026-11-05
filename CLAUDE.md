@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **545 tests** across 28 files.
+`tsc -b` clean across three projects, ESLint clean, **581 tests** across 30 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -71,6 +71,9 @@ Roughly in order, all in response to using the thing:
 - **Sync (2026-10-08)** — every device keeps its local copy and swaps changes with a Cloudflare D1
   database; later edit wins; the phone's and laptop's existing data merge. Status and "Sync now"
   on the Plan screen. D1 binding added 2026-10-08; live, and confirmed by the user on both devices.
+- **Accounts (2026-11-04)** — username + password sign-in, open sign-up, every API route but
+  health behind a session, sync isolated per user, an Account section on the Plan screen, and an
+  admin script for resets. PLAN.md §11 step 1. Hardening and encryption (steps 2–3) not built.
 - **Experiment tab — scratchpads (2026-10-08)** — a fifth tab of saved scratchpads: queue USDA
   foods, your own Foods and recipes (whole batches), set amounts, pick a period, and see either
   the **Average day** or **Day by day** — food dragged from a "Not placed" tray onto a dateless run
@@ -132,8 +135,7 @@ Roughly in order, all in response to using the thing:
   - **Ties lose.** The server keeps a write only if strictly newer, and a device's first upload
     stamps rows with their own timestamp (0 if none). That is what stops a fresh device's default
     goals overwriting real ones. Do not "fix" it to `>=`.
-  - **No auth, by the user's decision** — single user, one address. Anyone who finds the URL can
-    read and overwrite the data. Revisit when it goes multi-user, as the user plans.
+  - **Since 2026-11-04 sync is per user** (PLAN.md §11). See "Accounts" below.
   - The sync bookkeeping tables (`syncShadow`, `syncOutbox`, `syncMeta`) are per-device and are
     deliberately NOT in `TABLE_NAMES`: never backed up, never synced.
   - **Every sync reply is `Cache-Control: no-store`, and the client fetches with
@@ -146,6 +148,30 @@ Roughly in order, all in response to using the thing:
     the database's own count (`/api/sync?stats=1`). "Re-download everything" resets the cursor to
     0 — safe, since a download never overwrites a newer local edit. Ask the user to read it out
     before guessing at a sync problem.
+- **Accounts (2026-11-04, PLAN.md §11) — do not "simplify" any of these:**
+  - **The server never sees a password.** `src/auth/derive.ts` runs Argon2id in the browser and
+    sends a 32-byte proof; the server stores its SHA-256. A fast hash is right THERE because the
+    input is already a key, and Argon2id on the Worker would blow its CPU budget. Password rules
+    (8 characters, the user's choice) can therefore only live in the browser.
+  - **`ARGON2_PARAMS` and the salt domain are frozen.** Changing either changes every proof and
+    locks every account out. `derive.test.ts` pins a real proof to catch it.
+  - **`derive.ts` must stay free of `@/` imports**: `scripts/admin.mjs` imports it under Node so
+    an admin reset produces exactly the browser's proof.
+  - **The user is part of the sync KEY, not just a filter.** `user_records` is keyed
+    (user_id, tbl, id). Keying on (tbl, id) and filtering would let one user overwrite another's
+    row by reusing its id. The rev counter stays global; it only has to go up.
+  - **Rows with user_id `''` are pre-accounts data**, readable by nobody until
+    `node scripts/admin.mjs --remote claim-legacy <username>` assigns them.
+  - **Sessions are server-side rows holding only the token's hash.** That is what makes sign-out,
+    "sign out other devices" and an admin reset actually end sessions.
+  - **Unknown username and wrong password give the same error**, and an unknown username still
+    does a hash comparison. Sign-up must reveal a taken name; its per-IP limit slows that.
+  - **Every POST needs a same-origin `Origin`.** No Origin → 403, on purpose.
+  - **Signing out erases the device** (`eraseThisDevice`); `syncMeta.owner` says whose data a
+    device holds. `redownloadEverything` spreads the old meta so `owner` survives — keep it so.
+  - **Admin is command-line only, by the user's decision.** Never add an admin route or screen.
+  - **Sign-ups are capped at 5 per IP per hour**, so `scripts/screenshot.mjs` clears that counter
+    in the LOCAL database before each run. It must never touch `--remote`.
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
   render a neutral dot on purpose; rewriting them would be rewriting history.
 - **Omega totals are DERIVED at read time, never stored.** `derivedFrom` in the registry,
@@ -228,13 +254,13 @@ device that starts empty downloads everything. Reopen only if it recurs with syn
 
 **Open questions the user has not answered:**
 
-| Question                | Why it is open                                                                                                                                                                                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile.                                                                                            |
-| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                                                                                                                       |
-| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                                                                                                                   |
-| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                                                                                                                    |
-| Going public + security | DECIDED 2026-11-04, not built — PLAN.md §11: username + one password (Argon2id), open sign-up, admin reset by CLI only, E2EE with a recovery code. Repo stays private until accounts ship. Demo account deferred. Session length etc. still to propose. |
+| Question                | Why it is open                                                                                                                                                                                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile.                                                                                       |
+| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                                                                                                                  |
+| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                                                                                                              |
+| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                                                                                                               |
+| Going public + security | PLAN.md §11. **Step 1 (accounts) built 2026-11-04**, not yet deployed by the user — see SETUP.md "Accounts". Steps 2 (hardening) and 3 (E2EE with a recovery code) not started. Repo stays private until accounts are live. Demo account deferred. |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 
@@ -331,6 +357,7 @@ desktop widths**, not just whichever happens to be open.
 
 ```powershell
 npm run dev                      # must be running first
+npm run dev:api                  # also needed: the script signs up through the real form
 node scripts/screenshot.mjs      # all routes, 390px and 1280px
 node scripts/screenshot.mjs /calendar
 ```
@@ -419,16 +446,17 @@ picker) and the calendar mark.
 
 ## Commands
 
-| Script               | Does                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------- |
-| `npm run dev`        | Vite dev server, host exposed for phone testing                                                   |
-| `npm run dev:api`    | Wrangler on :8788 serving `worker/` + `dist/`. Vite proxies `/api` to it. Needed for food search. |
-| `npm run serve:full` | Build, then serve app + functions together on :8788 (no hot reload)                               |
-| `npm run build`      | Typecheck + production build to `dist/`                                                           |
-| `npm run preview`    | Serve the production build                                                                        |
-| `npm test`           | Vitest, `src/**/*.test.ts`                                                                        |
-| `npm run lint`       | ESLint                                                                                            |
-| `npm run format`     | Prettier, write in place                                                                          |
+| Script                                 | Does                                                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `npm run dev`                          | Vite dev server, host exposed for phone testing                                                   |
+| `npm run dev:api`                      | Wrangler on :8788 serving `worker/` + `dist/`. Vite proxies `/api` to it. Needed for food search. |
+| `npm run serve:full`                   | Build, then serve app + functions together on :8788 (no hot reload)                               |
+| `npm run build`                        | Typecheck + production build to `dist/`                                                           |
+| `npm run preview`                      | Serve the production build                                                                        |
+| `npm test`                             | Vitest, `src/**/*.test.ts`                                                                        |
+| `npm run lint`                         | ESLint                                                                                            |
+| `npm run format`                       | Prettier, write in place                                                                          |
+| `node scripts/admin.mjs --remote list` | Accounts admin: list, reset-password, sign-out, disable, enable, claim-legacy. `--local` for dev  |
 
 ---
 
@@ -436,6 +464,8 @@ picker) and the calendar mark.
 
 ```
 src/
+  auth/        Sign-in: derive (Argon2id → login proof), session state, AuthGate,
+               LoginScreen. Nothing in the app renders until signed in.
   db/          Dexie schema + every write path. schema, batches, fridge, logs,
                components, ingredients (incl. custom foods), plan, favorites,
                insight, backup, init, seed.dev, sync (the sync engine), scratchpads
@@ -458,11 +488,14 @@ src/
                TargetBar, InstallPrompt, vizPalette
   routes/      router + AppShell
 worker/
-  index.ts     The Cloudflare Worker: /api proxy for USDA, /api/sync over D1,
-               plus the ASSETS binding that serves dist/. Holds the API key.
-  syncLogic.ts The server's sync rules, storage-agnostic and tested.
+  index.ts     The Cloudflare Worker: /api/auth, the session gate, /api/usda,
+               /api/sync, plus the ASSETS binding that serves dist/. Holds the API key.
+  authLogic.ts Accounts, sessions, rate limits — storage-agnostic and tested.
+  syncLogic.ts The server's sync rules, per user, storage-agnostic and tested.
+  d1Stores.ts  The D1 versions of both stores, and the self-creating schema.
 scripts/
   screenshot.mjs   visual checks at both viewports (see above)
+  admin.mjs        account admin through wrangler — the only admin interface
   seed-browser.mjs browser-side seed shared by visual scripts
   make-icons.mjs   regenerates the PWA icon set from one inline SVG
 ```

@@ -150,6 +150,12 @@ function describe(status: SyncStatus): {
         body: `The server has no database connected, so data stays on this device for now.${waiting}`,
         tone: 'warn',
       };
+    case 'signedOut':
+      return {
+        title: 'Signed out',
+        body: `Sign in again to keep syncing. Everything stays on this device meanwhile.${waiting}`,
+        tone: 'warn',
+      };
     case 'error':
       return {
         title: 'Sync hit a problem',
@@ -162,7 +168,7 @@ function describe(status: SyncStatus): {
           status.lastSyncedAt === undefined
             ? 'Not synced yet'
             : `Synced ${relative(status.lastSyncedAt)}`,
-        body: `Saved on this device and in your Cloudflare database, so every device sees the same data.${waiting}`,
+        body: `Saved on this device and in your account, so every device you sign in on sees the same data.${waiting}`,
         tone: 'ok',
       };
   }

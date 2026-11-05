@@ -59,6 +59,14 @@ export class SyncUnconfiguredError extends Error {
   }
 }
 
+/** The server no longer accepts this device's session (PLAN.md §11). */
+export class SyncSignedOutError extends Error {
+  constructor() {
+    super('Signed out.');
+    this.name = 'SyncSignedOutError';
+  }
+}
+
 /** The request never reached the server — no signal, or the server is down. */
 export class SyncOfflineError extends Error {
   constructor() {
@@ -84,10 +92,11 @@ async function request(url: string, init?: RequestInit): Promise<unknown> {
   let response: Response;
   try {
     // Never answered from a cache: see NO_STORE in worker/index.ts.
-    response = await fetch(url, { ...init, cache: 'no-store' });
+    response = await fetch(url, { ...init, cache: 'no-store', credentials: 'same-origin' });
   } catch {
     throw new SyncOfflineError();
   }
+  if (response.status === 401) throw new SyncSignedOutError();
   if (response.status === 503) throw new SyncUnconfiguredError();
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
@@ -303,7 +312,7 @@ function toRecord(entry: SyncOutboxRow): SyncRecord {
 
 // ── Running it in the app ───────────────────────────────────────────────────
 
-export type SyncState = 'idle' | 'syncing' | 'offline' | 'unconfigured' | 'error';
+export type SyncState = 'idle' | 'syncing' | 'offline' | 'unconfigured' | 'signedOut' | 'error';
 
 export interface SyncStatus {
   state: SyncState;
@@ -350,19 +359,34 @@ let engine: SyncEngine | null = null;
 export async function redownloadEverything(): Promise<void> {
   await appDb.transaction('rw', appDb.syncMeta, async () => {
     const meta = await appDb.syncMeta.get('sync');
+    // Spread, so `owner` and anything added later survive.
     await appDb.syncMeta.put({
-      id: 'sync',
-      firstPassDone: meta?.firstPassDone ?? false,
+      ...(meta ?? { id: 'sync' as const, firstPassDone: false }),
       cursor: 0,
-      ...(meta?.lastSyncedAt === undefined ? {} : { lastSyncedAt: meta.lastSyncedAt }),
     });
   });
   await syncNow();
 }
 
+const signedOutListeners = new Set<() => void>();
+
+/** Called when the server rejects this device's session. */
+export function onSyncSignedOut(listener: () => void): () => void {
+  signedOutListeners.add(listener);
+  return () => signedOutListeners.delete(listener);
+}
+
+/** After signing back in: pick up where sync left off. */
+export function resumeSync(): void {
+  if (status.state !== 'signedOut') return;
+  setStatus({ state: 'idle' });
+  void syncNow();
+}
+
 /** Run a full cycle now — the "Sync now" button, and every trigger below. */
 export async function syncNow(): Promise<void> {
-  if (engine === null) return;
+  // Nothing to do until someone signs in again; edits wait in the outbox.
+  if (engine === null || status.state === 'signedOut') return;
   setStatus({ state: 'syncing' });
   try {
     await engine.syncOnce();
@@ -376,7 +400,10 @@ export async function syncNow(): Promise<void> {
     const pending = await engine.pending().catch(() => status.pending);
     if (error instanceof SyncOfflineError) setStatus({ state: 'offline', pending });
     else if (error instanceof SyncUnconfiguredError) setStatus({ state: 'unconfigured', pending });
-    else setStatus({ state: 'error', pending, error: String(error) });
+    else if (error instanceof SyncSignedOutError) {
+      setStatus({ state: 'signedOut', pending });
+      for (const listener of signedOutListeners) listener();
+    } else setStatus({ state: 'error', pending, error: String(error) });
   }
 }
 

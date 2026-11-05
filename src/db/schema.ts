@@ -50,6 +50,11 @@ export interface SyncMetaRow {
   /** Whether this device has done its first change scan — see `ownTimestamp`. */
   firstPassDone: boolean;
   lastSyncedAt?: number;
+  /**
+   * The account this device's data belongs to (PLAN.md §11). Absent on data
+   * from before accounts existed. Not indexed, so no schema version bump.
+   */
+  owner?: string;
 }
 
 /**

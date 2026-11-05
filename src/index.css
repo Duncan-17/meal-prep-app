@@ -2731,3 +2731,53 @@ label,
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Sign in (PLAN.md §11) ─────────────────────────────────────────── */
+
+.authscreen {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 16px;
+  padding-block-start: calc(16px + env(safe-area-inset-top));
+}
+
+.authscreen__card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 380px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.authscreen__card .screen__sub,
+.authscreen__card .notice {
+  margin: 0;
+}
+
+.authscreen__card .authscreen__modes {
+  margin: 0;
+}
+
+.authscreen__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.account__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}

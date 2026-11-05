@@ -2,7 +2,7 @@
 
 A meal-planning web app I designed for my own batch cooking. You build recipes from USDA food data, schedule cooks on a calendar, track leftovers as fridge stock, and log what you eat against a full nutrient plan, not just calories.
 
-**Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare. 545 automated tests passing.
+**Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare, with per-user accounts. 581 automated tests passing.
 
 <p align="center">
   <img src="docs/screenshots/diary.png" width="260" alt="Diary screen with calorie bar and macro rings">
@@ -32,7 +32,6 @@ I meal prep in batches, and the apps I tried treated every meal as a one-off ent
 7. **Experiment** — draft a week (or any period) of food you might buy and cook in a scratchpad.
    See the average day, or drag the food onto particular days and see each one.
 
-
 ## How I built it
 
 I wrote the product spec and made the design and data decisions; I built it with **Claude Code as my pair programmer**, which wrote most of the implementation while I directed the work, reviewed it, and tested every feature against real daily use. The design log I kept during the build is in [PLAN.md](PLAN.md).
@@ -44,12 +43,14 @@ Decisions I'm most proud of:
 - **One math path for counts and weights.** "2 servings" and "40% of the pot" go through the same calculation, which removed a whole class of bugs.
 - **Local-first, then sync.** Every device keeps a full offline copy (IndexedDB) and syncs through a Cloudflare D1 database, so it works in a grocery store with no signal.
 - **The API key never reaches the browser.** USDA lookups go through a Cloudflare Worker proxy that holds the key as a secret.
+- **The server never sees a password.** The browser stretches it with Argon2id and sends only a derived proof; sessions are server-side and revocable, sign-in is rate-limited per user and per IP, and every user's data is keyed by their account so one user can't read or overwrite another's. Tests attack that isolation directly.
 
 What I learned: how to scope a real project into phases, how to write specs precise enough that an AI tool builds the right thing, and how to verify AI-written code with tests and real use rather than trusting it.
 
 ## Roadmap
 
-- **User login and authenticated sync**, so the app can safely be shared (next up)
+- **Security hardening** — strict CSP and security headers, CI with dependency and code scanning, a written threat model (next up)
+- **End-to-end encryption** of synced data, with a recovery code
 - Suggestions in the Experiment tab: what to eat for what the week is missing
 
 ## Running it
@@ -60,7 +61,7 @@ npm run dev:api   # terminal 1 — wrangler on :8788, serves the /api proxy
 npm run dev       # terminal 2 — vite on :5173, open THIS one
 ```
 
-Food search needs both; everything else works with just `npm run dev`.
+Both are needed: the app opens on a sign-in screen, and accounts live in the Worker's local database. Create an account at http://localhost:5173 to get in.
 
 | Script                        | Does                                             |
 | ----------------------------- | ------------------------------------------------ |
@@ -71,6 +72,7 @@ Food search needs both; everything else works with just `npm run dev`.
 | `npm run lint` / `format`     | ESLint / Prettier                                |
 | `npm run deploy`              | Build and deploy to Cloudflare from this machine |
 | `node scripts/screenshot.mjs` | Visual check at phone and desktop widths         |
+| `node scripts/admin.mjs`      | Account admin (reset a password, etc.)           |
 
 ## Stack
 

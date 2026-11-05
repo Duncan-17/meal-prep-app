@@ -8,10 +8,11 @@
  *   node scripts/screenshot.mjs                    # all routes, both widths
  *   node scripts/screenshot.mjs /calendar          # one route
  *
- * Needs `npm run dev` on :5173. Seeds a little data first so the calendar has
+ * Needs `npm run dev` on :5173 AND `npm run dev:api` (sign-in). Seeds a little data first so the calendar has
  * something to draw — an empty grid hides every layout bug worth finding.
  */
 
+import { spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
@@ -35,6 +36,27 @@ const ROUTES =
 
 await mkdir(OUT, { recursive: true });
 
+// Each browser context signs up a throwaway account, and sign-ups are capped
+// at 5 per IP per hour (PLAN.md §11) — so a few runs in a row would lock this
+// script out. Reset the counter in the LOCAL database only; never --remote.
+{
+  const wrangler = resolve(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
+  const reset = spawnSync(
+    process.execPath,
+    [
+      wrangler,
+      'd1',
+      'execute',
+      'meal-prep',
+      '--local',
+      '--command',
+      "DELETE FROM auth_attempts WHERE key LIKE 'signup:%'",
+    ],
+    { encoding: 'utf8' },
+  );
+  if (reset.status !== 0) console.warn('could not reset the local sign-up limit; sign-up may 429');
+}
+
 const browser = await chromium.launch();
 
 for (const viewport of VIEWPORTS) {
@@ -50,9 +72,21 @@ for (const viewport of VIEWPORTS) {
     if (message.type() === 'error') problems.push(message.text());
   });
 
+  // Nothing renders until someone is signed in (PLAN.md §11), so each context
+  // photographs the sign-in screen, then creates a throwaway account through
+  // the real form. Needs `npm run dev:api` too, for the auth endpoints.
+  await page.goto(`${BASE}/calendar`);
+  await page.locator('form').waitFor({ timeout: 30_000 });
+  await page.getByRole('tab', { name: 'New account' }).click();
+  await page.screenshot({ path: `${OUT}/${viewport.name}-signin.png`, fullPage: true });
+  await page.locator('input[name=username]').fill(`shot${Date.now().toString(36)}`);
+  await page.locator('input[name=password]').fill('screenshot-password');
+  await page.locator('input[name=confirm]').fill('screenshot-password');
+  await page.locator('button[type=submit]').click();
+  await page.locator('.tabbar').waitFor({ timeout: 20_000 });
+
   // Per CONTEXT, not once globally — each context has its own IndexedDB, so
   // seeding only the first left every desktop screenshot showing empty states.
-  await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' });
   const seedResult = await page.evaluate(SEED);
   console.log(`${viewport.name}: ${seedResult}`);
 

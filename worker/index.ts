@@ -25,19 +25,28 @@
  *
  * Since 2026-10-07 it also hosts `/api/sync`, which swaps the user's data with
  * a D1 database (PLAN.md §10 "Storage"). The rules live in `syncLogic.ts`;
- * this file only adapts them to D1. No authentication, by the user's decision
- * — single user, one address; revisit when it becomes multi-user.
+ * this file only adapts them to HTTP.
+ *
+ * Since 2026-11-04 every route except `/api/health` and `/api/auth/*` needs a
+ * signed-in session (PLAN.md §11) — which also stops the USDA proxy being free
+ * for anyone who finds the address. Rules in `authLogic.ts`, storage in
+ * `d1Stores.ts`.
  */
 
 import {
-  SyncRequestError,
-  parsePush,
-  pull,
-  type IncomingRecord,
-  type StoredRecord,
-  type SyncStats,
-  type SyncStore,
-} from './syncLogic';
+  AuthError,
+  authenticate,
+  changePassword,
+  logIn,
+  logOut,
+  logOutOthers,
+  signUp,
+  type Authenticated,
+  type NewSession,
+  type RequestContext,
+} from './authLogic';
+import { d1AuthStore, d1SyncStore, ensureSchema } from './d1Stores';
+import { SyncRequestError, parsePush, pull } from './syncLogic';
 
 interface Env {
   /** Cloudflare secret in production; `.dev.vars` locally. Never sent to the client. */
@@ -77,8 +86,47 @@ export default {
 
     const route = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
 
+    // A write must come from this app's own pages. The session cookie is
+    // SameSite=Strict, which already stops other sites sending it; this is a
+    // second lock on the same door.
+    if (request.method !== 'GET' && request.method !== 'HEAD' && !sameOrigin(request, url)) {
+      return noStoreJson({ error: 'Cross-origin request refused.' }, 403);
+    }
+
+    if (route === 'health' && request.method === 'GET') {
+      // Reports whether secrets are configured WITHOUT revealing them — this
+      // is how to check the key is set without ever reading `.dev.vars`.
+      return json({
+        ok: true,
+        usdaKeyConfigured: Boolean(env.USDA_API_KEY),
+        offContactConfigured: Boolean(env.OFF_USER_AGENT),
+        syncConfigured: Boolean(env.DB),
+      });
+    }
+
+    if (env.DB === undefined) {
+      return noStoreJson(
+        {
+          error: 'The server has no database.',
+          detail: 'No D1 database is bound as DB in wrangler.toml, so nobody can sign in.',
+        },
+        503,
+      );
+    }
+    await ensureSchema(env.DB);
+
+    if (route.startsWith('auth/')) {
+      return handleAuth(route, request, url, env.DB);
+    }
+
+    // Everything below needs a signed-in user.
+    const auth = await authenticate(d1AuthStore(env.DB), readSessionCookie(request), Date.now());
+    if (auth === null) {
+      return noStoreJson({ error: 'Sign in first.' }, 401);
+    }
+
     if (route === 'sync') {
-      return handleSync(request, url, env);
+      return withRenewal(await handleSync(request, url, env.DB, auth.user.id), request, auth, url);
     }
 
     if (request.method !== 'GET') {
@@ -88,17 +136,6 @@ export default {
     const waitUntil = (promise: Promise<unknown>) => ctx.waitUntil(promise);
 
     try {
-      if (route === 'health') {
-        // Reports whether secrets are configured WITHOUT revealing them — this
-        // is how to check the key is set without ever reading `.dev.vars`.
-        return json({
-          ok: true,
-          usdaKeyConfigured: Boolean(env.USDA_API_KEY),
-          offContactConfigured: Boolean(env.OFF_USER_AGENT),
-          syncConfigured: Boolean(env.DB),
-        });
-      }
-
       if (route === 'usda/search') {
         return await handleUsdaSearch(url, env, waitUntil);
       }
@@ -129,153 +166,197 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
+// ── Auth ────────────────────────────────────────────────────────────────────
+
+async function handleAuth(
+  route: string,
+  request: Request,
+  url: URL,
+  db: D1Database,
+): Promise<Response> {
+  const store = d1AuthStore(db);
+  const context: RequestContext = {
+    ip: request.headers.get('cf-connecting-ip') ?? 'local',
+    userAgent: request.headers.get('user-agent') ?? '',
+    now: Date.now(),
+  };
+
+  try {
+    if (route === 'auth/me' && request.method === 'GET') {
+      const auth = await authenticate(store, readSessionCookie(request), context.now);
+      if (auth === null) {
+        return noStoreJson({ error: 'Not signed in.' }, 401, clearCookie(url));
+      }
+      return withRenewal(noStoreJson({ username: auth.user.username }), request, auth, url);
+    }
+
+    if (request.method !== 'POST') return noStoreJson({ error: 'Use POST.' }, 405);
+    const body: unknown = await request.json().catch(() => null);
+
+    if (route === 'auth/signup') {
+      return sessionResponse(await signUp(store, body, context), url, 201);
+    }
+    if (route === 'auth/login') {
+      return sessionResponse(await logIn(store, body, context), url);
+    }
+
+    const auth = await authenticate(store, readSessionCookie(request), context.now);
+    if (auth === null) return noStoreJson({ error: 'Sign in first.' }, 401, clearCookie(url));
+
+    if (route === 'auth/logout') {
+      await logOut(store, auth);
+      return noStoreJson({ ok: true }, 200, clearCookie(url));
+    }
+    if (route === 'auth/logout-others') {
+      await logOutOthers(store, auth);
+      return noStoreJson({ ok: true });
+    }
+    if (route === 'auth/password') {
+      await changePassword(store, auth, body, context);
+      return noStoreJson({ ok: true });
+    }
+
+    return noStoreJson({ error: `Unknown API route: ${route}` }, 404);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      const retry: Record<string, string> =
+        error.retryAfterSeconds === undefined
+          ? {}
+          : { 'retry-after': String(error.retryAfterSeconds) };
+      return noStoreJson({ error: error.message }, error.status, retry);
+    }
+    // Never echo internals from the auth path.
+    console.error('auth failed', error);
+    return noStoreJson({ error: 'Something went wrong. Try again.' }, 500);
+  }
+}
+
+/*
+ * The session cookie. The `__Host-` prefix makes the browser refuse it unless
+ * it is Secure, has Path=/ and no Domain — so nothing else can set or read it.
+ * HttpOnly keeps page scripts (and so any XSS) from reading the token;
+ * SameSite=Strict keeps other sites from making the browser send it.
+ *
+ * Over plain http (a phone testing `npm run serve:full` on the LAN) a Secure
+ * cookie would be dropped, so there it is a plain `session` cookie instead.
+ * Browsers treat localhost as secure, so `npm run dev` gets the real one.
+ */
+const SECURE_COOKIE = '__Host-session';
+const PLAIN_COOKIE = 'session';
+
+function isSecureOrigin(url: URL): boolean {
+  return url.protocol === 'https:' || url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+}
+
+function sessionCookie(url: URL, value: string, maxAgeSeconds: number): string {
+  const secure = isSecureOrigin(url);
+  return [
+    `${secure ? SECURE_COOKIE : PLAIN_COOKIE}=${value}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Strict',
+    `Max-Age=${Math.max(0, maxAgeSeconds)}`,
+    ...(secure ? ['Secure'] : []),
+  ].join('; ');
+}
+
+function readSessionCookie(request: Request): string | null {
+  const header = request.headers.get('cookie') ?? '';
+  for (const part of header.split(';')) {
+    const [name, ...rest] = part.trim().split('=');
+    if (name === SECURE_COOKIE || name === PLAIN_COOKIE) return rest.join('=');
+  }
+  return null;
+}
+
+function sessionResponse(session: NewSession, url: URL, status = 200): Response {
+  const maxAge = Math.floor((session.expiresAt - Date.now()) / 1000);
+  return noStoreJson({ username: session.user.username }, status, {
+    'set-cookie': sessionCookie(url, session.token, maxAge),
+  });
+}
+
+function clearCookie(url: URL): Record<string, string> {
+  return { 'set-cookie': sessionCookie(url, '', 0) };
+}
+
+/**
+ * When a session was just extended, re-send its cookie with the new lifetime.
+ * The server keeps only the token's hash, so the token comes from the request
+ * that presented it.
+ */
+function withRenewal(
+  response: Response,
+  request: Request,
+  auth: Authenticated,
+  url: URL,
+): Response {
+  const token = readSessionCookie(request);
+  if (auth.renewedUntil === undefined || token === null) return response;
+  const renewed = new Response(response.body, response);
+  renewed.headers.append(
+    'set-cookie',
+    sessionCookie(url, token, Math.floor((auth.renewedUntil - Date.now()) / 1000)),
+  );
+  return renewed;
+}
+
+/**
+ * The request's Origin is this site — or, in development only, both are
+ * loopback addresses: Vite on :5173 proxies to wrangler on :8788, so the
+ * browser's Origin and the URL the Worker sees differ by port. Production is
+ * always a single origin.
+ */
+function sameOrigin(request: Request, url: URL): boolean {
+  const origin = request.headers.get('origin');
+  // Browsers send Origin on every POST; a request without one did not come
+  // from a page, and the app has no other clients.
+  if (origin === null) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    return false;
+  }
+  if (parsed.host === url.host) return true;
+  const loopback = (host: string) => host === 'localhost' || host === '127.0.0.1';
+  return loopback(parsed.hostname) && loopback(url.hostname);
+}
+
 // ── Sync ────────────────────────────────────────────────────────────────────
 
-async function handleSync(request: Request, url: URL, env: Env): Promise<Response> {
-  if (env.DB === undefined) {
-    return syncJson(
-      {
-        error: 'Sync is not configured.',
-        detail: 'No D1 database is bound as DB in wrangler.toml, so data stays on each device.',
-      },
-      503,
-    );
-  }
-
-  const store = await d1Store(env.DB);
+async function handleSync(
+  request: Request,
+  url: URL,
+  db: D1Database,
+  userId: string,
+): Promise<Response> {
+  const store = d1SyncStore(db);
 
   try {
     if (request.method === 'GET' && url.searchParams.has('stats')) {
-      return syncJson(await store.stats());
+      return noStoreJson(await store.stats(userId));
     }
 
     if (request.method === 'GET') {
       const since = Number.parseInt(url.searchParams.get('since') ?? '0', 10);
-      return syncJson(await pull(store, Number.isFinite(since) && since > 0 ? since : 0));
+      return noStoreJson(
+        await pull(store, userId, Number.isFinite(since) && since > 0 ? since : 0),
+      );
     }
 
     if (request.method === 'POST') {
       const changes = parsePush(await request.json().catch(() => null));
-      const written = await store.upsertNewer(changes);
-      return syncJson({ received: changes.length, written });
+      const written = await store.upsertNewer(userId, changes);
+      return noStoreJson({ received: changes.length, written });
     }
 
-    return syncJson({ error: 'Sync takes GET or POST.' }, 405);
+    return noStoreJson({ error: 'Sync takes GET or POST.' }, 405);
   } catch (error) {
-    if (error instanceof SyncRequestError) return syncJson({ error: error.message }, 400);
-    return syncJson({ error: 'Sync failed.', detail: String(error).slice(0, 300) }, 500);
+    if (error instanceof SyncRequestError) return noStoreJson({ error: error.message }, 400);
+    console.error('sync failed', error);
+    return noStoreJson({ error: 'Sync failed.' }, 500);
   }
-}
-
-/**
- * The table is created on first use rather than by a migration step, so a
- * fresh database works the moment it is bound — no command to remember to
- * run against production. `IF NOT EXISTS` makes the check idempotent, and it
- * runs once per Worker instance, not per request.
- */
-let schemaReady: Promise<unknown> | null = null;
-
-function ensureSchema(db: D1Database): Promise<unknown> {
-  schemaReady ??= db
-    .batch([
-      db.prepare(
-        `CREATE TABLE IF NOT EXISTS records (
-           tbl TEXT NOT NULL,
-           id TEXT NOT NULL,
-           data TEXT,
-           updated_at INTEGER NOT NULL,
-           deleted INTEGER NOT NULL DEFAULT 0,
-           rev INTEGER NOT NULL,
-           PRIMARY KEY (tbl, id)
-         )`,
-      ),
-      db.prepare('CREATE INDEX IF NOT EXISTS records_rev ON records (rev)'),
-    ])
-    .catch((error: unknown) => {
-      schemaReady = null; // let the next request try again
-      throw error;
-    });
-  return schemaReady;
-}
-
-/** D1 statements per batch call — comfortably inside D1's limits. */
-const D1_CHUNK = 50;
-
-/*
- * One statement does the whole "strictly newer wins" rule: insert, or on a
- * clash update only WHERE the incoming change is newer. The rev subquery runs
- * per statement, and a D1 batch runs its statements in order inside one
- * transaction, so revs come out strictly increasing.
- */
-const UPSERT_NEWER = `
-  INSERT INTO records (tbl, id, data, updated_at, deleted, rev)
-  VALUES (?1, ?2, ?3, ?4, ?5, (SELECT COALESCE(MAX(rev), 0) + 1 FROM records))
-  ON CONFLICT (tbl, id) DO UPDATE SET
-    data = excluded.data,
-    updated_at = excluded.updated_at,
-    deleted = excluded.deleted,
-    rev = excluded.rev
-  WHERE excluded.updated_at > records.updated_at`;
-
-async function d1Store(db: D1Database): Promise<SyncStore> {
-  await ensureSchema(db);
-
-  return {
-    async upsertNewer(records: readonly IncomingRecord[]): Promise<number> {
-      let written = 0;
-      for (let start = 0; start < records.length; start += D1_CHUNK) {
-        const chunk = records.slice(start, start + D1_CHUNK);
-        const results = await db.batch(
-          chunk.map((record) =>
-            db
-              .prepare(UPSERT_NEWER)
-              .bind(
-                record.tbl,
-                record.id,
-                record.deleted ? null : JSON.stringify(record.data),
-                record.updatedAt,
-                record.deleted ? 1 : 0,
-              ),
-          ),
-        );
-        for (const result of results) written += result.meta.changes ?? 0;
-      }
-      return written;
-    },
-
-    async stats(): Promise<SyncStats> {
-      const row = await db
-        .prepare(
-          'SELECT COUNT(*) AS records, COALESCE(SUM(deleted), 0) AS deleted, COALESCE(MAX(rev), 0) AS latestRev FROM records',
-        )
-        .first<SyncStats>();
-      return row ?? { records: 0, deleted: 0, latestRev: 0 };
-    },
-
-    async changesSince(since: number, limit: number): Promise<StoredRecord[]> {
-      const { results } = await db
-        .prepare(
-          'SELECT tbl, id, data, updated_at, deleted, rev FROM records WHERE rev > ?1 ORDER BY rev LIMIT ?2',
-        )
-        .bind(since, limit)
-        .all<{
-          tbl: string;
-          id: string;
-          data: string | null;
-          updated_at: number;
-          deleted: number;
-          rev: number;
-        }>();
-      return results.map((row) => ({
-        tbl: row.tbl,
-        id: row.id,
-        data: row.data,
-        updatedAt: row.updated_at,
-        deleted: row.deleted === 1,
-        rev: row.rev,
-      }));
-    },
-  };
 }
 
 // ── USDA ────────────────────────────────────────────────────────────────────
@@ -542,7 +623,7 @@ function json(body: unknown, status = 200, extraHeaders: Record<string, string> 
 }
 
 /**
- * Every sync reply is marked never-cache. A pull URL repeats exactly
+ * Every sync and auth reply is marked never-cache. A pull URL repeats exactly
  * (`?since=0` until something arrives), and a browser that kept the first,
  * empty answer would report "synced" forever while never seeing new data.
  * Suspected on mobile Safari 2026-10-08 — the phone could load the data by
@@ -550,6 +631,10 @@ function json(body: unknown, status = 200, extraHeaders: Record<string, string> 
  */
 const NO_STORE = { 'cache-control': 'no-store' };
 
-function syncJson(body: unknown, status = 200): Response {
-  return json(body, status, NO_STORE);
+function noStoreJson(
+  body: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+): Response {
+  return json(body, status, { ...NO_STORE, ...extraHeaders });
 }

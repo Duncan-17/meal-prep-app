@@ -632,10 +632,11 @@ answers:
 
 ---
 
-## 11. Going public: accounts, hardening, end-to-end encryption — DECIDED 2026-11-04, not built
+## 11. Going public: accounts, hardening, end-to-end encryption — step 1 BUILT 2026-11-04
 
 The user wants the repository public on GitHub for recruiters, and wants the app multi-user with
-security work worth showing (they are a CS cybersecurity major). **Nothing here is built yet.**
+security work worth showing (they are a CS cybersecurity major). **Step 1 (accounts and
+per-user isolation) is built; hardening and encryption are not.**
 The user's answers are under "Decided"; the sketch below predates them where they differ.
 
 ### Why it cannot simply be made public today
@@ -753,6 +754,50 @@ Third round (2026-11-04):
 
 ### Still open
 
+Fourth round (2026-11-04): proposed defaults, accepted with one change —
+
+- **Sessions last 30 days**, extended (at most once a day) whenever used; "sign out other devices"
+  exists.
+- **Passwords: at least 8 characters, nothing else.** No common-password list (the user's change
+  from the proposed 12 + list). Enforced in the browser only — the server never sees a password.
+- **Rate limits:** 5 failed sign-ins per username per minute, 20 per IP per minute, 5 sign-ups
+  per IP per hour.
+- **Recovery code** shown once, with an "I've saved this" tick to continue (step 3).
+
+### Step 1 — BUILT 2026-11-04: accounts and per-user isolation
+
+Code: `worker/authLogic.ts` (rules, no Cloudflare types), `worker/d1Stores.ts` (D1 + the
+schema/migration), `worker/index.ts` (routes, cookie, Origin check), `src/auth/` (derivation,
+session state, the gate and sign-in screen), `src/features/settings/AccountSection.tsx`,
+`scripts/admin.mjs`.
+
+- **Every `/api/*` route except `health` and `auth/*` needs a session**, which also closes the
+  open USDA proxy.
+- **The user is part of every sync key** — `user_records` is keyed (user_id, tbl, id). A push
+  naming someone else's id makes a row in the pusher's own space; it cannot overwrite theirs.
+- **Migration:** on first use the old `records` rows are copied once into `user_records` with
+  user_id `''` (owned by nobody) and their revs kept, so device cursors stay valid. The admin
+  command `claim-legacy <username>` hands them to an account and empties `records`.
+- **Login proof:** Argon2id (64 MiB, 3 passes; 0.57 s on the laptop) over the password, salted
+  with SHA-256 of the username, then HKDF label `login-proof`. The server stores SHA-256 of the
+  proof. HKDF label `data-key-wrap` is reserved for step 3.
+- **Session cookie** `__Host-session`: HttpOnly, Secure, SameSite=Strict, Path=/. The server
+  keeps only the token's SHA-256. Plain `session` cookie over http on a LAN address (dev only).
+- **Writes need a same-origin `Origin` header** (two loopback hosts allowed for the Vite proxy).
+- **One device, one account's data.** `syncMeta.owner` records whose; sign-out uploads first,
+  warns if anything could not go, then erases the device. Data from before accounts prompts
+  "Keep it / Erase it"; another account's data prompts "Erase and continue / Back".
+- **Admin is command-line only** (`node scripts/admin.mjs --remote|--local …`): list,
+  reset-password (prints a temporary password once, ends every session), sign-out, disable,
+  enable, claim-legacy. Runs through the admin's own wrangler login; nothing on the web.
+
+Verified 2026-11-04: 41 Worker tests (4 of them cross-user attacks) and 6 derivation tests; 19
+HTTP checks against a local Worker (no-session 401s, forged and replayed tokens, cross-origin and
+origin-less POSTs, identical errors for unknown user and wrong password, the lock-out, isolation
+over the wire); and 8 browser flows (sign-up, keep pre-accounts data, refuse another account's,
+sign back in, sign out erases the device and kills the session).
+
+### Still open
+
 - **Demo account** — deferred by the user ("later").
-- Smaller details not yet put to the user: session length, minimum password length, rate-limit
-  thresholds, what the recovery-code screen says. To be proposed before building, not assumed.
+- **Step 2 (hardening) and step 3 (encryption)** — not started.
