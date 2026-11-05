@@ -24,6 +24,22 @@ because "Keep it" uploads just what changed since a device's last sync. Nothing 
 **If you forget your password:** `node scripts/admin.mjs --remote reset-password <username>`
 prints a temporary one. Sign in with it, then Plan → Account → Change password.
 
+## 🟡 Security switches on GitHub (2 minutes, when you go public)
+
+Hardening (2026-11-05) added CI, CodeQL and Dependabot in `.github/`. A few protections are
+repository settings, which only you can turn on. In the repo on github.com: **Settings → Advanced Security**
+(called "Code security" on older layouts):
+
+1. **Private vulnerability reporting** → Enable. `SECURITY.md` tells people to use it.
+2. **Dependabot alerts** and **Dependabot security updates** → Enable.
+3. **Secret scanning** and **Push protection** → Enable. These block a push that contains an API key.
+4. **Code scanning** works once the repo is public. The CodeQL workflow is already there.
+
+Then **Settings → General → Danger Zone → Change visibility → Public**, when you're ready.
+
+After your next push, the **Actions** tab shows the CI run. A green tick means the code
+typechecked, linted, passed every test, built, and had no serious dependency advisories.
+
 ## 🟡 Still waiting on you (neither blocks anything)
 
 ### Your real 2500-calorie targets
@@ -127,10 +143,11 @@ the data. Fine while it is just you; worth fixing before sharing the address.
 
 ## Quick status
 
-Everything that ever blocked work is done. Two rows remain, neither blocking.
+Everything that ever blocked work is done. Three rows remain, none blocking.
 
 | Item                       | Status                                               |
 | -------------------------- | ---------------------------------------------------- |
+| GitHub security switches   | ⬜ four toggles and the visibility, above            |
 | Your real 2500-cal targets | ⬜ FDA defaults in use — editable on the Plan screen |
 | Install on your phone      | ⬜ open the Worker URL → Add to Home Screen          |
 | Open Food Facts contact    | ⏸️ deferred by choice — gates barcode scanning only  |

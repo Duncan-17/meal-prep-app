@@ -148,12 +148,13 @@ export function d1SyncStore(db: D1Database): SyncStore {
       const row = await db
         .prepare(
           `SELECT COUNT(*) AS records, COALESCE(SUM(deleted), 0) AS deleted,
-                  COALESCE(MAX(rev), 0) AS latestRev
+                  COALESCE(MAX(rev), 0) AS latestRev,
+                  COALESCE(SUM(LENGTH(data)), 0) AS bytes
            FROM user_records WHERE user_id = ?1`,
         )
         .bind(userId)
         .first<SyncStats>();
-      return row ?? { records: 0, deleted: 0, latestRev: 0 };
+      return row ?? { records: 0, deleted: 0, latestRev: 0, bytes: 0 };
     },
 
     async changesSince(userId: string, since: number, limit: number): Promise<StoredRecord[]> {
@@ -312,6 +313,9 @@ export function d1AuthStore(db: D1Database): AuthStore {
     },
     async clearAttempts(key) {
       await db.prepare('DELETE FROM auth_attempts WHERE key = ?1').bind(key).run();
+    },
+    async deleteStaleAttempts(before) {
+      await db.prepare('DELETE FROM auth_attempts WHERE window_start < ?1').bind(before).run();
     },
   };
 }

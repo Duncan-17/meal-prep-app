@@ -23,7 +23,7 @@ settled with the user; if one looks wrong, raise it rather than quietly changing
 
 **All eight phases complete and deployed. Now in feedback-and-refinement.**
 
-`tsc -b` clean across three projects, ESLint clean, **581 tests** across 30 files.
+`tsc -b` clean across three projects, ESLint clean, **594 tests** across 30 files.
 
 Live on Cloudflare as a **Worker with static assets** (not Pages — see Deploying below), built
 from `main` on every push.
@@ -74,6 +74,9 @@ Roughly in order, all in response to using the thing:
 - **Accounts (2026-11-04)** — username + password sign-in, open sign-up, every API route but
   health behind a session, sync isolated per user, an Account section on the Plan screen, and an
   admin script for resets. PLAN.md §11 step 1. Hardening and encryption (steps 2–3) not built.
+- **Hardening (2026-11-05)**: CSP and security headers, body caps, sync validation and a
+  per-account quota, a USDA rate limit, CI + CodeQL + Dependabot, THREAT_MODEL.md and SECURITY.md.
+  PLAN.md §11 step 2.
 - **Experiment tab — scratchpads (2026-10-08)** — a fifth tab of saved scratchpads: queue USDA
   foods, your own Foods and recipes (whole batches), set amounts, pick a period, and see either
   the **Average day** or **Day by day** — food dragged from a "Not placed" tray onto a dateless run
@@ -174,6 +177,24 @@ Roughly in order, all in response to using the thing:
   - **Signing out erases the device** (`eraseThisDevice`); `syncMeta.owner` says whose data a
     device holds. `redownloadEverything` spreads the old meta so `owner` survives — keep it so.
   - **Admin is command-line only, by the user's decision.** Never add an admin route or screen.
+- **Hardening (2026-11-05, PLAN.md §11 step 2) — do not loosen without a reason:**
+  - **The CSP lives in `public/_headers`**, because pages never pass through the Worker. Its
+    one relaxation is `'wasm-unsafe-eval'` for Argon2id. Never add `'unsafe-inline'` or
+    `'unsafe-eval'`; a new host goes into `connect-src` by name. After any change, walk the app
+    in a browser with a `securitypolicyviolation` listener (the check is described in PLAN.md).
+  - **`parsePush` refuses timestamps more than a day ahead** of the server clock. Without that,
+    a record stamped in the year 9999 wins every later edit forever, given "later edit wins".
+  - **Ids must match `[A-Za-z0-9_.:-]{1,64}`.** Every real id fits: numeric ids, all 81
+    nutrient keys, dates, and `settings` / `plan`. A new table with a different id shape must
+    widen it, or its pushes fail.
+  - **Bodies are read through `readJson`, never `request.json()`.** It counts the stream, so
+    a chunked body with no declared length cannot get past the cap.
+  - **THREAT_MODEL.md must change with the code.** A control it claims and the code lacks is
+    worse than no document.
+  - **CodeQL only runs usefully on a public repo** (code scanning is free only there).
+  - **npm 11 blocks install scripts by default** (esbuild, workerd). Both still work without
+    them, verified 2026-11-05. If a build ever fails on a missing binary, that is the first
+    suspect.
   - **Sign-ups are capped at 5 per IP per hour**, so `scripts/screenshot.mjs` clears that counter
     in the LOCAL database before each run. It must never touch `--remote`.
 - **History is snapshotted, never back-filled.** Meal logs written before item colours existed
@@ -258,13 +279,13 @@ device that starts empty downloads everything. Reopen only if it recurs with syn
 
 **Open questions the user has not answered:**
 
-| Question                | Why it is open                                                                                                                                                                                                                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile.                                                                                                                                                                         |
-| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                                                                                                                                                                                                    |
-| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                                                                                                                                                                                                |
-| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                                                                                                                                                                                                 |
-| Going public + security | PLAN.md §11. **Step 1 (accounts) live 2026-11-04**, confirmed by the user on phone and laptop. `claim-legacy duncan` run the same night; no ownerless rows remain. Steps 2 (hardening) and 3 (E2EE with a recovery code) not started. Accounts are live, so the repo can go public whenever the user chooses. Demo account deferred. |
+| Question                | Why it is open                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile.                                                                                                                                                                                           |
+| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                                                                                                                                                                                                                      |
+| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                                                                                                                                                                                                                  |
+| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                                                                                                                                                                                                                   |
+| Going public + security | PLAN.md §11. **Step 1 (accounts) live 2026-11-04**, confirmed by the user on phone and laptop. `claim-legacy duncan` run the same night; no ownerless rows remain. Step 2 (hardening) built 2026-11-05. Step 3 (E2EE with a recovery code) not started. Accounts are live, so the repo can go public whenever the user chooses. Demo account deferred. |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 
@@ -494,6 +515,7 @@ src/
 worker/
   index.ts     The Cloudflare Worker: /api/auth, the session gate, /api/usda,
                /api/sync, plus the ASSETS binding that serves dist/. Holds the API key.
+               Security headers on every API reply; size-capped body reads.
   authLogic.ts Accounts, sessions, rate limits — storage-agnostic and tested.
   syncLogic.ts The server's sync rules, per user, storage-agnostic and tested.
   d1Stores.ts  The D1 versions of both stores, and the self-creating schema.

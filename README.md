@@ -2,7 +2,7 @@
 
 A meal-planning web app I designed for my own batch cooking. You build recipes from USDA food data, schedule cooks on a calendar, track leftovers as fridge stock, and log what you eat against a full nutrient plan, not just calories.
 
-**Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare, with per-user accounts. 581 automated tests passing.
+**Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare, with per-user accounts. 594 automated tests passing, checked by CI on every push.
 
 <p align="center">
   <img src="docs/screenshots/diary.png" width="260" alt="Diary screen with calorie bar and macro rings">
@@ -44,13 +44,13 @@ Decisions I'm most proud of:
 - **Local-first, then sync.** Every device keeps a full offline copy (IndexedDB) and syncs through a Cloudflare D1 database, so it works in a grocery store with no signal.
 - **The API key never reaches the browser.** USDA lookups go through a Cloudflare Worker proxy that holds the key as a secret.
 - **The server never sees a password.** The browser stretches it with Argon2id and sends only a derived proof; sessions are server-side and revocable, sign-in is rate-limited per user and per IP, and every user's data is keyed by their account so one user can't read or overwrite another's. Tests attack that isolation directly.
+- **Hardened like it's public, because it is.** A strict Content Security Policy, every sync upload validated and size-capped with a per-account quota, rate-limited USDA lookups, and CI that runs CodeQL and fails on serious dependency advisories. What it defends against, and where that stops, is in [THREAT_MODEL.md](THREAT_MODEL.md).
 
 What I learned: how to scope a real project into phases, how to write specs precise enough that an AI tool builds the right thing, and how to verify AI-written code with tests and real use rather than trusting it.
 
 ## Roadmap
 
-- **Security hardening** — strict CSP and security headers, CI with dependency and code scanning, a written threat model (next up)
-- **End-to-end encryption** of synced data, with a recovery code
+- **End-to-end encryption** of synced data, with a recovery code (next up)
 - Suggestions in the Experiment tab: what to eat for what the week is missing
 
 ## Running it
@@ -83,4 +83,6 @@ Cloudflare Worker with static assets
 
 - [PLAN.md](PLAN.md): architecture, data model, and the design decisions and why
 - [SETUP.md](SETUP.md): accounts, keys, and deployment setup
+- [THREAT_MODEL.md](THREAT_MODEL.md): what's protected, from whom, how, and the known limits
+- [SECURITY.md](SECURITY.md): how to report a vulnerability
 - [CLAUDE.md](CLAUDE.md): working notes for Claude Code sessions (conventions and current status)

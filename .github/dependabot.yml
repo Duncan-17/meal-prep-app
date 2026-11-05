@@ -1,0 +1,27 @@
+# Dependabot opens pull requests to update dependencies; CI checks each one.
+#
+# `cooldown` waits a few days after a release before proposing it. Most
+# malicious npm releases are caught and pulled within hours, so not being
+# first is a cheap defence against a hijacked package.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for routine dev-tool bumps instead of a dozen.
+      dev-tools:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 5

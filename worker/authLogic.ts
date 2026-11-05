@@ -47,6 +47,14 @@ export const LOGIN_FAILURES_PER_IP = 20;
 export const SIGNUP_WINDOW_MS = 60 * 60_000;
 /** Account creations attempted per IP per hour. */
 export const SIGNUPS_PER_IP = 5;
+/**
+ * USDA lookups per signed-in user per minute (step 2, 2026-11-04). Searching is
+ * debounced and one detail fetch follows a pick, so a person typing flat out
+ * makes perhaps ten a minute; this only stops a script spending the shared
+ * USDA key's hourly allowance.
+ */
+export const USDA_WINDOW_MS = 60_000;
+export const USDA_REQUESTS_PER_USER = 60;
 
 /** 3–32 characters: lowercase letters, digits, `_ . -`, starting with a letter or digit. */
 export const USERNAME_PATTERN = /^[a-z0-9][a-z0-9_.-]{2,31}$/;
@@ -95,6 +103,8 @@ export interface AuthStore {
   attempts(key: string): Promise<AttemptWindow | null>;
   setAttempts(key: string, window: AttemptWindow): Promise<void>;
   clearAttempts(key: string): Promise<void>;
+  /** Forget every window that started before `before` — they can no longer limit anything. */
+  deleteStaleAttempts(before: number): Promise<void>;
 }
 
 /** A refusal the client may see. `status` is the HTTP status to send. */
@@ -224,6 +234,22 @@ async function countAttempt(
   }
 }
 
+/**
+ * Count one request against `key`, refusing it with a 429 once `limit` have
+ * been made inside the window. For limits on every request, not only failures.
+ */
+export async function rateLimit(
+  store: AuthStore,
+  key: string,
+  limit: number,
+  windowMs: number,
+  now: number,
+  message: string,
+): Promise<void> {
+  await assertUnderLimit(store, key, limit, windowMs, now, message);
+  await countAttempt(store, key, windowMs, now);
+}
+
 const TOO_MANY_LOGINS = 'Too many failed sign-ins. Wait a minute and try again.';
 
 // ── Operations ──────────────────────────────────────────────────────────────
@@ -321,6 +347,7 @@ export async function logIn(
   await store.clearAttempts(userKey);
   // Opportunistic tidy-up: logins are rare enough that this costs nothing.
   await store.deleteExpiredSessions(context.now);
+  await store.deleteStaleAttempts(context.now - SIGNUP_WINDOW_MS); // the longest window
   return startSession(store, user, context);
 }
 
@@ -448,5 +475,10 @@ export class MemoryAuthStore implements AuthStore {
   }
   async clearAttempts(key: string) {
     this.attemptWindows.delete(key);
+  }
+  async deleteStaleAttempts(before: number) {
+    for (const [key, window] of this.attemptWindows) {
+      if (window.windowStart < before) this.attemptWindows.delete(key);
+    }
   }
 }

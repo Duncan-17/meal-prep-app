@@ -1,0 +1,58 @@
+# Every push and pull request: typecheck, lint, test, build, and audit the
+# dependencies. Cloudflare deploys `main` on its own; this is the check that
+# tells you whether what it deployed was sound.
+#
+# Actions are pinned to full commit SHAs, not tags: a tag can be moved to
+# different code by whoever controls the action's repo, a SHA cannot.
+# Dependabot (.github/dependabot.yml) keeps the pins current.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The token this workflow gets can read the repo and nothing else.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install (exactly what package-lock.json says)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Typecheck and build
+        run: npm run build
+
+      # Fails on any HIGH or CRITICAL advisory in any dependency. The moderate
+      # ones left (inside vite-plugin-pwa's build tooling; no fix but a
+      # downgrade) are explained in THREAT_MODEL.md.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      # What actually ships to the browser must be clean at every level.
+      - name: Audit shipped dependencies
+        run: npm audit --omit=dev --audit-level=low

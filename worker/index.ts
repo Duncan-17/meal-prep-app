@@ -31,22 +31,30 @@
  * signed-in session (PLAN.md §11) — which also stops the USDA proxy being free
  * for anyone who finds the address. Rules in `authLogic.ts`, storage in
  * `d1Stores.ts`.
+ *
+ * Hardening (step 2, 2026-11-04): every API reply carries security headers
+ * (`withSecurityHeaders`; the static pages get theirs from `public/_headers`),
+ * request bodies are size-capped before parsing, and USDA lookups are
+ * rate-limited per user.
  */
 
 import {
   AuthError,
+  USDA_REQUESTS_PER_USER,
+  USDA_WINDOW_MS,
   authenticate,
   changePassword,
   logIn,
   logOut,
   logOutOthers,
+  rateLimit,
   signUp,
   type Authenticated,
   type NewSession,
   type RequestContext,
 } from './authLogic';
 import { d1AuthStore, d1SyncStore, ensureSchema } from './d1Stores';
-import { SyncRequestError, parsePush, pull } from './syncLogic';
+import { MAX_PUSH_BYTES, SyncRequestError, parsePush, pull, push } from './syncLogic';
 
 interface Env {
   /** Cloudflare secret in production; `.dev.vars` locally. Never sent to the client. */
@@ -74,6 +82,9 @@ const MAX_PAGE_SIZE = 50;
 /** The FDC datasets worth searching, best-quality first. */
 const DEFAULT_DATA_TYPES = ['Foundation', 'SR Legacy', 'Survey (FNDDS)', 'Branded'];
 
+/** Sign-in bodies are a username and a 44-character proof or two. */
+const MAX_AUTH_BODY_BYTES = 16 * 1024;
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -84,87 +95,114 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    const route = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
-
-    // A write must come from this app's own pages. The session cookie is
-    // SameSite=Strict, which already stops other sites sending it; this is a
-    // second lock on the same door.
-    if (request.method !== 'GET' && request.method !== 'HEAD' && !sameOrigin(request, url)) {
-      return noStoreJson({ error: 'Cross-origin request refused.' }, 403);
-    }
-
-    if (route === 'health' && request.method === 'GET') {
-      // Reports whether secrets are configured WITHOUT revealing them — this
-      // is how to check the key is set without ever reading `.dev.vars`.
-      return json({
-        ok: true,
-        usdaKeyConfigured: Boolean(env.USDA_API_KEY),
-        offContactConfigured: Boolean(env.OFF_USER_AGENT),
-        syncConfigured: Boolean(env.DB),
-      });
-    }
-
-    if (env.DB === undefined) {
-      return noStoreJson(
-        {
-          error: 'The server has no database.',
-          detail: 'No D1 database is bound as DB in wrangler.toml, so nobody can sign in.',
-        },
-        503,
-      );
-    }
-    await ensureSchema(env.DB);
-
-    if (route.startsWith('auth/')) {
-      return handleAuth(route, request, url, env.DB);
-    }
-
-    // Everything below needs a signed-in user.
-    const auth = await authenticate(d1AuthStore(env.DB), readSessionCookie(request), Date.now());
-    if (auth === null) {
-      return noStoreJson({ error: 'Sign in first.' }, 401);
-    }
-
-    if (route === 'sync') {
-      return withRenewal(await handleSync(request, url, env.DB, auth.user.id), request, auth, url);
-    }
-
-    if (request.method !== 'GET') {
-      return json({ error: 'Only GET is supported.' }, 405);
-    }
-
-    const waitUntil = (promise: Promise<unknown>) => ctx.waitUntil(promise);
-
-    try {
-      if (route === 'usda/search') {
-        return await handleUsdaSearch(url, env, waitUntil);
-      }
-
-      const foodMatch = /^usda\/food\/(\d+)$/.exec(route);
-      if (foodMatch?.[1] !== undefined) {
-        return await handleUsdaFood(foodMatch[1], env, waitUntil);
-      }
-
-      if (route.startsWith('off/')) {
-        // Deferred by choice — SETUP.md item 8. Kept as an explicit 501 so the
-        // client gets a clear reason instead of a confusing 404.
-        return json(
-          {
-            error: 'Open Food Facts is not enabled.',
-            detail:
-              'OFF_USER_AGENT is not configured. Open Food Facts asks callers to identify themselves, so lookups stay disabled until a contact address is set.',
-          },
-          501,
-        );
-      }
-
-      return json({ error: `Unknown API route: ${route}` }, 404);
-    } catch (error) {
-      // Never let an upstream message leak the key into a client-visible body.
-      return json({ error: 'Upstream request failed.', detail: redact(String(error)) }, 502);
-    }
+    return withSecurityHeaders(await handleApi(request, url, env, ctx), url);
   },
 } satisfies ExportedHandler<Env>;
+
+async function handleApi(
+  request: Request,
+  url: URL,
+  env: Env,
+  ctx: ExecutionContext,
+): Promise<Response> {
+  const route = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
+
+  // A write must come from this app's own pages. The session cookie is
+  // SameSite=Strict, which already stops other sites sending it; this is a
+  // second lock on the same door.
+  if (request.method !== 'GET' && request.method !== 'HEAD' && !sameOrigin(request, url)) {
+    return noStoreJson({ error: 'Cross-origin request refused.' }, 403);
+  }
+
+  if (route === 'health' && request.method === 'GET') {
+    // Reports whether secrets are configured WITHOUT revealing them — this
+    // is how to check the key is set without ever reading `.dev.vars`.
+    return json({
+      ok: true,
+      usdaKeyConfigured: Boolean(env.USDA_API_KEY),
+      offContactConfigured: Boolean(env.OFF_USER_AGENT),
+      syncConfigured: Boolean(env.DB),
+    });
+  }
+
+  if (env.DB === undefined) {
+    return noStoreJson(
+      {
+        error: 'The server has no database.',
+        detail: 'No D1 database is bound as DB in wrangler.toml, so nobody can sign in.',
+      },
+      503,
+    );
+  }
+  await ensureSchema(env.DB);
+
+  if (route.startsWith('auth/')) {
+    return handleAuth(route, request, url, env.DB);
+  }
+
+  // Everything below needs a signed-in user.
+  const auth = await authenticate(d1AuthStore(env.DB), readSessionCookie(request), Date.now());
+  if (auth === null) {
+    return noStoreJson({ error: 'Sign in first.' }, 401);
+  }
+
+  if (route === 'sync') {
+    return withRenewal(await handleSync(request, url, env.DB, auth.user.id), request, auth, url);
+  }
+
+  if (request.method !== 'GET') {
+    return json({ error: 'Only GET is supported.' }, 405);
+  }
+
+  const waitUntil = (promise: Promise<unknown>) => ctx.waitUntil(promise);
+
+  try {
+    if (route.startsWith('usda/')) {
+      // Counted per account, cache hits included: the point is to bound
+      // what one account can make the Worker do, not only upstream calls.
+      await rateLimit(
+        d1AuthStore(env.DB),
+        `usda:${auth.user.id}`,
+        USDA_REQUESTS_PER_USER,
+        USDA_WINDOW_MS,
+        Date.now(),
+        'Too many food lookups. Wait a minute and try again.',
+      );
+    }
+
+    if (route === 'usda/search') {
+      return await handleUsdaSearch(url, env, waitUntil);
+    }
+
+    const foodMatch = /^usda\/food\/(\d+)$/.exec(route);
+    if (foodMatch?.[1] !== undefined) {
+      return await handleUsdaFood(foodMatch[1], env, waitUntil);
+    }
+
+    if (route.startsWith('off/')) {
+      // Deferred by choice — SETUP.md item 8. Kept as an explicit 501 so the
+      // client gets a clear reason instead of a confusing 404.
+      return json(
+        {
+          error: 'Open Food Facts is not enabled.',
+          detail:
+            'OFF_USER_AGENT is not configured. Open Food Facts asks callers to identify themselves, so lookups stay disabled until a contact address is set.',
+        },
+        501,
+      );
+    }
+
+    return json({ error: `Unknown API route: ${route}` }, 404);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return json({ error: error.message }, error.status, {
+        'retry-after': String(error.retryAfterSeconds ?? 60),
+      });
+    }
+    // Never let an upstream message leak the key into a client-visible body.
+    return json({ error: 'Upstream request failed.', detail: redact(String(error)) }, 502);
+  }
+}
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 
@@ -191,7 +229,8 @@ async function handleAuth(
     }
 
     if (request.method !== 'POST') return noStoreJson({ error: 'Use POST.' }, 405);
-    const body: unknown = await request.json().catch(() => null);
+    const body = await readJson(request, MAX_AUTH_BODY_BYTES);
+    if (body === TOO_LARGE) return noStoreJson({ error: 'Request too large.' }, 413);
 
     if (route === 'auth/signup') {
       return sessionResponse(await signUp(store, body, context), url, 201);
@@ -323,6 +362,76 @@ function sameOrigin(request: Request, url: URL): boolean {
   return loopback(parsed.hostname) && loopback(url.hostname);
 }
 
+// ── Request bodies and response headers ─────────────────────────────────────
+
+const TOO_LARGE = Symbol('too large');
+
+/**
+ * Parse a JSON body, reading at most `maxBytes` of it. The declared length is
+ * checked first, but not trusted: a chunked body declares none, so the stream
+ * is counted as it arrives and abandoned the moment it passes the cap. Bad
+ * JSON comes back as null, for the caller's own validation to refuse.
+ */
+async function readJson(request: Request, maxBytes: number): Promise<unknown> {
+  const declared = Number(request.headers.get('content-length') ?? '0');
+  if (declared > maxBytes) return TOO_LARGE;
+  if (request.body === null) return null;
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return TOO_LARGE;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+/*
+ * Every API reply is data, never a page, so its policy forbids everything: if
+ * a browser were ever tricked into rendering one as HTML, nothing in it could
+ * run or load. `nosniff` stops it being guessed into a script or stylesheet;
+ * CORP stops other sites embedding it. HSTS only over https — browsers ignore
+ * it on http, and localhost must stay reachable.
+ *
+ * The static pages get their own, page-shaped policy from public/_headers.
+ */
+const API_SECURITY_HEADERS: Record<string, string> = {
+  'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'referrer-policy': 'no-referrer',
+  'cross-origin-resource-policy': 'same-origin',
+};
+
+function withSecurityHeaders(response: Response, url: URL): Response {
+  // Re-wrapped because a Response from the cache or fetch() has immutable headers.
+  const secured = new Response(response.body, response);
+  for (const [name, value] of Object.entries(API_SECURITY_HEADERS)) {
+    secured.headers.set(name, value);
+  }
+  if (url.protocol === 'https:') {
+    secured.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
+  }
+  return secured;
+}
+
 // ── Sync ────────────────────────────────────────────────────────────────────
 
 async function handleSync(
@@ -346,14 +455,20 @@ async function handleSync(
     }
 
     if (request.method === 'POST') {
-      const changes = parsePush(await request.json().catch(() => null));
-      const written = await store.upsertNewer(userId, changes);
+      const body = await readJson(request, MAX_PUSH_BYTES);
+      if (body === TOO_LARGE) {
+        return noStoreJson({ error: `Push larger than ${MAX_PUSH_BYTES / 1024 / 1024} MB.` }, 413);
+      }
+      const changes = parsePush(body);
+      const written = await push(store, userId, changes);
       return noStoreJson({ received: changes.length, written });
     }
 
     return noStoreJson({ error: 'Sync takes GET or POST.' }, 405);
   } catch (error) {
-    if (error instanceof SyncRequestError) return noStoreJson({ error: error.message }, 400);
+    if (error instanceof SyncRequestError) {
+      return noStoreJson({ error: error.message }, error.status);
+    }
     console.error('sync failed', error);
     return noStoreJson({ error: 'Sync failed.' }, 500);
   }

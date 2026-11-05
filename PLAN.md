@@ -632,11 +632,11 @@ answers:
 
 ---
 
-## 11. Going public: accounts, hardening, end-to-end encryption — step 1 BUILT 2026-11-04
+## 11. Going public: accounts, hardening, end-to-end encryption — steps 1–2 BUILT 2026-11-04/05
 
 The user wants the repository public on GitHub for recruiters, and wants the app multi-user with
-security work worth showing (they are a CS cybersecurity major). **Step 1 (accounts and
-per-user isolation) is built; hardening and encryption are not.**
+security work worth showing (they are a CS cybersecurity major). **Steps 1 (accounts and
+per-user isolation) and 2 (hardening) are built; encryption is not.**
 The user's answers are under "Decided"; the sketch below predates them where they differ.
 
 ### Why it cannot simply be made public today
@@ -797,7 +797,54 @@ origin-less POSTs, identical errors for unknown user and wrong password, the loc
 over the wire); and 8 browser flows (sign-up, keep pre-accounts data, refuse another account's,
 sign back in, sign out erases the device and kills the session).
 
+### Step 2 — BUILT 2026-11-05: hardening
+
+The user said "keep moving forward". The numbers below are mine, set far above measured real use
+(largest live record 3.7 kB, whole account 59 records), and easy to change.
+
+- **Security headers.** Static pages get theirs from `public/_headers`, which Cloudflare's asset
+  server applies:
+  - a strict CSP: `default-src 'self'`, with `'wasm-unsafe-eval'` only for Argon2id; no inline
+    script or style;
+  - `frame-ancestors 'none'`, HSTS, `nosniff`, `Referrer-Policy: no-referrer`, COOP/CORP;
+  - a Permissions-Policy that turns the camera off. Barcode scanning will need `camera=(self)`.
+
+  API replies get `default-src 'none'` from `withSecurityHeaders` in `worker/index.ts`.
+
+- **Body caps before parsing:** 4 MB for a sync push and 16 kB for sign-in. The stream is
+  counted, so a chunked body with no declared length is capped too.
+- **Sync validation** in `parsePush`:
+  - ids must match `[A-Za-z0-9_.:-]{1,64}`;
+  - timestamps must not be negative, nor more than a day ahead of the server clock (a record
+    stamped in the year 9999 would win every later edit forever);
+  - each record is at most 256 kB.
+- **Per-account quota** in `push`: 20,000 records and 50 MB. Deletions always pass. Refusals
+  return 413.
+- **USDA rate limit:** 60 lookups per account per minute (`rateLimit` in `authLogic.ts`). Old
+  windows are pruned on sign-in.
+- **CI** (`.github/workflows/ci.yml`):
+  - runs lint, test, typecheck and build, then `npm audit --audit-level=high`, then a zero-tolerance
+    audit of shipped dependencies;
+  - actions are pinned to commit SHAs, and the token is read-only.
+- **CodeQL** (`codeql.yml`) scans TypeScript and the workflows with the security-extended queries.
+  It works only once the repo is public.
+- **Dependabot** checks npm and actions weekly, with a 5-day cooldown.
+- **Dependencies:** `npm audit fix`, and Vitest 3 → 5, which cleared both criticals. 12
+  moderate/low remain, all inside vite-plugin-pwa's build tooling, explained in THREAT_MODEL.md.
+- **`THREAT_MODEL.md`** covers assets, attackers, controls by area and ten known limits.
+  **`SECURITY.md`** asks for reports through GitHub's private vulnerability reporting.
+
+Verified 2026-11-05:
+
+- 594 tests, 13 of them new.
+- Over the wire against a local Worker, each refused with the right status:
+  - a year-9999 timestamp and an id with markup in it (400);
+  - a 300 kB record, a 5 MB body, the same body chunked, and a 20 kB sign-in (413);
+  - the 61st USDA call in a minute (429, with Retry-After).
+- In Chromium under the production CSP, at 390 and 1280 px: sign-up, every screen, a food search
+  and service worker registration. Zero CSP violations, zero console errors.
+
 ### Still open
 
 - **Demo account** — deferred by the user ("later").
-- **Step 2 (hardening) and step 3 (encryption)** — not started.
+- **Step 3 (encryption)** — not started.

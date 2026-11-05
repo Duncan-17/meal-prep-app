@@ -9,6 +9,9 @@ import {
   SESSION_SLIDE_AFTER_MS,
   SESSION_TTL_MS,
   SIGNUPS_PER_IP,
+  SIGNUP_WINDOW_MS,
+  USDA_REQUESTS_PER_USER,
+  USDA_WINDOW_MS,
   authenticate,
   changePassword,
   constantTimeEqual,
@@ -17,6 +20,7 @@ import {
   logOutOthers,
   normalizeUsername,
   parseProof,
+  rateLimit,
   sha256Hex,
   signUp,
 } from './authLogic';
@@ -167,6 +171,28 @@ describe('rate limits', () => {
       await signUp(store, { username: `user${i}`, proof: RIGHT }, ctx());
     }
     await expectAuthError(signUp(store, { username: 'onemore', proof: RIGHT }, ctx()), 429);
+  });
+
+  it(`allows ${USDA_REQUESTS_PER_USER} USDA lookups a minute per key, then refuses until the window passes`, async () => {
+    const store = new MemoryAuthStore();
+    const limit = (key: string, now: number) =>
+      rateLimit(store, key, USDA_REQUESTS_PER_USER, USDA_WINDOW_MS, now, 'slow down');
+    for (let i = 0; i < USDA_REQUESTS_PER_USER; i += 1) await limit('usda:a', 1000);
+    const refused = await expectAuthError(limit('usda:a', 1000), 429);
+    expect(refused.retryAfterSeconds).toBe(USDA_WINDOW_MS / 1000);
+    // Another account is unaffected; the same one recovers a window later.
+    await expect(limit('usda:b', 1000)).resolves.toBeUndefined();
+    await expect(limit('usda:a', 1000 + USDA_WINDOW_MS)).resolves.toBeUndefined();
+  });
+
+  it('forgets rate-limit windows too old to matter on the next login', async () => {
+    const store = new MemoryAuthStore();
+    await signUp(store, { username: 'duncan', proof: RIGHT }, ctx());
+    await store.setAttempts('usda:old', { windowStart: 0, count: 3 });
+    await store.setAttempts('usda:fresh', { windowStart: ctx().now, count: 3 });
+    await logIn(store, { username: 'duncan', proof: RIGHT }, ctx({ now: SIGNUP_WINDOW_MS + 5 }));
+    expect(store.attemptWindows.has('usda:old')).toBe(false);
+    expect(store.attemptWindows.has('usda:fresh')).toBe(true);
   });
 });
 
