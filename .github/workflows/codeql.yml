@@ -2,8 +2,9 @@
 # and the like in the TypeScript, and for unsafe patterns in these workflows.
 # Findings appear under the repo's Security → Code scanning tab.
 #
-# Code scanning is free on PUBLIC repositories only, so this does nothing
-# useful while the repo is private; it starts working the day it goes public.
+# Code scanning is free on PUBLIC repositories only. While the repo is private
+# the analysis job is skipped, so a run shows grey rather than red; it starts
+# working the day the repo goes public, with no change needed here.
 
 name: CodeQL
 
@@ -18,7 +19,24 @@ permissions:
   contents: read
 
 jobs:
+  # Asked of the API rather than read from the event, because a scheduled
+  # run's event carries no repository details to read.
+  visibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      private: ${{ steps.check.outputs.private }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "private=$(gh api "repos/$GITHUB_REPOSITORY" --jq .private)" >> "$GITHUB_OUTPUT"
+
   analyze:
+    needs: visibility
+    # Skipped (not failed) while the repo is private: code scanning would
+    # refuse the upload, and GitHub would email a failure every week.
+    if: needs.visibility.outputs.private == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

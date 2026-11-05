@@ -191,7 +191,9 @@ Roughly in order, all in response to using the thing:
     a chunked body with no declared length cannot get past the cap.
   - **THREAT_MODEL.md must change with the code.** A control it claims and the code lacks is
     worse than no document.
-  - **CodeQL only runs usefully on a public repo** (code scanning is free only there).
+  - **CodeQL only runs usefully on a public repo** (code scanning is free only there). Its
+    `visibility` job asks the API and skips the analysis while private; the 2026-11-05 runs
+    failed (and emailed the user) before that guard existed.
   - **npm 11 blocks install scripts by default** (esbuild, workerd). Both still work without
     them, verified 2026-11-05. If a build ever fails on a missing binary, that is the first
     suspect.
