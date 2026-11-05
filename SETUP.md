@@ -12,21 +12,15 @@ What follows is a record of how it was set up, plus the two things still genuine
 
 ---
 
-## 🔴 Accounts — what to do when you push (built 2026-11-04)
+## ✅ Accounts — live (built and deployed 2026-11-04)
 
-Pushing deploys sign-in. The moment it is live, the app shows a sign-in screen on every device,
-and your existing data is waiting in the database, owned by nobody until you claim it. In order:
+Signed up, kept the device's data, signed in on phone and laptop at once, and checked that
+wrong and too-short passwords are refused — all confirmed by you on 2026-11-04.
 
-1. **Once, on this computer: `npx wrangler login`.** The admin script works through your
-   Cloudflare login. (Deploys come from GitHub, so this terminal may never have logged in.)
-2. **On the laptop:** open the app → **New account** → choose a username and password.
-   It will say **"This device already has data"** → **Keep it**.
-3. **Straight away, in a terminal here:**
-   `node scripts/admin.mjs --remote claim-legacy <your-username>`
-   That hands everything synced before accounts to your account.
-4. **On the phone:** **Sign in** with the same username and password → **Keep it**.
-5. Check: `node scripts/admin.mjs --remote list` shows your account with its records, and the
-   line about records belonging to nobody is gone.
+**Optional tidy-up:** the copy of your data from before accounts still sits in the database owned
+by nobody (your devices re-uploaded everything into your account, so nothing depends on it). To
+fold it in and clear it: `npx wrangler login` once, then
+`node scripts/admin.mjs --remote claim-legacy <your-username>`. Your newer edits win over it.
 
 **If you forget your password:** `node scripts/admin.mjs --remote reset-password <username>`
 prints a temporary one. Sign in with it, then Plan → Account → Change password.
@@ -134,11 +128,10 @@ the data. Fine while it is just you; worth fixing before sharing the address.
 
 ## Quick status
 
-Everything that ever blocked work is done. Three rows remain, none of them blocking.
+Everything that ever blocked work is done. Two rows remain, neither blocking.
 
 | Item                       | Status                                               |
 | -------------------------- | ---------------------------------------------------- |
-| Accounts                   | 🔴 built — do the five steps above after pushing     |
 | Your real 2500-cal targets | ⬜ FDA defaults in use — editable on the Plan screen |
 | Install on your phone      | ⬜ open the Worker URL → Add to Home Screen          |
 | Open Food Facts contact    | ⏸️ deferred by choice — gates barcode scanning only  |
