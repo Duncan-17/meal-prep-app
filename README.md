@@ -5,9 +5,10 @@ A meal-planning web app I designed for my own batch cooking. You build recipes f
 **Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare, with per-user accounts. 594 automated tests passing, checked by CI on every push.
 
 <p align="center">
-  <img src="docs/screenshots/diary.png" width="260" alt="Diary screen with calorie bar and macro rings">
-  <img src="docs/screenshots/calendar.png" width="260" alt="Calendar with planned cooks and meals eaten">
-  <img src="docs/screenshots/trends.png" width="260" alt="Trends view with daily macros and weekly totals">
+  <img src="docs/screenshots/diary.png" width="49%" alt="Diary: today's calories against the plan, macro rings, and what was eaten from the fridge">
+  <img src="docs/screenshots/calendar.png" width="49%" alt="Calendar trends view: each day's carbs, fat and protein against goals">
+  <img src="docs/screenshots/experiment.png" width="49%" alt="Experiment tab: a scratchpad of foods placed across days, each day totaled against the 2500 kcal plan">
+  <img src="docs/screenshots/nutrients.png" width="49%" alt="Full nutrient panel: each nutrient against its target, with how much of the intake had data">
 </p>
 
 ## Why I built it
