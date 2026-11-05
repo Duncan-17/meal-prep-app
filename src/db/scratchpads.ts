@@ -45,5 +45,5 @@ export async function deleteScratchpad(id: number): Promise<void> {
 
 /** Item ids only need to be unique within one scratchpad. */
 export function newItemUid(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return `${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
 }

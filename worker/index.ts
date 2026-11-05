@@ -199,8 +199,10 @@ async function handleApi(
         'retry-after': String(error.retryAfterSeconds ?? 60),
       });
     }
-    // Never let an upstream message leak the key into a client-visible body.
-    return json({ error: 'Upstream request failed.', detail: redact(String(error)) }, 502);
+    // Log the cause server-side only; the client gets a generic message so no
+    // upstream text, stack trace, or key can reach a response body.
+    console.error('Upstream request failed:', redact(String(error)));
+    return json({ error: 'Upstream request failed.' }, 502);
   }
 }
 
