@@ -1,8 +1,8 @@
 # Meal Prep
 
-A meal-planning web app I designed for my own batch cooking. You build recipes from USDA food data, schedule cooks on a calendar, track leftovers as fridge stock, and log what you eat against a full nutrient plan, not just calories.
+A meal-planning web app I designed for meal planning, shopping, and nutriant tracking. You build recipes from USDA food data, schedule cooks on a calendar, track leftovers as fridge stock, and log what you eat against a full nutrient plan.
 
-**Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare, with per-user accounts. 594 automated tests passing, checked by CI on every push.
+**Status:** in daily use on my phone and laptop. Installable as a PWA, works offline, syncs between devices through Cloudflare, with user accounts.
 
 <p align="center">
   <img src="docs/screenshots/diary.png" width="49%" alt="Diary: today's calories against the plan, macro rings, and what was eaten from the fridge">
@@ -13,7 +13,7 @@ A meal-planning web app I designed for my own batch cooking. You build recipes f
 
 ## Why I built it
 
-I meal prep in batches, and the apps I tried treated every meal as a one-off entry. None of them handled "I cooked six servings on Sunday and I'm eating them through Thursday," and most only tracked calories and macros. I wanted one place to plan a cook, see what's left in the fridge, and see whether I'm actually hitting my micronutrient targets over a week.
+There are many apps that help you track your nutrition but I personally struggled with the planning and shopping. This app is designed to allow me to lay out proposed meal plans, see their nutritional info and plan what I would eat on which days, and then easily schedule sopping and cooking for those meals. 
 
 ## What it does
 
@@ -35,7 +35,7 @@ I meal prep in batches, and the apps I tried treated every meal as a one-off ent
 
 ## How I built it
 
-I wrote the product spec and made the design and data decisions; I built it with **Claude Code as my pair programmer**, which wrote most of the implementation while I directed the work, reviewed it, and tested every feature against real daily use. The design log I kept during the build is in [PLAN.md](PLAN.md).
+I wrote the product spec and made the design and data decisions; I built it with **Claude Code as my pair programmer**, which wrote most of the implementation while I directed the work, reviewed it, and tested every feature against real daily use. The design log I kept during the build is in [PLAN.md](PLAN.md). 
 
 Decisions I'm most proud of:
 
@@ -47,7 +47,7 @@ Decisions I'm most proud of:
 - **The server never sees a password.** The browser stretches it with Argon2id and sends only a derived proof; sessions are server-side and revocable, sign-in is rate-limited per user and per IP, and every user's data is keyed by their account so one user can't read or overwrite another's. Tests attack that isolation directly.
 - **Hardened like it's public, because it is.** A strict Content Security Policy, every sync upload validated and size-capped with a per-account quota, rate-limited USDA lookups, and CI that runs CodeQL and fails on serious dependency advisories. What it defends against, and where that stops, is in [THREAT_MODEL.md](THREAT_MODEL.md).
 
-What I learned: how to scope a real project into phases, how to write specs precise enough that an AI tool builds the right thing, and how to verify AI-written code with tests and real use rather than trusting it.
+What I learned: How to design a solution to a set of problems and how to break development of that solution into iterable testable phases of development.
 
 ## Roadmap
 
