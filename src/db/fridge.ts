@@ -205,7 +205,8 @@ export async function discardRemaining(
 /** The audit trail for one entry, newest first. */
 export async function listAdjustments(entryId: number): Promise<StockAdjustment[]> {
   const rows = await db.stockAdjustments.where('fridgeEntryId').equals(entryId).toArray();
-  return rows.sort((a, b) => b.createdAt - a.createdAt);
+  // Tie-break on the auto-increment id: two adjustments can share a millisecond.
+  return rows.sort((a, b) => b.createdAt - a.createdAt || (b.id ?? 0) - (a.id ?? 0));
 }
 
 /**

@@ -18,6 +18,19 @@ updates:
       dev-tools:
         dependency-type: development
         update-types: [minor, patch]
+    ignore:
+      # ESLint 10 needs eslint, @eslint/js, eslint-plugin-react-hooks 7 and
+      # typescript-eslint bumped together, and react-hooks 7 adds rules that
+      # need code changes. Done by hand as one upgrade, not as separate PRs.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-plugin-react-hooks"
+        update-types: ["version-update:semver-major"]
+      # Node types should match the Node version the app runs on (.node-version = 22).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
