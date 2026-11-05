@@ -161,7 +161,11 @@ Roughly in order, all in response to using the thing:
     (user_id, tbl, id). Keying on (tbl, id) and filtering would let one user overwrite another's
     row by reusing its id. The rev counter stays global; it only has to go up.
   - **Rows with user_id `''` are pre-accounts data**, readable by nobody until
-    `node scripts/admin.mjs --remote claim-legacy <username>` assigns them.
+    `node scripts/admin.mjs --remote claim-legacy <username>` assigns them. "Keep it" does NOT
+    replace that step: a device uploads only rows changed since its last sync, so rows it had
+    already synced reach the account only through `claim-legacy` (13 did, 2026-11-04). Admin SQL
+    goes through `wrangler d1 execute --command`, never `--file`: remote `--file` is a bulk
+    import that prints progress before its JSON and returns no rows.
   - **Sessions are server-side rows holding only the token's hash.** That is what makes sign-out,
     "sign out other devices" and an admin reset actually end sessions.
   - **Unknown username and wrong password give the same error**, and an unknown username still
@@ -254,13 +258,13 @@ device that starts empty downloads everything. Reopen only if it recurs with syn
 
 **Open questions the user has not answered:**
 
-| Question                | Why it is open                                                                                                                                                                                                                                                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile.                                                                                                                                                                             |
-| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                                                                                                                                                                                                        |
-| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                                                                                                                                                                                                    |
-| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                                                                                                                                                                                                     |
-| Going public + security | PLAN.md §11. **Step 1 (accounts) live 2026-11-04**, confirmed by the user on phone and laptop. `claim-legacy` not yet run (optional — devices re-uploaded their data). Steps 2 (hardening) and 3 (E2EE with a recovery code) not started. Accounts are live, so the repo can go public whenever the user chooses. Demo account deferred. |
+| Question                | Why it is open                                                                                                                                                                                                                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Real 2500-cal targets   | The Plan screen works but is seeded with FDA defaults, each labelled "FDA default". Only the user can supply the real numbers. Nothing is blocked meanwhile.                                                                                                                                                                         |
+| Open Food Facts contact | Deliberately deferred 2026-09-10. Gates barcode scanning only. **Do not re-ask.**                                                                                                                                                                                                                                                    |
+| Phone install           | The Worker URL works; the user had not yet added it to a home screen.                                                                                                                                                                                                                                                                |
+| Experiment: suggestions | Every question in PLAN.md §10 still unanswered. Scratchpads are built; suggestions wait for answers.                                                                                                                                                                                                                                 |
+| Going public + security | PLAN.md §11. **Step 1 (accounts) live 2026-11-04**, confirmed by the user on phone and laptop. `claim-legacy duncan` run the same night; no ownerless rows remain. Steps 2 (hardening) and 3 (E2EE with a recovery code) not started. Accounts are live, so the repo can go public whenever the user chooses. Demo account deferred. |
 
 **Things that would plausibly annoy the user next**, in the order I would expect:
 

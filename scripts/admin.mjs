@@ -26,8 +26,6 @@
 
 import { spawnSync } from 'node:child_process';
 import { randomInt } from 'node:crypto';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -52,28 +50,23 @@ if (where === undefined) usage('Say --remote (the live database) or --local.');
 if (command === undefined) usage();
 
 /**
- * Run SQL through wrangler. Written to a file and passed with --file rather
- * than on the command line, so no shell ever parses it.
+ * Run SQL through wrangler with --command. No shell parses it: spawnSync is
+ * given node and an argument array, so the SQL arrives as one argument.
+ * (Not --file: against the REMOTE database that is a bulk import, which
+ * prints upload progress before its JSON and returns no rows from a SELECT.)
  */
 function sql(statement) {
-  const dir = mkdtempSync(join(tmpdir(), 'meal-prep-admin-'));
-  const file = join(dir, 'admin.sql');
-  writeFileSync(file, statement);
-  try {
-    const result = spawnSync(
-      process.execPath,
-      [WRANGLER, 'd1', 'execute', DATABASE, where, '--json', '--file', file],
-      { cwd: ROOT, encoding: 'utf8' },
-    );
-    if (result.status !== 0) {
-      console.error(result.stderr || result.stdout);
-      process.exit(1);
-    }
-    const parsed = JSON.parse(result.stdout);
-    return parsed.flatMap((entry) => entry.results ?? []);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
+  const result = spawnSync(
+    process.execPath,
+    [WRANGLER, 'd1', 'execute', DATABASE, where, '--json', '--command', statement],
+    { cwd: ROOT, encoding: 'utf8' },
+  );
+  if (result.status !== 0) {
+    console.error(result.stderr || result.stdout);
+    process.exit(1);
   }
+  const parsed = JSON.parse(result.stdout);
+  return parsed.flatMap((entry) => entry.results ?? []);
 }
 
 /** Usernames are interpolated into SQL, so only the server's own pattern gets through. */
@@ -172,14 +165,29 @@ switch (command) {
     // OR IGNORE: if the account has already synced its own version of a row
     // (an edit made after signing in, before this ran), that version was
     // written later and wins; the stale pre-accounts copy is then dropped.
+    //
+    // Signing in with "Keep it" does NOT make this unnecessary: the device
+    // only uploads rows changed since its last sync, so everything it had
+    // already synced exists in the account only once this has run.
     const user = requireUser(username());
-    const [legacy] = sql(`SELECT COUNT(*) AS n FROM user_records WHERE user_id = '';`);
+    const [counts] = sql(
+      `SELECT COUNT(*) AS total,
+              SUM(NOT EXISTS (SELECT 1 FROM user_records mine
+                              WHERE mine.user_id = '${user.id}'
+                                AND mine.tbl = l.tbl AND mine.id = l.id)) AS moving
+       FROM user_records l WHERE l.user_id = '';`,
+    );
     sql(
       `UPDATE OR IGNORE user_records SET user_id = '${user.id}' WHERE user_id = '';
        DELETE FROM user_records WHERE user_id = '';
        DELETE FROM records;`,
     );
-    console.log(`${legacy?.n ?? 0} records from before accounts now belong to ${user.username}.`);
+    const total = counts?.total ?? 0;
+    const moving = counts?.moving ?? 0;
+    console.log(
+      `${moving} records from before accounts moved to ${user.username}; ` +
+        `${total - moving} were older copies of rows the account already had, and were dropped.`,
+    );
     break;
   }
 

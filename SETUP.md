@@ -17,10 +17,9 @@ What follows is a record of how it was set up, plus the two things still genuine
 Signed up, kept the device's data, signed in on phone and laptop at once, and checked that
 wrong and too-short passwords are refused — all confirmed by you on 2026-11-04.
 
-**Optional tidy-up:** the copy of your data from before accounts still sits in the database owned
-by nobody (your devices re-uploaded everything into your account, so nothing depends on it). To
-fold it in and clear it: `npx wrangler login` once, then
-`node scripts/admin.mjs --remote claim-legacy <your-username>`. Your newer edits win over it.
+The data from before accounts was merged into `duncan` with `claim-legacy` the same night: 13
+records (two recipes, a yoghurt drink, two meal logs, fridge items) existed ONLY in the old copy,
+because "Keep it" uploads just what changed since a device's last sync. Nothing is ownerless now.
 
 **If you forget your password:** `node scripts/admin.mjs --remote reset-password <username>`
 prints a temporary one. Sign in with it, then Plan → Account → Change password.
